@@ -138,10 +138,16 @@ const AccountSection = () => (
     </h2>
     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
       <div className="flex items-center space-x-3">
-        <CheckCircle2 className="w-5 h-5 text-green-600" />
+        <img
+          src="/images/profile-default.svg" 
+          alt={`${MOCK_USER.name}'s profile`}
+          className="w-8 h-8 rounded-full object-cover border border-gray-300 p-1 bg-white" 
+        />
         <span className="font-medium text-gray-800">{MOCK_USER.name}</span>
       </div>
-      <p className="text-sm text-gray-600 ml-8">{MOCK_USER.email}</p>
+      <p className="text-sm text-gray-600 ml-11"> 
+        {MOCK_USER.email}
+      </p>
     </div>
     <p className="text-xs text-gray-500 mt-3">
       This purchase will be linked to your account.{" "}
