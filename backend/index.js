@@ -1,27 +1,42 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import dotenv from 'dotenv';
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-import cookieParser from 'cookie-parser';
-import passport from 'passport';
+import cookieParser from "cookie-parser";
+import passport from "passport";
 import http from "http";
 import { Server } from "socket.io";
-import './config/passport.js';
-import authRoutes from './routes/authRoutes.js';
+import "./config/passport.js";
+import authRoutes from "./routes/authRoutes.js";
 import clientRoutes from "./routes/clientRoutes.js";
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 7000;
 
+// Create HTTP server for Socket.io
+const server = http.createServer(app);
+
 // Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL,
-  credentials: true,
-}));
-app.use(express.json());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  })
+);
+
+// Webhook Middleware Handling: Skip express.json() for the webhook route
+app.use((req, res, next) => {
+  if (req.originalUrl === "/api/subscriptions/webhook") {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
@@ -32,21 +47,22 @@ const __dirname = path.dirname(__filename);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
-app.use('/api/users', authRoutes);
-app.use('/api/client', clientRoutes);
+app.use("/api/users", authRoutes);
+app.use("/api/client", clientRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
 
 // Connect to MongoDB and start server
-mongoose.connect(process.env.MONGO_URL).then(() => {
-  console.log(' Connected to MongoDB successfully!');
-  server.listen(PORT, () => {
-    console.log(` Server is running on port ${PORT}`);
+mongoose
+  .connect(process.env.MONGO_URL)
+  .then(() => {
+    console.log(" Connected to MongoDB successfully!");
+    server.listen(PORT, () => {
+      console.log(` Server is running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error(" Database connection error:", err);
   });
-}).catch((err) => {
-  console.error(' Database connection error:', err);
-});
-
-// Create HTTP server for Socket.io
-const server = http.createServer(app);
 
 // Setup Socket.io
 const io = new Server(server, {
@@ -75,4 +91,3 @@ io.on("connection", (socket) => {
     console.log("User disconnected:", socket.id);
   });
 });
-
