@@ -165,7 +165,7 @@ export default function BrowseServicesPage(): React.JSX.Element {
                   </li>
                   <li>
                     <Link
-                      href="/client/find-handyman"
+                      href="/client/clientFindHandyman"
                       className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
                       onClick={() => setShowMenu(false)}
                     >
