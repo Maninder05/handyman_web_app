@@ -1,5 +1,5 @@
-import HandyProfile from "../models/handyman/HandyDashboard.js";
-import User from "../models/auth/User.js";
+import HandyProfile from "../../models/handyman/HandyDashboard.js";
+import User from "../../models/auth/User.js";
 
 // GET LOGGED-IN HANDYMAN'S PROFILE
 export const getMyProfile = async (req, res) => {
@@ -265,8 +265,6 @@ export const verifyHandyman = async (req, res) => {
   try {
     const { handymanId } = req.params;
     const { verified } = req.body;
-    
-    // TODO: Add admin authentication check here
     
     const profile = await HandyProfile.findByIdAndUpdate(
       handymanId,
