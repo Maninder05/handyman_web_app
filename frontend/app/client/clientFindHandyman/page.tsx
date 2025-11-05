@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import * as React from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Bell } from "lucide-react";
 import { FiUser } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 
@@ -24,7 +25,7 @@ interface Handyman {
   price?: number;
 }
 
-export default function BrowseServicesPage(): JSX.Element {
+export default function BrowseServicesPage(): React.JSX.Element {
   const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -101,34 +102,106 @@ export default function BrowseServicesPage(): JSX.Element {
   });
 
   return (
-    <main className="bg-[#F8F8F8] min-h-screen text-[#5C4033] flex flex-col">
+    <main className="bg-[#F5F5F0] min-h-screen text-[#1a1a1a] flex flex-col">
       {/* ================= HEADER ================= */}
-      <header className="bg-[#5C4033] shadow-md relative py-4 px-4 border-b-4 border-[#EED9C4]">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-[#EED9C4] tracking-wide">Browse Services</h1>
+      <header className="bg-[#1a1a1a] shadow-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+          <h1 className="text-2xl font-bold text-white tracking-wide">Browse Services</h1>
+
           <div className="flex items-center gap-4 relative">
-            <button onClick={toggleProfile} className="p-2 rounded-full hover:bg-[#C4956A]/30 transition">
-              <FiUser size={22} className="text-[#EED9C4]" />
+            <button className="relative p-2 rounded-full hover:bg-[#2a2a2a] transition">
+              <Bell size={22} className="text-white" />
             </button>
+
+            <button
+              onClick={toggleProfile}
+              className="p-2 rounded-full hover:bg-[#2a2a2a] transition"
+            >
+              <FiUser size={24} className="text-white" />
+            </button>
+
             {showProfileMenu && (
-              <div className="absolute right-14 top-14 bg-[#FFF8F2] rounded-xl shadow-lg border border-[#EED9C4] w-48 z-50">
-                <ul className="text-sm divide-y divide-[#EED9C4]">
+              <div className="absolute right-14 top-14 bg-white border border-gray-200 rounded-lg shadow-xl w-52 z-50">
+                <ul className="text-sm text-gray-800">
                   <li>
-                    <Link href="/handyAccount" className="block px-4 py-3 hover:bg-[#EED9C4]/40 transition text-[#5C4033]">
+                    <Link
+                      href="/handyAccount"
+                      className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowProfileMenu(false)}
+                    >
                       View Account
                     </Link>
                   </li>
                   <li>
-                    <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-[#C4956A] hover:bg-[#EED9C4]/40 transition">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-5 py-3 text-[#C41E3A] hover:bg-red-50 transition font-medium"
+                    >
                       Logout
                     </button>
                   </li>
                 </ul>
               </div>
             )}
-            <button onClick={toggleMenu} className="p-2 rounded-md hover:bg-[#EED9C4]/40 bg-[#C4956A] text-white transition">
+
+            <button
+              onClick={toggleMenu}
+              className="p-2 rounded-md bg-[#D4A574] text-white hover:bg-[#B8A565] transition"
+            >
               {showMenu ? <X size={26} /> : <Menu size={26} />}
             </button>
+
+            {showMenu && (
+              <div className="absolute right-0 top-14 bg-white border border-gray-200 rounded-xl shadow-xl w-72 text-sm z-50 overflow-hidden">
+                <ul className="divide-y divide-gray-100">
+                  <li>
+                    <Link
+                      href="/client/post-job"
+                      className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      Post a Job
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/client/find-handyman"
+                      className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      Find Handyman
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/client/bookings"
+                      className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      Recent Bookings
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/client/help"
+                      className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      Help & Support
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/settings"
+                      className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      Settings
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -136,30 +209,25 @@ export default function BrowseServicesPage(): JSX.Element {
       {/* ================= STEP 1: BROWSE ================= */}
       {step === "browse" && (
         <section className="px-6 py-12 max-w-[1400px] mx-auto w-full">
-          <h2 className="text-3xl font-bold mb-10 text-[#C4956A] text-center">Explore Handyman Services</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
-            {services.map((service, index) => (
+          <h2 className="text-3xl font-bold mb-10 text-[#D4A574] text-center">
+            Explore Handyman Services
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {services.map((service) => (
               <div
-                key={index}
+                key={service.name}
                 onClick={() => handleSelectService(service)}
-                className="bg-white rounded-3xl overflow-hidden shadow-lg border border-[#EED9C4] hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col cursor-pointer"
+                className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition cursor-pointer text-center group"
               >
-                <div className="relative w-full h-48">
-                  <Image
-                    src={service.image}
-                    alt={service.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 400px"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                  <span className="absolute bottom-3 left-4 bg-[#EED9C4] text-[#5C4033] px-3 py-1 rounded-full text-xs font-semibold shadow">
-                    {service.category}
-                  </span>
-                </div>
-                <div className="p-5 flex flex-col flex-1 items-center">
-                  <h3 className="text-lg font-semibold text-[#5C4033] mb-1 text-center">{service.name}</h3>
-                </div>
+                <Image
+                  src={service.image}
+                  alt={service.name}
+                  width={200}
+                  height={150}
+                  className="rounded-lg object-cover w-full h-40 mb-4"
+                />
+                <h4 className="font-bold text-[#1a1a1a]">{service.name}</h4>
+                <p className="text-gray-500 text-sm mt-1">{service.category}</p>
               </div>
             ))}
           </div>
@@ -167,121 +235,80 @@ export default function BrowseServicesPage(): JSX.Element {
       )}
 
       {/* ================= STEP 2: FILTER ================= */}
-      {step === "filter" && selectedService && (
-        <section className="min-h-screen bg-[#FFF8F2] flex flex-col items-center py-12 px-6">
-          <h2 className="text-4xl font-bold text-[#C4956A] mb-8 text-center">
-            Find the Perfect Handyman for {selectedService.name}
+      {step === "filter" && (
+        <section className="px-6 py-12 max-w-2xl mx-auto w-full">
+          <h2 className="text-3xl font-bold mb-6 text-[#D4A574] text-center">
+            Filter Handymen for {selectedService?.name}
           </h2>
-
-          <div className="flex flex-col gap-6 w-full max-w-3xl">
-            {/* ⭐ Rating */}
-            <div className="flex flex-col">
-              <label className="text-[#5C4033] font-semibold mb-2">Minimum Rating</label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setFilters({ ...filters, rating: star.toString() })}
-                    className={`text-3xl ${
-                      Number(filters.rating) >= star ? "text-yellow-400" : "text-gray-300"
-                    } hover:scale-110 transition`}
-                  >
-                    ★
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 📍 Address */}
-            <div className="flex flex-col">
-              <label className="text-[#5C4033] font-semibold mb-2">Your Location</label>
-              <input
-                name="address"
-                type="text"
-                placeholder="Enter your address"
-                value={filters.address}
-                onChange={handleFilterChange}
-                className="border border-[#EED9C4] rounded-xl p-4 mb-3"
-              />
-              <select
-                name="radius"
-                value={filters.radius}
-                onChange={handleFilterChange}
-                className="border border-[#EED9C4] rounded-xl p-4"
-              >
-                <option value="">Select Radius</option>
-                <option value="5">Within 5 km</option>
-                <option value="10">Within 10 km</option>
-                <option value="25">Within 25 km</option>
-                <option value="50">Within 50 km</option>
-              </select>
-            </div>
-
-            {/* 🧰 Experience */}
-            <div className="flex flex-col">
-              <label className="text-[#5C4033] font-semibold mb-2">Experience Level</label>
-              <select
-                name="experience"
-                value={filters.experience}
-                onChange={handleFilterChange}
-                className="border border-[#EED9C4] rounded-xl p-4"
-              >
-                <option value="">Any</option>
-                <option value="1-3">1–3 years</option>
-                <option value="3-5">3–5 years</option>
-                <option value="5+">5+ years</option>
-              </select>
-            </div>
-
-            {/* 💵 Payment Type */}
-            <div className="flex flex-col">
-              <label className="text-[#5C4033] font-semibold mb-2">Payment Type</label>
-              <select
-                name="paymentType"
-                value={filters.paymentType}
-                onChange={handleFilterChange}
-                className="border border-[#EED9C4] rounded-xl p-4"
-              >
-                <option value="">Any</option>
-                <option value="Hourly">Hourly</option>
-                <option value="Fixed">Fixed</option>
-              </select>
-            </div>
-
-            {/* 💰 Price Range */}
-            <div className="flex flex-col">
-              <label className="text-[#5C4033] font-semibold mb-2">Price Range ($)</label>
-              <div className="flex gap-4">
+          <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium mb-2">Minimum Rating</label>
                 <input
-                  name="priceFrom"
                   type="number"
-                  placeholder="From"
+                  name="rating"
+                  value={filters.rating}
+                  onChange={handleFilterChange}
+                  placeholder="4.0"
+                  className="w-full border border-gray-300 rounded-lg p-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Experience</label>
+                <select
+                  name="experience"
+                  value={filters.experience}
+                  onChange={handleFilterChange}
+                  className="w-full border border-gray-300 rounded-lg p-2"
+                >
+                  <option value="">Any</option>
+                  <option value="1-3">1-3 years</option>
+                  <option value="3-5">3-5 years</option>
+                  <option value="5+">5+ years</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Payment Type</label>
+                <select
+                  name="paymentType"
+                  value={filters.paymentType}
+                  onChange={handleFilterChange}
+                  className="w-full border border-gray-300 rounded-lg p-2"
+                >
+                  <option value="">Any</option>
+                  <option value="Hourly">Hourly</option>
+                  <option value="Fixed">Fixed</option>
+                </select>
+              </div>
+              <div className="flex gap-3">
+                <input
+                  type="number"
+                  name="priceFrom"
                   value={filters.priceFrom}
                   onChange={handleFilterChange}
-                  className="border border-[#EED9C4] rounded-xl p-4 flex-1"
+                  placeholder="Min Price"
+                  className="w-1/2 border border-gray-300 rounded-lg p-2"
                 />
                 <input
-                  name="priceTo"
                   type="number"
-                  placeholder="To"
+                  name="priceTo"
                   value={filters.priceTo}
                   onChange={handleFilterChange}
-                  className="border border-[#EED9C4] rounded-xl p-4 flex-1"
+                  placeholder="Max Price"
+                  className="w-1/2 border border-gray-300 rounded-lg p-2"
                 />
               </div>
             </div>
-
-            {/* Buttons */}
-            <div className="flex justify-between mt-10">
+            <div className="mt-8 flex justify-between">
               <button
                 onClick={() => setStep("browse")}
-                className="bg-[#EED9C4] text-[#5C4033] font-semibold py-3 px-6 rounded-xl hover:bg-[#E3C7A8] transition"
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
               >
-                ← Back
+                Back
               </button>
               <button
                 onClick={handleFind}
-                className="bg-[#C4956A] text-white font-semibold py-3 px-6 rounded-xl hover:bg-[#B3835F] transition"
+                className="px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition"
               >
                 Find Handymen
               </button>
@@ -292,48 +319,48 @@ export default function BrowseServicesPage(): JSX.Element {
 
       {/* ================= STEP 3: RESULTS ================= */}
       {step === "results" && (
-        <section className="max-w-[1300px] mx-auto py-12">
-          <h2 className="text-3xl font-bold text-[#C4956A] mb-8 text-center">
-            Handymen for {selectedService?.name}
+        <section className="px-6 py-12 max-w-6xl mx-auto w-full">
+          <h2 className="text-3xl font-bold mb-8 text-[#D4A574] text-center">
+            Available Handymen
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredHandymen.map((h, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-3xl shadow-lg border border-[#EED9C4] overflow-hidden hover:-translate-y-2 hover:shadow-2xl transition-all"
-              >
-                <div className="relative w-full h-56">
+          {filteredHandymen.length === 0 ? (
+            <p className="text-center text-gray-500">
+              No handymen found matching your filters.
+            </p>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredHandymen.map((h) => (
+                <div
+                  key={h.name}
+                  className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition text-center"
+                >
                   <Image
                     src={h.image}
                     alt={h.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 400px"
+                    width={200}
+                    height={150}
+                    className="rounded-lg object-cover w-full h-40 mb-4"
                   />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-[#5C4033]">{h.name}</h3>
-                  <p className="text-[#C4956A] font-semibold mt-1">{h.location}</p>
-                  <p className="text-sm text-[#5C4033]/70 mt-2">
-                    ⭐ {h.rating} | {h.experience} years exp | {h.paymentType} | ${h.price}
+                  <h4 className="font-bold text-[#1a1a1a] text-lg mb-1">{h.name}</h4>
+                  <p className="text-gray-500 text-sm mb-2">
+                    ⭐ {h.rating} | {h.experience} yrs | {h.location}
                   </p>
-                  <button
-                    className="mt-4 w-full bg-[#C4956A] text-white py-2 rounded-xl font-semibold hover:bg-[#B3835F] transition"
-                    onClick={() => alert(`Booked ${h.name}`)}
-                  >
+                  <p className="text-gray-600 text-sm mb-3">
+                    {h.paymentType}: ${h.price}
+                  </p>
+                  <button className="px-6 py-2 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition">
                     Book Now
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex justify-center mt-10">
+              ))}
+            </div>
+          )}
+          <div className="mt-10 text-center">
             <button
               onClick={() => setStep("filter")}
-              className="bg-[#EED9C4] text-[#5C4033] font-semibold py-3 px-6 rounded-xl hover:bg-[#E3C7A8] transition"
+              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
             >
-              ← Back to Filters
+              Back to Filters
             </button>
           </div>
         </section>
