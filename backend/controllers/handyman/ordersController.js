@@ -1,5 +1,5 @@
-import Order from "../models/handyman/Orders.js";
-import PostService from "../models/handyman/PostService.js";
+import Order from "../../models/handyman/Orders.js";
+import PostService from "../../models/handyman/PostService.js";
 
 /**
  * 🧾 Create a new order (Client requests a handyman service)
