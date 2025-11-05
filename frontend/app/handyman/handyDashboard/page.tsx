@@ -3,9 +3,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {  Menu,  X,  Briefcase,  Settings,  HelpCircle,  Crown,  Wrench, Bell, Upload, Camera} from "lucide-react";
 import { FiUser, FiPlus, FiDollarSign, FiShoppingBag, FiStar } from "react-icons/fi";
 import Header from "../../components/handyHeader";
+import { Menu, X, Briefcase, Settings, HelpCircle, Crown, Wrench, Bell, Upload, Camera } from "lucide-react";
+import Image from "next/image";
+
 
 type Service = { 
   _id?: string;
@@ -423,7 +425,7 @@ export default function HandyDashboard() {
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-[#1a1a1a]">My Services</h3>
-            <Link href="/handyman/my-services" className="text-[#D4A574] hover:text-[#B8A565] font-medium text-sm">
+            <Link href="/handyman/handyPostService" className="text-[#D4A574] hover:text-[#B8A565] font-medium text-sm">
               Manage Services
             </Link>
           </div>
@@ -436,7 +438,7 @@ export default function HandyDashboard() {
               <p className="text-gray-400 text-lg mb-2">No services added</p>
               <p className="text-gray-500 text-sm mb-4">Add your services to attract clients</p>
               <Link 
-                href="/handyman/my-services"
+                href="/handyman/handyPostService"
                 className="inline-block px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold shadow-lg hover:shadow-xl"
               >
                 Add Services
@@ -468,11 +470,14 @@ export default function HandyDashboard() {
             <div className="mb-6">
               {previewUrl ? (
                 <div className="relative w-40 h-40 mx-auto mb-4">
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    className="w-40 h-40 rounded-full object-cover border-4 border-[#D4A574]"
-                  />
+                  <Image
+  src={previewUrl || "/default-avatar.png"} // fallback if preview is null
+  alt="Preview"
+  width={160}
+  height={160}
+  className="w-40 h-40 rounded-full object-cover border-4 border-[#D4A574]"
+/>
+
                 </div>
               ) : (
                 <div className="w-40 h-40 mx-auto mb-4 rounded-full border-4 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
