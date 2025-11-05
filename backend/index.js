@@ -18,9 +18,10 @@ const PORT = process.env.PORT || 7000;
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: process.env.CLIENT_URL || "http://localhost:3000",
   credentials: true,
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -34,6 +35,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Routes
 app.use('/api/users', authRoutes);
 app.use('/api/client', clientRoutes);
+app.use("/api/handymen", handyRoutes);
+// ✅ NEW route for handyman workflow
 
 // Connect to MongoDB and start server
 mongoose.connect(process.env.MONGO_URL).then(() => {

@@ -2,14 +2,22 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, X } from "lucide-react";
-import { FiUser } from "react-icons/fi";
 import Header from "../../components/handyHeader";
+
+interface Service {
+  _id: string;
+  title: string;
+  description: string;
+  category: string;
+  price: string;
+  priceType: string;
+  images?: string[];
+}
 
 export default function CreateService() {
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [priceType, setPriceType] = useState("Hourly");
   const [price, setPrice] = useState("");
@@ -17,45 +25,48 @@ export default function CreateService() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [popup, setPopup] = useState<string | null>(null);
-  const [showMenu, setShowMenu] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
+
   const router = useRouter();
-
   const handleLogout = () => router.push("/");
-
-  const toggleMenu = () => {
-    setShowMenu(!showMenu);
-    setShowProfileMenu(false);
-  };
-
-  const toggleProfile = () => {
-    setShowProfileMenu(!showProfileMenu);
-    setShowMenu(false);
-  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
-      setErrors({ image: "Only JPG, JPEG and PNG are allowed" });
+      setErrors({ image: "Only JPG, JPEG, and PNG are allowed" });
       return;
     }
     if (file.size > 35 * 1024 * 1024) {
       setErrors({ image: "Image must be less than 35MB" });
       return;
     }
-
     setErrors({});
     setImage(file);
     setImagePreview(URL.createObjectURL(file));
   };
 
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (/^\d*\.?\d*$/.test(val)) {
+      setPrice(val);
+      setErrors((prev) => ({ ...prev, price: "" }));
+    } else {
+      setErrors((prev) => ({ ...prev, price: "Price must be a number" }));
+    }
+  };
+
   const submitToServer = async (isDraft = false) => {
     const newErrors: { [key: string]: string } = {};
     if (!title) newErrors.title = "Title is required";
+    if (!description) newErrors.description = "Description is required";
     if (!category) newErrors.category = "Category is required";
-    if (!price) newErrors.price = "Price is required";
+    if (!price && !isDraft) newErrors.price = "Price is required";
     if (!image && !isDraft) newErrors.image = "Image is required";
 
     if (Object.keys(newErrors).length > 0) {
@@ -64,175 +75,270 @@ export default function CreateService() {
     }
 
     try {
+      setLoading(true);
       const formData = new FormData();
       formData.append("title", title);
+      formData.append("description", description);
       formData.append("category", category);
-      formData.append("priceType", priceType);
       formData.append("price", price);
+      formData.append("priceType", priceType);
       formData.append("isDraft", isDraft ? "true" : "false");
       if (image) formData.append("image", image);
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/services`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl) throw new Error("API URL not set");
+
+      const res = await fetch(`${apiUrl}/api/handymen/services`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
 
       if (res.ok) {
-        setPopup(isDraft ? "Draft saved" : "Service submitted");
+        setPopup(isDraft ? "✅ Draft saved successfully!" : "🎉 Service published successfully!");
         setTitle("");
+        setDescription("");
         setCategory("");
         setPrice("");
         setImage(null);
         setImagePreview(null);
+        setErrors({});
       } else {
-        const data = await res.json();
-        setPopup(data.message || "Failed to submit service");
+        const text = await res.text();
+        let data: { message?: string } = { message: text };
+        try {
+          data = JSON.parse(text);
+        } catch {}
+        setPopup(data.message || "❌ Failed to submit service");
       }
     } catch (err) {
-      console.error("Error submitting service:", err);
-      setPopup("Error submitting service");
+      if (err instanceof Error) {
+        setPopup(`⚠️ ${err.message}`);
+      } else {
+        setPopup("⚠️ Unexpected error");
+      }
+    } finally {
+      setLoading(false);
+      setTimeout(() => setPopup(null), 3000);
     }
   };
 
-  const handleSubmit = async () => {
-    await submitToServer(false);
+  const fetchServices = async () => {
+    try {
+      setLoadingServices(true);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${apiUrl}/api/handymen/services`, { credentials: "include" });
+      const data = await res.json();
+      setServices(data);
+    } catch (err) {
+      console.error("Error fetching services:", err);
+      setPopup("⚠️ Failed to load services");
+    } finally {
+      setLoadingServices(false);
+    }
   };
 
-  const handleSaveDraft = async () => {
-    await submitToServer(true);
+  const openModal = () => {
+    fetchServices();
+    setShowModal(true);
   };
+  const closeModal = () => setShowModal(false);
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] flex flex-col">
-      <div>
-        <Header pageTitle="Post Service" onLogout={handleLogout} />
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-[#F5F5F0] to-[#eae7e1] flex flex-col">
+      <Header pageTitle="Post Service" onLogout={handleLogout} />
 
-      <main className="flex-1 flex justify-center items-start py-14 px-4">
-        <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-12 space-y-10 border-t-4 border-[#D4A574]">
-          {/* Title */}
-          <div>
-            <label className="block mb-2 font-semibold text-[#1a1a1a]">
-              Service Title
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-xl p-4 border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#D4A574] transition"
-              placeholder="Enter service title"
-            />
-            {errors.title && (
-              <p className="text-[#D4A574] text-sm mt-1">{errors.title}</p>
-            )}
-          </div>
+      {popup && (
+        <div className="fixed top-6 right-6 bg-[#5C4033] text-white px-6 py-3 rounded-xl shadow-xl z-50 animate-fade-in-up">
+          {popup}
+        </div>
+      )}
 
-          {/* Category */}
-          <div>
-            <label className="block mb-2 font-semibold text-[#1a1a1a]">
-              Category
-            </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full rounded-xl p-4 border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#D4A574] appearance-none pr-8 transition cursor-pointer"
-            >
-              <option value="">Select Category</option>
-              <option>Electrical</option>
-              <option>Plumbing</option>
-              <option>Carpentry</option>
-              <option>Appliances</option>
-              <option>Painting & Finishing</option>
-              <option>Cleaning</option>
-              <option>Landscaping</option>
-              <option>Renovation</option>
-              <option>Roofing</option>
-              <option>General Repairs</option>
-            </select>
-            {errors.category && (
-              <p className="text-[#D4A574] text-sm mt-1">{errors.category}</p>
-            )}
-          </div>
+      <main className="flex-1 flex justify-center items-start py-14 px-6">
+        <div className="w-full max-w-5xl bg-white/95 backdrop-blur-md rounded-2xl shadow-lg p-12 border border-[#D4A574]/30 hover:shadow-[#D4A574]/20 transition-all duration-300">
+          <h2 className="text-4xl font-bold text-[#5C4033] border-b pb-4 flex items-center justify-between">
+            Create a New Service
+            {loading && <span className="text-sm text-[#D4A574] animate-pulse">Saving...</span>}
+          </h2>
 
-          {/* Image Upload */}
-          <div>
-            <label className="block mb-2 font-semibold text-[#1a1a1a]">
-              Upload Service Image
-            </label>
-            <div className="flex items-center gap-4">
-              <label className="flex-1 rounded-xl p-4 border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#D4A574] transition cursor-pointer">
-                {image ? image.name : "Choose image file"}
-                <span className="ml-2 text-[#D4A574]">📁</span>
+          {/* Form */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-10">
+            {/* Left */}
+            <div className="space-y-6">
+              <div>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">Title</label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload}
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter service title"
+                  className="w-full rounded-xl p-4 border border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-[#D4A574]"
                 />
-              </label>
-              {imagePreview && (
-                <div className="w-24 h-24 relative border border-gray-200 rounded-xl overflow-hidden shadow">
-                  <Image
-                    src={imagePreview}
-                    alt="Preview"
-                    fill
-                    className="object-cover"
+                {errors.title && <p className="text-[#D4A574] text-sm mt-1">{errors.title}</p>}
+              </div>
+
+              <div>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">Description</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Enter service description"
+                  className="w-full rounded-xl p-4 border border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-[#D4A574]"
+                  rows={5}
+                />
+                {errors.description && <p className="text-[#D4A574] text-sm mt-1">{errors.description}</p>}
+              </div>
+
+              <div>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full rounded-xl p-4 border border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-[#D4A574] cursor-pointer"
+                >
+                  <option value="">Select Category</option>
+                  <option>Electrical</option>
+                  <option>Plumbing</option>
+                  <option>Carpentry</option>
+                  <option>Cleaning</option>
+                  <option>Painting</option>
+                  <option>Renovation</option>
+                </select>
+                {errors.category && <p className="text-[#D4A574] text-sm mt-1">{errors.category}</p>}
+              </div>
+
+              <div>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">Price</label>
+                <div className="flex gap-4">
+                  <select
+                    value={priceType}
+                    onChange={(e) => setPriceType(e.target.value)}
+                    className="rounded-xl p-4 border border-gray-200 bg-white text-gray-800 cursor-pointer"
+                  >
+                    <option>Hourly</option>
+                    <option>Fixed</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={price}
+                    onChange={handlePriceChange}
+                    placeholder="Enter price"
+                    className="flex-1 rounded-xl p-4 border border-gray-200 bg-white text-gray-800"
                   />
                 </div>
-              )}
+                {errors.price && <p className="text-[#D4A574] text-sm mt-1">{errors.price}</p>}
+              </div>
             </div>
-            {errors.image && (
-              <p className="text-[#D4A574] text-sm mt-1">{errors.image}</p>
-            )}
-          </div>
 
-          {/* Price */}
-          <div>
-            <label className="block mb-2 font-semibold text-[#1a1a1a]">
-              Price
-            </label>
-            <div className="flex gap-4">
-              <select
-                value={priceType}
-                onChange={(e) => setPriceType(e.target.value)}
-                className="rounded-xl p-4 border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#D4A574] transition cursor-pointer"
-              >
-                <option>Hourly</option>
-                <option>Fixed</option>
-              </select>
-              <input
-                type="text"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="flex-1 rounded-xl p-4 border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#D4A574] transition"
-                placeholder="Enter price"
-              />
+            {/* Right */}
+            <div className="space-y-6">
+              <div>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">Image</label>
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-[#D4A574]/40 rounded-xl p-6 hover:bg-[#FFF8F0] cursor-pointer">
+                  <input type="file" accept="image/*" className="hidden" id="upload" onChange={handleImageUpload} />
+                  <label htmlFor="upload" className="cursor-pointer flex flex-col items-center gap-2">
+                    <span className="text-[#D4A574] font-medium">{image ? image.name : "Click to upload image"}</span>
+                    <p className="text-gray-500 text-sm">Only JPG, JPEG, PNG allowed</p>
+                  </label>
+                  {imagePreview && (
+                    <div className="w-40 h-40 mt-4 relative rounded-xl overflow-hidden border border-gray-200 shadow-lg">
+                      <Image src={imagePreview} alt="Preview" fill className="object-cover" />
+                    </div>
+                  )}
+                </div>
+                {errors.image && <p className="text-[#D4A574] text-sm mt-1">{errors.image}</p>}
+              </div>
             </div>
-            {errors.price && (
-              <p className="text-[#D4A574] text-sm mt-1">{errors.price}</p>
-            )}
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+          <div className="flex justify-end gap-6 pt-10 mt-10 border-t border-[#D4A574]/30">
             <button
-              onClick={handleSaveDraft}
-              className="px-6 py-3 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition"
+              onClick={openModal}
+              className="px-6 py-3 rounded-xl bg-white text-[#5C4033] border border-gray-300 hover:bg-[#F5F5F0] font-medium"
             >
-              Save Draft
+              Browse Services
             </button>
+
             <button
-              onClick={handleSubmit}
-              className="px-6 py-3 rounded-lg bg-[#D4A574] text-white font-semibold hover:bg-[#B8A565] shadow-lg hover:shadow-xl transition"
+              onClick={() => submitToServer(false)}
+              disabled={loading}
+              className="px-8 py-3 rounded-xl bg-gradient-to-r from-[#D4A574] to-[#B8A565] text-white font-semibold hover:shadow-lg hover:scale-[1.02] disabled:opacity-70"
             >
               Publish Service
             </button>
           </div>
         </div>
       </main>
+
+ {/* Modal */}
+{showModal && (
+  <div className="fixed inset-0 bg-black/50 flex justify-center items-start z-50 py-12 overflow-auto">
+    <div className="bg-[#F5F5F0] rounded-2xl p-6 w-[90%] max-w-4xl shadow-xl relative border border-[#D4A574]/40">
+      <button
+        onClick={closeModal}
+        className="absolute top-4 right-4 text-[#1a1a1a] text-xl font-bold hover:text-[#D4A574]"
+      >
+        ✕
+      </button>
+      <h3 className="text-2xl font-bold text-[#5C4033] text-center mb-6">Published Services</h3>
+
+      {loadingServices ? (
+        <p className="text-center text-gray-500">Loading...</p>
+      ) : services.length === 0 ? (
+        <p className="text-center text-gray-500">No services found.</p>
+      ) : (
+        <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
+          {services.map((s) => (
+            <div
+              key={s._id}
+              className="bg-white/95 rounded-xl shadow-md p-4 border border-[#D4A574]/30 hover:shadow-lg transition flex gap-4"
+            >
+              {s.images && s.images.length > 0 && (
+  <div className="w-32 h-32 relative rounded-xl overflow-hidden flex-shrink-0 border border-[#D4A574]/40">
+    <Image
+      src={s.images[0] as string} // TypeScript needs this cast
+      alt={s.title || "Service Image"} // fallback if title is undefined
+      fill // allows image to fill parent div
+      style={{ objectFit: "cover" }} // ensures image covers the area
+      className="rounded-xl"
+      priority // optional, improves loading
+    />
+  </div>
+)}
+
+              <div className="flex-1 flex flex-col justify-between">
+                <div className="space-y-1">
+                  <p className="text-[#1a1a1a]"><strong>Name:</strong> {s.title}</p>
+                  <p className="text-gray-700"><strong>Description:</strong> {s.description}</p>
+                  <p className="text-gray-700"><strong>Category:</strong> {s.category}</p>
+                  <p className="text-[#D4A574] font-semibold"><strong>Price:</strong> {s.priceType} - ${s.price}</p>
+                </div>
+                <p className="text-green-600 font-bold mt-2"><strong>Status:</strong> Published ✅</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+)}
+
+      <style jsx global>{`
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.4s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
