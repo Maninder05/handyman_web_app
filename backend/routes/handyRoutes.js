@@ -13,33 +13,33 @@ import {
   getClientOrders,
   updateOrderStatus,
   deleteOrder,
-} from "../controllers/handyman/orderController.js";
+} from "../controllers/handyman/ordersController.js";
 
 const router = express.Router();
 
 /* ------------------------------------------------------------------
  🧱 SERVICE ROUTES  (For Handymen to manage their own services)
 -------------------------------------------------------------------*/
-router.post("/services", verifyToken, createService);   // ➕ Create a service
-router.get("/services", verifyToken, getMyServices);    // 📋 Get all services for handyman
+router.post("/services", createService);   // ➕ Create a service
+router.get("/services", getMyServices);    // 📋 Get all services for handyman
 
 /* ------------------------------------------------------------------
  🧾 ORDER ROUTES (For Clients & Handymen to manage job orders)
 -------------------------------------------------------------------*/
 
 // 🧍 Client creates new order for a handyman service
-router.post("/orders", verifyToken, createOrder);
+router.post("/orders", createOrder);
 
 // 🧑‍🔧 Handyman views all their assigned orders
-router.get("/orders/handyman", verifyToken, getHandymanOrders);
+router.get("/orders/handyman", getHandymanOrders);
 
 // 👤 Client views all orders they placed
-router.get("/orders/client", verifyToken, getClientOrders);
+router.get("/orders/client", getClientOrders);
 
 // 🔄 Handyman updates status (accepted, in-progress, completed, declined)
-router.put("/orders/:id/status", verifyToken, updateOrderStatus);
+router.put("/orders/:id/status", updateOrderStatus);
 
 // ❌ Delete/cancel order
-router.delete("/orders/:id", verifyToken, deleteOrder);
+router.delete("/orders/:id", deleteOrder);
 
 export default router;

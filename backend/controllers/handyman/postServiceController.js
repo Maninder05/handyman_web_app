@@ -1,5 +1,5 @@
-import PostService from "../models/handyman/PostService.js";
-import Order from "../models/handyman/Orders.js";
+import PostService from "../../models/handyman/PostService.js";
+import Order from "../../models/handyman/Orders.js";
 
 // ➕ Create new service
 export const createService = async (req, res) => {

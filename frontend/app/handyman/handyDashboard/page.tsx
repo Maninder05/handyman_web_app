@@ -340,7 +340,7 @@ export default function HandyDashboard() {
               <p className="text-gray-500 text-sm mt-1">Browse available jobs</p>
             </Link>
 
-            <Link href="/handyman/my-services" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="/handyman/handyPostService" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Wrench size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">My Services</h4>
               <p className="text-gray-500 text-sm mt-1">Manage your services</p>
