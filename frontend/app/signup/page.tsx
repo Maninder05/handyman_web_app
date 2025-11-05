@@ -14,7 +14,7 @@ export default function Signup() {
 
   // Signup state
   const [username, setUsername] = useState("");
-  const [userType, setUserType] = useState("customer");
+  const [userType, setUserType] = useState("client");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -34,7 +34,7 @@ export default function Signup() {
     if (!email.includes("@")) errs.email = "Invalid email format";
     if (password.length < 6)
       errs.password = "Password must be at least 6 characters";
-    if (!["customer", "handyman"].includes(userType))
+    if (!["client", "handyman"].includes(userType))
       errs.userType = "Select a valid user type";
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -57,10 +57,10 @@ export default function Signup() {
     if (token) {
       localStorage.setItem("token", token);
 
-      if (type === "customer") {
-        router.push("client/clientDashboard");
+      if (type === "client") {
+        router.push("../client/clientDashboard");
       } else {
-        router.push("handyman/handyDashboard");
+        router.push("../handyman/handyDashboard");
       }
     }
   }, [searchParams, router]);
@@ -85,7 +85,7 @@ export default function Signup() {
       setShowSignup(false);
 
       // Redirect based on userType
-      if (userType === "customer") {
+      if (userType === "client") {
         router.push("../client/clientDashboard");
       } else {
         router.push("../handyman//handyDashboard");
@@ -114,7 +114,7 @@ export default function Signup() {
 
       //  FIXED: Redirect based on userType from backend response
       // Redirect based on userType from backend response
-      if (res.data.userType === "customer") {
+      if (res.data.userType === "client") {
         router.push("../client/clientDashboard");
       } else {
         router.push("../handyman/handyDashboard");
@@ -198,20 +198,20 @@ export default function Signup() {
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setUserType("customer")}
+                  onClick={() => setUserType("client")}
                   className={`w-1/2 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm transition ${
-                    userType === "customer"
+                    userType === "client"
                       ? "bg-[#D4A574] text-black border-[#D4A574]"
                       : "bg-neutral-800 text-neutral-300 border-neutral-700 hover:border-[#D4A574]"
                   }`}
                 >
                   <Image
                     src="/images/dummy-client.jpg"
-                    alt="Customer"
+                    alt="Client"
                     width={30}
                     height={30}
                   />
-                  <span>Customer</span>
+                  <span>Client</span>
                 </button>
                 <button
                   type="button"

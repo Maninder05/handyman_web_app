@@ -55,7 +55,7 @@ export const signup = async (req, res) => {
       message: "Signup successful",
       user: sanitizeUser(newUser),
       token,
-      userType: newUser.userType, // ✅ ADDED: Send userType at top level
+      userType: newUser.userType, // ADDED: Send userType at top level
     });
   } catch (err) {
     res.status(500).json({ message: "Server error: " + err.message });
@@ -97,14 +97,14 @@ export const login = async (req, res) => {
       message: "Login successful",
       token,
       user: sanitizeUser(user),
-      userType: user.userType, // ✅ ADDED: Send userType at top level
+      userType: user.userType, // ADDED: Send userType at top level
     });
   } catch (err) {
     res.status(500).json({ message: "Server error: " + err.message });
   }
 };
 
-// (Optional) Logout helper — clears session token
+// Logout helper — clears session token
 export const logout = async (req, res) => {
   try {
     const userId = req.body.userId || req.user?.id;
