@@ -21,9 +21,10 @@ const PORT = process.env.PORT || 7000;
 
 // ⚙️ MIDDLEWARE
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: process.env.CLIENT_URL || "http://localhost:3000",
   credentials: true,
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -37,7 +38,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // 🧭 ROUTES
 app.use('/api/users', authRoutes);
 app.use('/api/client', clientRoutes);
-app.use('/api/handymen', handyRoutes); // ✅ NEW route for handyman workflow
+app.use("/api/handymen", handyRoutes);
+// ✅ NEW route for handyman workflow
 
 // 💾 CONNECT TO MONGODB
 mongoose.connect(process.env.MONGO_URL)

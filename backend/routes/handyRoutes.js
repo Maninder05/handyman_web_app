@@ -1,45 +1,56 @@
 import express from "express";
-import { verifyToken } from "../middleware/authService.js";
-
-// 🧰 Controllers
-import {
-  createService,
-  getMyServices,
-} from "../controllers/handyman/postServiceController.js";
-
-import {
-  createOrder,
-  getHandymanOrders,
-  getClientOrders,
-  updateOrderStatus,
-  deleteOrder,
-} from "../controllers/handyman/ordersController.js";
+import PostService from "../models/handyman/PostService.js";
+import multer from "multer";
+import path from "path";
 
 const router = express.Router();
 
-/* ------------------------------------------------------------------
- 🧱 SERVICE ROUTES  (For Handymen to manage their own services)
--------------------------------------------------------------------*/
-router.post("/services", createService);   // ➕ Create a service
-router.get("/services", getMyServices);    // 📋 Get all services for handyman
+// Image upload setup
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
+});
+const upload = multer({ storage });
 
-/* ------------------------------------------------------------------
- 🧾 ORDER ROUTES (For Clients & Handymen to manage job orders)
--------------------------------------------------------------------*/
+// 🔹 Create Service
+router.post("/services", upload.single("image"), async (req, res) => {
+  try {
+    const { title, description, category, price, isDraft } = req.body;
+    const handymanId = "64f0b8b0a2c6c123456789ab"; // replace with auth middleware
 
-// 🧍 Client creates new order for a handyman service
-router.post("/orders", createOrder);
+    if (!title || !description || !category || !price) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
-// 🧑‍🔧 Handyman views all their assigned orders
-router.get("/orders/handyman", getHandymanOrders);
+    const newService = new PostService({
+      handymanId,
+      title,
+      description,
+      category,
+      price,
+      images: req.file ? [`/uploads/${req.file.filename}`] : [],
+      isActive: !isDraft,
+    });
 
-// 👤 Client views all orders they placed
-router.get("/orders/client", getClientOrders);
+    await newService.save();
+    res.status(201).json({ message: isDraft ? "Draft saved" : "Service published" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error creating service" });
+  }
+});
 
-// 🔄 Handyman updates status (accepted, in-progress, completed, declined)
-router.put("/orders/:id/status", updateOrderStatus);
+// 🔹 Get all published services for the dashboard
+router.get("/services", async (req, res) => {
+  try {
+    const handymanId = "64f0b8b0a2c6c123456789ab"; // replace with auth middleware
+    const services = await PostService.find({ handymanId }).sort({ createdAt: -1 }); // remove isActive filter
+    res.status(200).json(services);
+  } catch (err) {
+    console.error("Error fetching services:", err);
+    res.status(500).json({ message: "Server error fetching services" });
+  }
+});
 
-// ❌ Delete/cancel order
-router.delete("/orders/:id", deleteOrder);
 
 export default router;
