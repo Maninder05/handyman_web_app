@@ -37,12 +37,12 @@ app.use('/api/client', clientRoutes);
 
 // Connect to MongoDB and start server
 mongoose.connect(process.env.MONGO_URL).then(() => {
-  console.log(' Connected to MongoDB successfully!');
+  console.log('Connected to MongoDB successfully!');
   server.listen(PORT, () => {
-    console.log(` Server is running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
   });
 }).catch((err) => {
-  console.error(' Database connection error:', err);
+  console.error('Database connection error:', err);
 });
 
 // Create HTTP server for Socket.io
