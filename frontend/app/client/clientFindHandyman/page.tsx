@@ -51,6 +51,7 @@ export default function BrowseServicesPage(): React.JSX.Element {
 
   const handleLogout = (): void => router.push("/");
 
+  // ✅ Services list
   const services: Service[] = [
     { name: "Wiring Repair", category: "Electrical", image: "/images/wiringrepair.jpg" },
     { name: "Pipe Leakage Fix", category: "Plumbing", image: "/images/pipefix.webp" },
@@ -60,6 +61,11 @@ export default function BrowseServicesPage(): React.JSX.Element {
     { name: "Deep Cleaning", category: "Cleaning", image: "/images/deepclean.webp" },
     { name: "Lawn Mowing", category: "Landscaping", image: "/images/lawnmowing.jpeg" },
     { name: "Flooring Installation", category: "Renovation", image: "/images/floorinstall.jpg" },
+    { name: "Door & Lock Repair", category: "Carpentry", image: "/images/fixdoorlock.jpg" },
+    { name: "Ceiling Fan Installation", category: "Electrical", image: "/images/ceilingfan.jpg" },
+    { name: "Roof Leak Repair", category: "Roofing", image: "/images/roofleakrepair.jpg" },
+    { name: "Drywall & Plaster Fix", category: "Renovation", image: "/images/drywallrepair.jpg" },
+    { name: "Furniture Assembly", category: "General Repairs", image: "/images/furnitureassemble.jpg" },
   ];
 
   const handymen: Handyman[] = [
