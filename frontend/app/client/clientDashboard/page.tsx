@@ -250,14 +250,14 @@ export default function ClientDashboard() {
 
           <div className="flex items-center gap-4 relative">
             {/* Notifications Bell */}
-            <button className="relative p-2 rounded-full hover:bg-[#2a2a2a] transition">
+            <Link href="/mutual/notifications" className="relative p-2 rounded-full hover:bg-[#2a2a2a] transition">
               <Bell size={22} className="text-white" />
               {profile && profile.notificationsCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
                   {profile.notificationsCount > 9 ? '9+' : profile.notificationsCount}
                 </span>
               )}
-            </button>
+            </Link>
 
             {/* Profile Button */}
             <button
@@ -291,7 +291,7 @@ export default function ClientDashboard() {
                   </li>
                   <li>
                     <Link
-                      href="/settings"
+                      href="/mutual/settings"
                       className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
                       onClick={() => setShowProfileMenu(false)}
                     >
@@ -320,41 +320,41 @@ export default function ClientDashboard() {
 
             {showMenu && (
               <div className="absolute right-0 top-14 bg-white border border-gray-200 rounded-xl shadow-xl w-72 text-sm z-50 overflow-hidden">
-                <ul className="divide-y divide-gray-100">
-                  <li>
+                <ul>
+                  <li className="border-b border-gray-100">
                     <Link
-                      href="/client/post-job"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      href="/client/clientPostJob"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium block"
                       onClick={() => setShowMenu(false)}
                     >
                       <Briefcase size={20} className="text-[#D4A574]" />
                       Post a Job
                     </Link>
                   </li>
-                  <li>
+                  <li className="border-b border-gray-100">
                     <Link
-                      href="/client/find-handyman"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      href="/client/clientFindHandyman"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium block"
                       onClick={() => setShowMenu(false)}
                     >
                       <Users size={20} className="text-[#D4A574]" />
                       Find Handyman
                     </Link>
                   </li>
-                  <li>
+                  <li className="border-b border-gray-100">
                     <Link
-                      href="/client/bookings"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      href="/client/clientBookings"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium block"
                       onClick={() => setShowMenu(false)}
                     >
                       <Calendar size={20} className="text-[#D4A574]" />
                       Recent Bookings
                     </Link>
                   </li>
-                  <li>
+                  <li className="border-b border-gray-100">
                     <Link
-                      href="/client/help"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      href="/mutual/support"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium block"
                       onClick={() => setShowMenu(false)}
                     >
                       <HelpCircle size={20} className="text-[#D4A574]" />
@@ -363,8 +363,8 @@ export default function ClientDashboard() {
                   </li>
                   <li>
                     <Link
-                      href="/settings"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      href="/mutual/settings"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium block"
                       onClick={() => setShowMenu(false)}
                     >
                       <Settings size={20} className="text-[#D4A574]" />
@@ -476,25 +476,25 @@ export default function ClientDashboard() {
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <h3 className="text-xl font-bold text-[#1a1a1a] mb-6">Quick Actions</h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/client/post-job" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="/client/clientPostJob" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Briefcase size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Post a Job</h4>
               <p className="text-gray-500 text-sm mt-1">Hire handymen</p>
             </Link>
 
-            <Link href="/client/find-handyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="/client/clientFindHandyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Users size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Find Handyman</h4>
               <p className="text-gray-500 text-sm mt-1">Browse profiles</p>
             </Link>
 
-            <Link href="/client/bookings" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="/client/clientBookings" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Calendar size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Bookings</h4>
               <p className="text-gray-500 text-sm mt-1">Track orders</p>
             </Link>
 
-            <Link href="/client/help" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="/mutual/support" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <HelpCircle size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Help</h4>
               <p className="text-gray-500 text-sm mt-1">Get support</p>
@@ -502,11 +502,10 @@ export default function ClientDashboard() {
           </div>
         </section>
 
-        {/* RECENT BOOKINGS WITH STATUS */}
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-[#1a1a1a]">Recent Bookings</h3>
-            <Link href="/client/bookings" className="text-[#D4A574] hover:text-[#B8A565] font-medium text-sm">
+            <Link href="/client/clientBookings" className="text-[#D4A574] hover:text-[#B8A565] font-medium text-sm">
               View All
             </Link>
           </div>
@@ -519,7 +518,7 @@ export default function ClientDashboard() {
               <p className="text-gray-400 text-lg mb-2">No bookings yet</p>
               <p className="text-gray-500 text-sm mb-4">Post your first job to get started</p>
               <Link 
-                href="/client/post-job"
+                href="/client/clientPostJob"
                 className="inline-block px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold shadow-lg hover:shadow-xl"
               >
                 Post a Job
