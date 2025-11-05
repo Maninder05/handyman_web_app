@@ -81,7 +81,7 @@ export default function clientHeader({ pageTitle, profile, onLogout }: HeaderPro
                 <ul className="divide-y divide-gray-100">
                   <li>
                     <Link
-                      href="/client/post-job"
+                      href="../client/clientPostJob"
                       className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
                       onClick={() => setShowMenu(false)}
                     >
@@ -91,7 +91,7 @@ export default function clientHeader({ pageTitle, profile, onLogout }: HeaderPro
                   </li>
                   <li>
                     <Link
-                      href="/client/find-handyman"
+                      href="../client/clientFindHandyman"
                       className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
                       onClick={() => setShowMenu(false)}
                     >
@@ -101,7 +101,7 @@ export default function clientHeader({ pageTitle, profile, onLogout }: HeaderPro
                   </li>
                   <li>
                     <Link
-                      href="/client/bookings"
+                      href="../client/clientBookings"
                       className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
                       onClick={() => setShowMenu(false)}
                     >
@@ -111,7 +111,7 @@ export default function clientHeader({ pageTitle, profile, onLogout }: HeaderPro
                   </li>
                   <li>
                     <Link
-                      href="/client/help"
+                      href="../mutual/support"
                       className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
                       onClick={() => setShowMenu(false)}
                     >
@@ -121,7 +121,7 @@ export default function clientHeader({ pageTitle, profile, onLogout }: HeaderPro
                   </li>
                   <li>
                     <Link
-                      href="/settings"
+                      href="../mutual/settings"
                       className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
                       onClick={() => setShowMenu(false)}
                     >

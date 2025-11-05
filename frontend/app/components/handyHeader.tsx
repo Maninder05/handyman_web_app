@@ -80,27 +80,27 @@ export default function handyHeader({ pageTitle, profile, onLogout }: HeaderProp
             <div className="absolute right-0 top-14 bg-white border border-gray-200 rounded-xl shadow-xl w-72 text-sm z-50 overflow-hidden">
               <ul className="divide-y divide-gray-100">
                 <li>
-                  <Link href="/handyman/my-services" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                  <Link href="../handyman/handyPostService" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
                     <Wrench size={20} className="text-[#D4A574]" /> My Services
                   </Link>
                 </li>
                 <li>
-                  <Link href="/handyman/find-jobs" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                  <Link href="../handyman/handyFindJob" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
                     <Briefcase size={20} className="text-[#D4A574]" /> Find Jobs
                   </Link>
                 </li>
                 <li>
-                  <Link href="/handyman/membership" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                  <Link href="../mutual/membership" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
                     <Crown size={20} className="text-[#D4A574]" /> Membership Plan
                   </Link>
                 </li>
                 <li>
-                  <Link href="/handyman/help" className="flex items-center  text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                  <Link href="../mutual/support" className="flex items-center  text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
                     <HelpCircle size={20} className="text-[#D4A574]" /> Help & Support
                   </Link>
                 </li>
                 <li>
-                  <Link href="/settings" className="flex items-center  text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                  <Link href="../mutual/settings" className="flex items-center  text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
                     <Settings size={20} className="text-[#D4A574]" /> Settings
                   </Link>
                 </li>

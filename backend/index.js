@@ -12,6 +12,7 @@ import './config/passport.js';
 import authRoutes from './routes/authRoutes.js';
 import clientRoutes from "./routes/clientRoutes.js";
 import handyRoutes from "./routes/handyRoutes.js";
+// import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -22,6 +23,15 @@ app.use(cors({
   origin: process.env.CLIENT_URL || "http://localhost:3000",
   credentials: true,
 }));
+
+// Webhook Middleware Handling: Skip express.json() for the webhook route
+// app.use((req, res, next) => {
+//   if (req.originalUrl === "/api/subscriptions/webhook") {
+//     next();
+//   } else {
+//     express.json()(req, res, next);
+//   }
+// });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -37,7 +47,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use('/api/users', authRoutes);
 app.use('/api/client', clientRoutes);
 app.use("/api/handyman", handyRoutes);
-// ✅ NEW route for handyman workflow
+// app.use("/api/subscriptions", subscriptionRoutes);
+
 
 // Connect to MongoDB and start server
 mongoose.connect(process.env.MONGO_URL).then(() => {
@@ -79,4 +90,5 @@ io.on("connection", (socket) => {
     console.log("User disconnected:", socket.id);
   });
 });
+
 
