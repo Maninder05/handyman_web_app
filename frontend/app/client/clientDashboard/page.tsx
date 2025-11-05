@@ -333,7 +333,7 @@ export default function ClientDashboard() {
                   </li>
                   <li>
                     <Link
-                      href="/client/find-handyman"
+                      href="/client/clientFindHandyman"
                       className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
                       onClick={() => setShowMenu(false)}
                     >
@@ -482,7 +482,7 @@ export default function ClientDashboard() {
               <p className="text-gray-500 text-sm mt-1">Hire handymen</p>
             </Link>
 
-            <Link href="/client/find-handyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="/client/clientFindHandyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Users size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Find Handyman</h4>
               <p className="text-gray-500 text-sm mt-1">Browse profiles</p>

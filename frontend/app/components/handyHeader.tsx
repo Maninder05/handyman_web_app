@@ -89,7 +89,7 @@ export default function Header({ pageTitle, profile, onLogout }: HeaderProps) {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/handyman/my-services" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                  <Link href="/handyman/handyPostService" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
                     <Wrench size={20} className="text-[#D4A574]" /> My Services
                   </Link>
                 </li>

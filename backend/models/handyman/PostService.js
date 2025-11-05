@@ -1,16 +1,13 @@
-// backend/models/CreateService.js
 import mongoose from "mongoose";
 
-const serviceSchema = new mongoose.Schema(
-  {
-    title: { type: String, required: true },
-    category: { type: String, required: true },
-    priceType: { type: String, enum: ["Hourly", "Fixed"], required: true },
-    price: { type: Number, required: true },
-    image: { type: String }, // store path like /uploads/filename.jpg
-    isDraft: { type: Boolean, default: false }, // new field
-  },
-  { timestamps: true }
-);
+const postServiceSchema = new mongoose.Schema({
+  handymanId: { type: mongoose.Schema.Types.ObjectId, ref: "Handyman", required: true },
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  price: { type: Number, required: true },
+  category: { type: String, default: "General" },
+  images: [{ type: String }],
+  isActive: { type: Boolean, default: true },
+}, { timestamps: true });
 
-export default mongoose.model("Service", serviceSchema);
+export default mongoose.model("PostService", postServiceSchema);

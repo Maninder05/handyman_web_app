@@ -31,7 +31,7 @@ const HandymanSchema = new mongoose.Schema(
 
     userType: {
       type: String,
-      enum: ['handyman', 'customer', 'admin'],
+      enum: ['handyman', 'client', 'admin'],
       default: 'handyman',
       required: true
     },
