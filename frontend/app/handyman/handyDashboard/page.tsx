@@ -202,11 +202,9 @@ export default function HandyDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] text-gray-900 flex flex-col">
+    <div className="min-h-screen bg-[#F5F5F0] flex flex-col text-gray-900">
       {/* HEADER */}
-       <div>
-        <Header pageTitle="Handyman Dashboard" onLogout={handleLogout} />
-      </div>
+      <Header pageTitle="Handyman Dashboard"  onLogout={handleLogout} />
       <main className="flex-1 overflow-y-auto pb-10">
         {/* PROFILE CARD WITH INLINE BADGES */}
         <section className="bg-gradient-to-br from-[#D4A574] to-[#B8A565] py-8">

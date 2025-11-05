@@ -1,11 +1,11 @@
 "use client";
-
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Menu, X, Briefcase, Users, Calendar, HelpCircle, Settings, AlertCircle,Bell,Upload,Camera } from "lucide-react";
 import { FiUser, FiDollarSign, FiShoppingBag } from "react-icons/fi";
+import Header from "../../components/clientHeader";
 
 type Booking = {
   _id: string;
@@ -242,142 +242,7 @@ export default function ClientDashboard() {
   return (
     <div className="min-h-screen bg-[#F5F5F0] flex flex-col text-gray-900">
       {/* HEADER */}
-      <header className="bg-[#1a1a1a] shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-          <h1 className="text-2xl font-bold text-white tracking-wide">
-            Client Dashboard
-          </h1>
-
-          <div className="flex items-center gap-4 relative">
-            {/* Notifications Bell */}
-            <button className="relative p-2 rounded-full hover:bg-[#2a2a2a] transition">
-              <Bell size={22} className="text-white" />
-              {profile && profile.notificationsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                  {profile.notificationsCount > 9 ? '9+' : profile.notificationsCount}
-                </span>
-              )}
-            </button>
-
-            {/* Profile Button */}
-            <button
-              onClick={toggleProfile}
-              className="p-2 rounded-full hover:bg-[#2a2a2a] transition"
-            >
-              {profile?.profileImage ? (
-                <Image 
-                  src={profile.profileImage} 
-                  alt="Profile" 
-                  width={32} 
-                  height={32} 
-                  className="rounded-full object-cover" 
-                />
-              ) : (
-                <FiUser size={24} className="text-white" />
-              )}
-            </button>
-
-            {showProfileMenu && (
-              <div className="absolute right-14 top-14 bg-white border border-gray-200 rounded-lg shadow-xl w-52 z-50">
-                <ul className="text-sm text-gray-800">
-                  <li>
-                    <Link
-                      href="/clientAccount"
-                      className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
-                      onClick={() => setShowProfileMenu(false)}
-                    >
-                      My Account
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/settings"
-                      className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
-                      onClick={() => setShowProfileMenu(false)}
-                    >
-                      Settings
-                    </Link>
-                  </li>
-                  <li>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-5 py-3 text-[#C41E3A] hover:bg-red-50 transition font-medium"
-                    >
-                      Logout
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            )}
-
-            {/* Menu Button */}
-            <button
-              onClick={toggleMenu}
-              className="p-2 rounded-md bg-[#D4A574] text-white hover:bg-[#B8A565] transition"
-            >
-              {showMenu ? <X size={26} /> : <Menu size={26} />}
-            </button>
-
-            {showMenu && (
-              <div className="absolute right-0 top-14 bg-white border border-gray-200 rounded-xl shadow-xl w-72 text-sm z-50 overflow-hidden">
-                <ul className="divide-y divide-gray-100">
-                  <li>
-                    <Link
-                      href="/client/post-job"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
-                      onClick={() => setShowMenu(false)}
-                    >
-                      <Briefcase size={20} className="text-[#D4A574]" />
-                      Post a Job
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/client/find-handyman"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
-                      onClick={() => setShowMenu(false)}
-                    >
-                      <Users size={20} className="text-[#D4A574]" />
-                      Find Handyman
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/client/bookings"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
-                      onClick={() => setShowMenu(false)}
-                    >
-                      <Calendar size={20} className="text-[#D4A574]" />
-                      Recent Bookings
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/client/help"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
-                      onClick={() => setShowMenu(false)}
-                    >
-                      <HelpCircle size={20} className="text-[#D4A574]" />
-                      Help & Support
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="/settings"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
-                      onClick={() => setShowMenu(false)}
-                    >
-                      <Settings size={20} className="text-[#D4A574]" />
-                      Settings
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
+      <Header pageTitle="Client Dashboard"  onLogout={handleLogout} />
       {/* PROFILE SECTION */}
       <main className="flex-1 overflow-y-auto pb-10">
         <section className="bg-gradient-to-br from-[#D4A574] to-[#B8A565] py-8">

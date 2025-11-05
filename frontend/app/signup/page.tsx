@@ -80,6 +80,7 @@ export default function Signup() {
       alert(res.data.message || "Signup successful");
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
+  
       }
 
       setShowSignup(false);
@@ -129,6 +130,7 @@ export default function Signup() {
     window.location.href = `${API_BASE}/api/users/auth/google`;
   };
   const oauthFacebook = () => {
+    // localStorage.setItem("userType", userType);
     window.location.href = `${API_BASE}/api/users/auth/facebook`;
   };
 
