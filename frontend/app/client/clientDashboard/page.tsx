@@ -333,7 +333,7 @@ export default function ClientDashboard() {
                   </li>
                   <li>
                     <Link
-                      href="/client/find-handyman"
+                      href="/client/clientFindHandyman"
                       className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
                       onClick={() => setShowMenu(false)}
                     >
