@@ -1,5 +1,19 @@
 import HandyProfile from "../../models/handyman/HandyDashboard.js";
 import User from "../../models/auth/User.js";
+import Orders from "../../models/handyman/Orders.js";
+import PostService from "../../models/handyman/PostService.js";
+import FindJob from "../../models/handyman/FindJob.js";
+import Reviews from "../../models/mutual/Reviews.js";
+import Messages from "../../models/mutual/Messages.js";
+import Notifications from "../../models/mutual/Notifications.js";
+import Payment from "../../models/mutual/Payment.js";
+import Bookings from "../../models/client/Bookings.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // GET LOGGED-IN HANDYMAN'S PROFILE
 export const getMyProfile = async (req, res) => {
@@ -125,6 +139,18 @@ export const uploadProfilePic = async (req, res) => {
 
     const profilePicUrl = `/uploads/profiles/${req.file.filename}`;
 
+    // Get old profile pic to delete it
+    const oldProfile = await HandyProfile.findOne({ userId: id });
+    
+    // Delete old profile picture if exists
+    if (oldProfile?.profilePic) {
+      const oldPath = path.join(__dirname, "../../", oldProfile.profilePic);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+        console.log(`Deleted old profile picture: ${oldPath}`);
+      }
+    }
+
     const profile = await HandyProfile.findOneAndUpdate(
       { userId: id },
       {
@@ -192,15 +218,29 @@ export const deleteCertification = async (req, res) => {
     const { id } = req.user;
     const { certificationId } = req.params;
     
-    const profile = await HandyProfile.findOneAndUpdate(
+    // Get the certification to delete the file
+    const profile = await HandyProfile.findOne({ userId: id });
+    
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    const certification = profile.certifications.id(certificationId);
+    
+    if (certification?.fileUrl) {
+      const filePath = path.join(__dirname, "../../", certification.fileUrl);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log(`Deleted certification file: ${filePath}`);
+      }
+    }
+
+    // Remove from database
+    const updatedProfile = await HandyProfile.findOneAndUpdate(
       { userId: id },
       { $pull: { certifications: { _id: certificationId } } },
       { new: true }
     );
-
-    if (!profile) {
-      return res.status(404).json({ message: "Profile not found" });
-    }
 
     res.status(200).json({
       message: "Certification deleted successfully"
@@ -211,24 +251,125 @@ export const deleteCertification = async (req, res) => {
   }
 };
 
-// DELETE ACCOUNT
+// DELETE ACCOUNT - PERMANENTLY DELETES EVERYTHING
 export const deleteAccount = async (req, res) => {
   try {
     const { id } = req.user;
     
-    const profile = await HandyProfile.findOneAndDelete({ userId: id });
-    
-    if (!profile) {
-      return res.status(404).json({ message: "Profile not found" });
+    console.log(`🗑️ Starting account deletion for handyman ID: ${id}`);
+
+    // 1. Get handyman profile
+    const handymanProfile = await HandyProfile.findOne({ userId: id });
+
+    if (!handymanProfile) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Handyman profile not found" 
+      });
     }
 
-    // Delete user account too
-    await User.findByIdAndDelete(id);
+    const handymanProfileId = handymanProfile._id;
 
-    res.status(200).json({ message: "Account deleted successfully" });
+    // 2. Delete profile image from filesystem
+    if (handymanProfile.profilePic || handymanProfile.profileImage) {
+      const imagePath = path.join(
+        __dirname, 
+        "../../", 
+        handymanProfile.profilePic || handymanProfile.profileImage
+      );
+      
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+        console.log(` Deleted profile image: ${imagePath}`);
+      }
+    }
+
+    // 3. Delete certification files from filesystem
+    if (handymanProfile.certifications && handymanProfile.certifications.length > 0) {
+      for (const cert of handymanProfile.certifications) {
+        if (cert.fileUrl) {
+          const certPath = path.join(__dirname, "../../", cert.fileUrl);
+          if (fs.existsSync(certPath)) {
+            fs.unlinkSync(certPath);
+            console.log(` Deleted certification: ${certPath}`);
+          }
+        }
+      }
+    }
+
+    // 4. Delete all related data from MongoDB collections
+    const deletePromises = [
+      // Delete handyman profile
+      HandyProfile.deleteOne({ userId: id }),
+      
+      // Delete all orders/bookings for this handyman
+      Orders.deleteMany({ handymanId: handymanProfileId }),
+      
+      // Delete all services posted by this handyman
+      PostService.deleteMany({ handymanId: handymanProfileId }),
+      
+      // Delete all job applications by this handyman
+      FindJob.deleteMany({ handymanId: handymanProfileId }),
+      
+      // Delete bookings where handyman is involved
+      Bookings.deleteMany({ handymanId: handymanProfileId }),
+      
+      // Delete all reviews received by this handyman
+      Reviews.deleteMany({ handymanId: handymanProfileId }),
+      
+      // Delete all messages sent/received by this handyman
+      Messages.deleteMany({ 
+        $or: [
+          { senderId: id }, 
+          { receiverId: id }
+        ] 
+      }),
+      
+      // Delete all notifications for this handyman
+      Notifications.deleteMany({ userId: id }),
+      
+      // Delete all payment records
+      Payment.deleteMany({ handymanId: handymanProfileId })
+    ];
+
+    await Promise.all(deletePromises);
+    console.log(` Deleted all related handyman data from database`);
+
+    // 5. Delete user account
+    const userResult = await User.findByIdAndDelete(id);
+
+    if (!userResult) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    console.log(` Deleted user account: ${id}`);
+
+    // 6. Destroy session
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Session destruction error:", err);
+        }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Account and all associated data permanently deleted"
+    });
+
+    console.log(` HANDYMAN ACCOUNT ${id} FULLY DELETED - ALL DATA REMOVED`);
+
   } catch (err) {
-    console.error("Error deleting account:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error(" Error deleting handyman account:", err);
+    res.status(500).json({ 
+      success: false,
+      message: "Server error during account deletion", 
+      error: err.message 
+    });
   }
 };
 
