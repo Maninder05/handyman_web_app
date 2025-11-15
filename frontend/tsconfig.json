@@ -16,7 +16,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {
@@ -35,7 +35,7 @@
     "**/*.tsx",
     "app/**/*.tsx",
     ".next/types/**/*.ts",
-    "app/handyman/handyPostService",
+    "app/handyman/handyPostServices",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [

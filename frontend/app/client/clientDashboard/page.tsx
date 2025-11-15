@@ -341,25 +341,25 @@ export default function ClientDashboard() {
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <h3 className="text-xl font-bold text-[#1a1a1a] mb-6">Quick Actions</h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/client/post-job" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="/client/clientPostob" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Briefcase size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Post a Job</h4>
               <p className="text-gray-500 text-sm mt-1">Hire handymen</p>
             </Link>
 
-            <Link href="/client/find-handyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="/client/clientFindHandyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Users size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Find Handyman</h4>
               <p className="text-gray-500 text-sm mt-1">Browse profiles</p>
             </Link>
 
-            <Link href="/client/bookings" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="/client/clientBookings" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Calendar size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Bookings</h4>
               <p className="text-gray-500 text-sm mt-1">Track orders</p>
             </Link>
 
-            <Link href="/client/help" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="../mutual/support" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <HelpCircle size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Help</h4>
               <p className="text-gray-500 text-sm mt-1">Get support</p>
@@ -371,7 +371,7 @@ export default function ClientDashboard() {
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-[#1a1a1a]">Recent Bookings</h3>
-            <Link href="/client/bookings" className="text-[#D4A574] hover:text-[#B8A565] font-medium text-sm">
+            <Link href="/client/clientBookings" className="text-[#D4A574] hover:text-[#B8A565] font-medium text-sm">
               View All
             </Link>
           </div>
@@ -384,7 +384,7 @@ export default function ClientDashboard() {
               <p className="text-gray-400 text-lg mb-2">No bookings yet</p>
               <p className="text-gray-500 text-sm mb-4">Post your first job to get started</p>
               <Link 
-                href="/client/post-job"
+                href="/client/clientPostJob"
                 className="inline-block px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold shadow-lg hover:shadow-xl"
               >
                 Post a Job

@@ -80,12 +80,12 @@ export default function handyHeader({ pageTitle, profile, onLogout }: HeaderProp
             <div className="absolute right-0 top-14 bg-white border border-gray-200 rounded-xl shadow-xl w-72 text-sm z-50 overflow-hidden">
               <ul className="divide-y divide-gray-100">
                 <li>
-                  <Link href="../handyman/handyPostService" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                  <Link href="../handyman/handyPostServices" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
                     <Wrench size={20} className="text-[#D4A574]" /> My Services
                   </Link>
                 </li>
                 <li>
-                  <Link href="../handyman/handyFindJob" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                  <Link href="../handyman/handyFindJobs" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
                     <Briefcase size={20} className="text-[#D4A574]" /> Find Jobs
                   </Link>
                 </li>
