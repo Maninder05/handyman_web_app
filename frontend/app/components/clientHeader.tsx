@@ -15,7 +15,7 @@ interface HeaderProps {
   onLogout: () => void;
 }
 
-export default function handyHeader({ pageTitle, profile, onLogout }: HeaderProps) {
+export default function clientHeader({ pageTitle, profile, onLogout }: HeaderProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
@@ -58,7 +58,7 @@ export default function handyHeader({ pageTitle, profile, onLogout }: HeaderProp
             <div className="absolute right-14 top-14 bg-white border border-gray-200 rounded-lg shadow-xl w-52 z-50">
               <ul className="text-sm text-gray-800">
                 <li>
-                  <Link href="../handyman/handyProfile"
+                  <Link href="../client/clientProfile"
                    className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
                     My Account
                   </Link>
@@ -76,37 +76,62 @@ export default function handyHeader({ pageTitle, profile, onLogout }: HeaderProp
             {showMenu ? <X size={26} /> : <Menu size={26} />}
           </button>
 
-          {showMenu && (
-            <div className="absolute right-0 top-14 bg-white border border-gray-200 rounded-xl shadow-xl w-72 text-sm z-50 overflow-hidden">
-              <ul className="divide-y divide-gray-100">
-                <li>
-                  <Link href="../handyman/handyPostServices" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
-                    <Wrench size={20} className="text-[#D4A574]" /> My Services
-                  </Link>
-                </li>
-                <li>
-                  <Link href="../handyman/handyFindJobs" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
-                    <Briefcase size={20} className="text-[#D4A574]" /> Find Jobs
-                  </Link>
-                </li>
-                <li>
-                  <Link href="../mutual/membership" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
-                    <Crown size={20} className="text-[#D4A574]" /> Membership Plan
-                  </Link>
-                </li>
-                <li>
-                  <Link href="../mutual/support" className="flex items-center  text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
-                    <HelpCircle size={20} className="text-[#D4A574]" /> Help & Support
-                  </Link>
-                </li>
-                <li>
-                  <Link href="../mutual/settings" className="flex items-center  text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
-                    <Settings size={20} className="text-[#D4A574]" /> Settings
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          )}
+          {showMenu &&  (
+              <div className="absolute right-0 top-14 bg-white border border-gray-200 rounded-xl shadow-xl w-72 text-sm z-50 overflow-hidden">
+                <ul className="divide-y divide-gray-100">
+                  <li>
+                    <Link
+                      href="../client/clientPostJob"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <Briefcase size={20} className="text-[#D4A574]" />
+                      Post Jobs
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="../client/clientFindHandyman"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <Users size={20} className="text-[#D4A574]" />
+                      Find Handyman
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="../client/clientBookings"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <Calendar size={20} className="text-[#D4A574]" />
+                      Recent Bookings
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="../mutual/support"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <HelpCircle size={20} className="text-[#D4A574]" />
+                      Help & Support
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="../mutual/settings"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <Settings size={20} className="text-[#D4A574]" />
+                      Settings
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+           )}
         </div>
       </div>
     </header>
