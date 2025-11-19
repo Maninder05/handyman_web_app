@@ -15,7 +15,6 @@ export default function HelpCentrePage() {
       <div>
         <Header pageTitle="Help Center" onLogout={handleLogout} />
       </div>
-
       <main className="mx-auto max-w-[1100px] px-6">
         {/* HERO */}
         <section className="py-20 md:py-28">

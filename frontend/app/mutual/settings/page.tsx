@@ -49,7 +49,6 @@ export default function SettingsPage() {
     bio: '',
     profileImage: ''
   });
-
   const [passwordData, setPasswordData] = useState<PasswordData>({
     currentPassword: '',
     newPassword: '',
