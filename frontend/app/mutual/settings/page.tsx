@@ -453,7 +453,7 @@ export default function SettingsPage() {
           onClick={() => router.push("/handyman/handyDashboard")}
           className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
         >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B8A565] text-white flex items-center justify-center font-semibold">
+          <div className="w-9 h-9 rounded-full bg-linear-to-br from-[#D4A574] to-[#B8A565] text-white flex items-center justify-center font-semibold">
             H
           </div>
         </button>
