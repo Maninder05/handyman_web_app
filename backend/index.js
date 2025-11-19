@@ -36,7 +36,6 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Routes
 app.use("/api/client", clientRoutes);
 app.use('/api/users', authRoutes);
-//app.use('/api/client', clientRoutes);
 app.use("/api/handyman", handyRoutes);
 // ✅ NEW route for handyman workflow
 
