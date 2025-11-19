@@ -239,9 +239,7 @@ export default function CreateService() {
                   <option>General Repairs</option>
                 </select>
                 {errors.category && (
-                  <p className="text-[#D4A574] text-sm mt-1">
-                    {errors.category}
-                  </p>
+                  <p className="text-[#D4A574] text-sm mt-1">{errors.category}</p>
                 )}
               </div>
 
@@ -301,24 +299,16 @@ export default function CreateService() {
                     </p>
                   </label>
 
+                  {/* ✅ Updated Preview */}
                   {imagePreview && (
                     <div className="w-40 h-40 mt-4 relative rounded-xl overflow-hidden border border-gray-200 shadow-lg">
-                      {services.map((s) => (
-                        <div key={s._id}>
-                          {s.images?.length ? (
-                            <Image
-                              src={`${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}`}
-                              width={200}
-                              height={200}
-                              alt={s.title}
-                            />
-                          ) : (
-                            <div className="w-32 h-32 bg-gray-200 rounded-md" />
-                          )}
-
-                          <h3>{s.title}</h3>
-                        </div>
-                      ))}
+                      <Image
+                        src={imagePreview}
+                        alt="Preview"
+                        width={200}
+                        height={200}
+                        className="object-cover"
+                      />
                     </div>
                   )}
                 </div>
@@ -350,6 +340,7 @@ export default function CreateService() {
         </div>
       </main>
 
+      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-start z-50 py-12 overflow-auto">
           <div className="bg-white rounded-2xl p-8 w-[90%] max-w-4xl shadow-xl relative border border-gray-200">
@@ -378,10 +369,15 @@ export default function CreateService() {
                     {s.images && s.images.length > 0 ? (
                       <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100 border">
                         <Image
-                          src={`${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}`}
+                          src={
+                            s.images[0].startsWith("http")
+                              ? s.images[0]
+                              : `${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}`
+                          }
                           width={200}
                           height={200}
                           alt="service"
+                          className="object-cover"
                         />
                       </div>
                     ) : (
