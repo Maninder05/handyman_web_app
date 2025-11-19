@@ -16,6 +16,8 @@ import './config/passport.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
+import clientRoutes from "./routes/clientRoutes.js";
+import handymanRoutes from "./routes/handyRoutes.js";  
 import handyRoutes from './routes/handyRoutes.js';
 import clientRoutes from './routes/clientRoutes.js';
 
@@ -59,6 +61,7 @@ app.use("/uploads", express.static(uploadsPath));
 // API Routes
 app.use('/api/users', authRoutes);
 app.use('/api/client', clientRoutes);
+app.use('/api/handyman', handymanRoutes);  
 app.use('/api/handyman', handyRoutes);
 
 // Connect to MongoDB
@@ -86,4 +89,14 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
+});
+
+// Connect to MongoDB and start server
+mongoose.connect(process.env.MONGO_URL).then(() => {
+  console.log(' Connected to MongoDB successfully!');
+  server.listen(PORT, () => {
+    console.log(` Server is running on port ${PORT}`);
+  });
+}).catch((err) => {
+  console.error(' Database connection error:', err);
 });

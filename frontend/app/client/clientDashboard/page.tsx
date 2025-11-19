@@ -242,6 +242,142 @@ export default function ClientDashboard() {
   return (
     <div className="min-h-screen bg-[#F5F5F0] flex flex-col text-gray-900">
       {/* HEADER */}
+      <header className="bg-[#1a1a1a] shadow-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+          <h1 className="text-2xl font-bold text-white tracking-wide">
+            Client Dashboard
+          </h1>
+
+          <div className="flex items-center gap-4 relative">
+            {/* Notifications Bell */}
+            <Link href="/mutual/notifications" className="relative p-2 rounded-full hover:bg-[#2a2a2a] transition">
+              <Bell size={22} className="text-white" />
+              {profile && profile.notificationsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                  {profile.notificationsCount > 9 ? '9+' : profile.notificationsCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Profile Button */}
+            <button
+              onClick={toggleProfile}
+              className="p-2 rounded-full hover:bg-[#2a2a2a] transition"
+            >
+              {profile?.profileImage ? (
+                <Image 
+                  src={profile.profileImage} 
+                  alt="Profile" 
+                  width={32} 
+                  height={32} 
+                  className="rounded-full object-cover" 
+                />
+              ) : (
+                <FiUser size={24} className="text-white" />
+              )}
+            </button>
+
+            {showProfileMenu && (
+              <div className="absolute right-14 top-14 bg-white border border-gray-200 rounded-lg shadow-xl w-52 z-50">
+                <ul className="text-sm text-gray-800">
+                  <li>
+                    <Link
+                      href="/clientAccount"
+                      className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowProfileMenu(false)}
+                    >
+                      My Account
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/mutual/settings"
+                      className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                      onClick={() => setShowProfileMenu(false)}
+                    >
+                      Settings
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-5 py-3 text-[#C41E3A] hover:bg-red-50 transition font-medium"
+                    >
+                      Logout
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            )}
+
+            {/* Menu Button */}
+            <button
+              onClick={toggleMenu}
+              className="p-2 rounded-md bg-[#D4A574] text-white hover:bg-[#B8A565] transition"
+            >
+              {showMenu ? <X size={26} /> : <Menu size={26} />}
+            </button>
+
+            {showMenu && (
+              <div className="absolute right-0 top-14 bg-white border border-gray-200 rounded-xl shadow-xl w-72 text-sm z-50 overflow-hidden">
+                <ul>
+                  <li className="border-b border-gray-100">
+                    <Link
+                      href="/client/clientPostJob"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium block"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <Briefcase size={20} className="text-[#D4A574]" />
+                      Post a Job
+                    </Link>
+                  </li>
+                  <li className="border-b border-gray-100">
+                    <Link
+                      href="/client/clientFindHandyman"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium block"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <Users size={20} className="text-[#D4A574]" />
+                      Find Handyman
+                    </Link>
+                  </li>
+                  <li className="border-b border-gray-100">
+                    <Link
+                      href="/client/clientBookings"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium block"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <Calendar size={20} className="text-[#D4A574]" />
+                      Recent Bookings
+                    </Link>
+                  </li>
+                  <li className="border-b border-gray-100">
+                    <Link
+                      href="/mutual/support"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium block"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <HelpCircle size={20} className="text-[#D4A574]" />
+                      Help & Support
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/mutual/settings"
+                      className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium block"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <Settings size={20} className="text-[#D4A574]" />
+                      Settings
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
       <Header pageTitle="Client Dashboard"  onLogout={handleLogout} />
       {/* PROFILE SECTION */}
       <main className="flex-1 overflow-y-auto pb-10">
@@ -341,13 +477,19 @@ export default function ClientDashboard() {
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <h3 className="text-xl font-bold text-[#1a1a1a] mb-6">Quick Actions</h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link href="/client/clientPostJob" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
             <Link href="./clientPostJob" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+
               <Briefcase size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Post Jobs</h4>
               <p className="text-gray-500 text-sm mt-1">Hire handymen</p>
             </Link>
 
+
+            <Link href="/client/clientFindHandyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+
             <Link href="./clientFindHandyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+
               <Users size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Find Handyman</h4>
               <p className="text-gray-500 text-sm mt-1">Browse profiles</p>
@@ -359,7 +501,10 @@ export default function ClientDashboard() {
               <p className="text-gray-500 text-sm mt-1">Track orders</p>
             </Link>
 
+
+            <Link href="/mutual/support" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
             <Link href="../mutual/support" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+
               <HelpCircle size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Help</h4>
               <p className="text-gray-500 text-sm mt-1">Get support</p>
@@ -367,7 +512,6 @@ export default function ClientDashboard() {
           </div>
         </section>
 
-        {/* RECENT BOOKINGS WITH STATUS */}
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-[#1a1a1a]">Recent Bookings</h3>
@@ -384,6 +528,9 @@ export default function ClientDashboard() {
               <p className="text-gray-400 text-lg mb-2">No bookings yet</p>
               <p className="text-gray-500 text-sm mb-4">Post your first job to get started</p>
               <Link 
+
+                href="/client/clientPostJob"
+
                 href="./clientPostJob"
                 className="inline-block px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold shadow-lg hover:shadow-xl"
               >
@@ -483,5 +630,5 @@ export default function ClientDashboard() {
         </div>
       )}
     </div>
-  );
+  )
 }
