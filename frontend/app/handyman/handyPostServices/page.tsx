@@ -304,23 +304,21 @@ export default function CreateService() {
                   {imagePreview && (
                     <div className="w-40 h-40 mt-4 relative rounded-xl overflow-hidden border border-gray-200 shadow-lg">
                       {services.map((s) => (
-  <div key={s._id}>
+                        <div key={s._id}>
+                          {s.images?.length ? (
+                            <Image
+                              src={`${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}`}
+                              width={200}
+                              height={200}
+                              alt={s.title}
+                            />
+                          ) : (
+                            <div className="w-32 h-32 bg-gray-200 rounded-md" />
+                          )}
 
-    {s.images?.length ? (
-      <Image
-        src={`http://localhost:7000${s.images[0]}`}
-        width={200}
-        height={200}
-        alt={s.title}
-      />
-    ) : (
-      <div className="w-32 h-32 bg-gray-200 rounded-md" />
-    )}
-
-    <h3>{s.title}</h3>
-  </div>
-))}
-
+                          <h3>{s.title}</h3>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -380,7 +378,7 @@ export default function CreateService() {
                     {s.images && s.images.length > 0 ? (
                       <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100 border">
                         <Image
-                          src={`http://localhost:7000${s.images[0]}`}
+                          src={`${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}`}
                           width={200}
                           height={200}
                           alt="service"
