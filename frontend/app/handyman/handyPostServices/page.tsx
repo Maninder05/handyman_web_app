@@ -31,7 +31,7 @@ const DEMO_SERVICES: DemoService[] = [
     title: "Living Room Light Repair",
     category: "Electrical",
     price: "45",
-    priceType: "Hourly",
+    priceType: "Hour",
     rating: 4.7,
     img: "/images/handyman-2.jpg",
     status: "Published",
