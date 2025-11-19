@@ -397,23 +397,16 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F0]">
       {/* HEADER */}
-      <header className="bg-[#1a1a1a] shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link 
-              href={getDashboardLink()}
-              className="p-2 rounded-lg hover:bg-[#2a2a2a] transition"
-            >
-              <ArrowLeft size={24} className="text-white" />
-            </Link>
-            <h1 className="text-2xl font-bold text-white">Settings</h1>
+      <header className="w-full flex items-center justify-between px-16 py-4 bg-black shadow-md">
+        <h1 className="text-2xl font-semibold text-white">Acount Settings</h1>
+        <button
+          onClick={() => router.push("/handyman/handyDashboard")}
+          className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
+        >
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B8A565] text-white flex items-center justify-center font-semibold">
+            H
           </div>
-          <div className="text-white text-sm">
-            <span className="bg-[#D4A574] px-3 py-1 rounded-full capitalize font-medium">
-              {userType}
-            </span>
-          </div>
-        </div>
+        </button>
       </header>
 
       {/* ALERT */}
