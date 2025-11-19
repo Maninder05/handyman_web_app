@@ -1,158 +1,156 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Header from "../../components/handyHeader";
 
-type DemoService = {
+interface Service {
+  _id: string;
   title: string;
+  description: string;
   category: string;
   price: string;
   priceType: string;
-  rating?: number;
-  img?: string;
-  status?: "Published" | "Draft";
-  excerpt?: string;
-};
+  images?: string[];
+}
 
-const DEMO_SERVICES: DemoService[] = [
-  {
-    title: "Kitchen Faucet Replacement",
-    category: "Plumbing",
-    price: "120",
-    priceType: "Fixed",
-    rating: 4.9,
-    img: "/images/sample-attachment.jpg",
-    status: "Published",
-    excerpt: "Replace faucet cartridge, test seals, ensure leak-free installation.",
-  },
-  {
-    title: "Living Room Light Repair",
-    category: "Electrical",
-    price: "45",
-    priceType: "Hourly",
-    rating: 4.7,
-    img: "/images/handyman-2.jpg",
-    status: "Published",
-    excerpt: "Diagnose flicker, tighten connections, replace switch or socket as needed.",
-  },
-  {
-    title: "Trim & Hedge Maintenance",
-    category: "Gardening",
-    price: "90",
-    priceType: "Fixed",
-    rating: 4.6,
-    img: "/images/handyman-3.jpg",
-    status: "Draft",
-    excerpt: "Trim hedges, remove debris, tidy flower beds and edges.",
-  },
-  {
-    title: "Dishwasher Installation",
-    category: "Appliance Repair",
-    price: "150",
-    priceType: "Fixed",
-    rating: 4.8,
-    img: "/images/handyman-4.jpg",
-    status: "Published",
-    excerpt: "Install new dishwasher, connect drain and power, test cycle.",
-  },
-];
-
-export default function HandymanServicesPage() {
-  const router = useRouter();
-  const [modalOpen, setModalOpen] = useState(false);
+export default function CreateService() {
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
-  const [priceType, setPriceType] = useState("Fixed");
-  const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [category, setCategory] = useState("");
+  const [priceType, setPriceType] = useState("Hourly");
+  const [price, setPrice] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [popup, setPopup] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!file) {
-      setPreviewUrl(null);
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
+
+  const router = useRouter();
+  const handleLogout = () => router.push("/");
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
+      setErrors({ image: "Only JPG, JPEG, and PNG are allowed" });
       return;
     }
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
+    if (file.size > 35 * 1024 * 1024) {
+      setErrors({ image: "Image must be less than 35MB" });
+      return;
+    }
 
-  const validate = (allowDraft = false) => {
-    const e: Record<string, string> = {};
-    if (!title.trim() && !allowDraft) e.title = "Please add a title";
-    if (!category.trim() && !allowDraft) e.category = "Please choose a category";
-    if (!description.trim() && !allowDraft) e.description = "Please provide a short description";
-    if (!price.trim() && !allowDraft) e.price = "Set a price or save as draft";
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const resetForm = () => {
-    setTitle("");
-    setCategory("");
-    setPrice("");
-    setPriceType("Fixed");
-    setDescription("");
-    setFile(null);
-    setPreviewUrl(null);
     setErrors({});
+    setImage(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    if (!f.type.startsWith("image/")) {
-      setToast("Only image files are supported for preview");
-      setTimeout(() => setToast(null), 2500);
-      return;
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+
+    if (/^\d*\.?\d*$/.test(val)) {
+      setPrice(val);
+      setErrors((prev) => ({ ...prev, price: "" }));
+    } else {
+      setErrors((prev) => ({ ...prev, price: "Price must be a number" }));
     }
-    if (f.size > 8 * 1024 * 1024) {
-      setToast("Image too large — max 8MB");
-      setTimeout(() => setToast(null), 2500);
-      return;
-    }
-    setFile(f);
   };
 
-  const saveDraft = async () => {
-    validate(true);
-    setSaving(true);
+  const submitToServer = async () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!title) newErrors.title = "Title is required";
+    if (!description) newErrors.description = "Description is required";
+    if (!category) newErrors.category = "Category is required";
+    if (!price) newErrors.price = "Price is required";
+    if (!image) newErrors.image = "Image is required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     try {
-      await new Promise((r) => setTimeout(r, 700));
-      setToast("Draft saved");
-      setTimeout(() => setToast(null), 2000);
-      closeModal();
+      setLoading(true);
+
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("category", category);
+      formData.append("price", price);
+      formData.append("priceType", priceType);
+
+      if (image) formData.append("image", image);
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl) throw new Error("API URL not set");
+
+      const res = await fetch(`${apiUrl}/api/handyman/services`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        setPopup("🎉 Service published successfully!");
+        setTitle("");
+        setDescription("");
+        setCategory("");
+        setPrice("");
+        setImage(null);
+        setImagePreview(null);
+        setErrors({});
+      } else {
+        const text = await res.text();
+        let data: { message?: string } = { message: text };
+        try {
+          data = JSON.parse(text);
+        } catch {}
+
+        setPopup(data.message || "❌ Failed to submit service");
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setPopup(`⚠️ ${err.message}`);
+      } else {
+        setPopup("⚠️ Unexpected error");
+      }
     } finally {
-      setSaving(false);
+      setLoading(false);
+      setTimeout(() => setPopup(null), 3000);
     }
   };
 
-  const publish = async () => {
-    if (!validate(false)) {
-      setToast("Please fix the required fields");
-      setTimeout(() => setToast(null), 2200);
-      return;
-    }
-    setSaving(true);
+  const fetchServices = async () => {
     try {
-      await new Promise((r) => setTimeout(r, 900));
-      setToast("Service published");
-      setTimeout(() => setToast(null), 1800);
-      closeModal();
+      setLoadingServices(true);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+      const res = await fetch(`${apiUrl}/api/handyman/services`, {
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      setServices(data);
+    } catch (err) {
+      console.error("Error fetching services:", err);
+      setPopup("⚠️ Failed to load services");
     } finally {
-      setSaving(false);
+      setLoadingServices(false);
     }
   };
 
-  const closeModal = () => {
-    setModalOpen(false);
-    resetForm();
+  const openModal = () => {
+    fetchServices();
+    setShowModal(true);
   };
 
   const Header = () => (
@@ -180,130 +178,274 @@ export default function HandymanServicesPage() {
           )}
         </div>
 
-        <div className="p-4 flex-1 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="font-semibold text-lg text-[#1a1a1a]">{s.title}</h3>
-              <div className={`px-2 py-1 rounded-full text-xs font-semibold ${s.status === "Published" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-                {s.status}
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">{s.category} • {s.priceType} • ${s.price}</p>
-            <p className="mt-3 text-sm text-gray-700 line-clamp-3">{s.excerpt}</p>
-          </div>
-
-          <div className="mt-4 flex items-center justify-end gap-2">
-            <button className="text-sm px-3 py-1 rounded border bg-white">View</button>
-            <button className="text-sm px-3 py-1 rounded bg-[#D4A574] text-white">Edit</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#F5F5F0] to-[#efe6da] text-[#1a1a1a] flex flex-col">
-      <Header />
+    <div className="min-h-screen bg-gradient-to-b from-[#F5F5F0] to-[#eae7e1] flex flex-col">
+      <Header pageTitle="Post Service" onLogout={handleLogout} />
 
-      <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {DEMO_SERVICES.map((s, i) => (
-            <Card key={i} s={s} />
-          ))}
-        </section>
-
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-3 px-5 py-3 rounded-full bg-gradient-to-r from-[#D4A574] to-[#B8A565] text-white font-semibold shadow-lg hover:brightness-95"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" className="inline-block"><path fill="white" d="M13 11h8v2h-8v8h-2v-8H3v-2h8V3h2v8z"/></svg>
-            Create Service
-          </button>
+      {popup && (
+        <div className="fixed top-6 right-6 bg-[#5C4033] text-white px-6 py-3 rounded-xl shadow-xl z-50 animate-fade-in-up">
+          {popup}
         </div>
-      </main>
+      )}
 
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 bg-black/40 p-4" onClick={closeModal}>
-          <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-[#EED9C4] p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between gap-4 mb-4">
+      <main className="flex-1 flex justify-center items-start py-14 px-6">
+        <div className="w-full max-w-5xl bg-white/95 backdrop-blur-md rounded-2xl shadow-lg p-12 border border-[#D4A574]/30 hover:shadow-[#D4A574]/20 transition-all duration-300">
+          <h2 className="text-4xl font-bold text-[#5C4033] border-b pb-4 flex items-center justify-between">
+            Create a New Service
+            {loading && (
+              <span className="text-sm text-[#D4A574] animate-pulse">
+                Saving...
+              </span>
+            )}
+          </h2>
+
+          {/* Form */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-10">
+            {/* Left */}
+            <div className="space-y-6">
+              {/* Title */}
               <div>
-                <h2 className="text-xl font-semibold text-[#5C4033]">Create Service</h2>
-                <p className="text-sm text-gray-500">Quickly add a service listing. Publish when ready or save as draft.</p>
-              </div>
-              <button onClick={closeModal} className="px-3 py-2 rounded bg-gray-100">Close</button>
-            </div>
-
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-gray-700">Title</label>
-                <input value={title} onChange={(e) => setTitle(e.target.value)} className={`w-full rounded-lg border px-3 py-2 ${errors.title ? "border-red-300" : "border-gray-200"}`} placeholder="e.g., Faucet replacement" />
-                {errors.title && <div className="text-xs text-red-600">{errors.title}</div>}
-
-                <label className="text-sm font-medium text-gray-700">Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className={`w-full rounded-lg border px-3 py-2 ${errors.category ? "border-red-300" : "border-gray-200"}`}>
-                  <option value="">Select category</option>
-                  <option>Plumbing</option>
-                  <option>Electrical</option>
-                  <option>Carpentry</option>
-                  <option>Gardening</option>
-                  <option>Appliance Repair</option>
-                  <option>Cleaning</option>
-                  <option>Other</option>
-                </select>
-                {errors.category && <div className="text-xs text-red-600">{errors.category}</div>}
-
-                <label className="text-sm font-medium text-gray-700">Price</label>
-                <div className="flex gap-2">
-                  <select value={priceType} onChange={(e) => setPriceType(e.target.value)} className="rounded-lg border px-3 py-2">
-                    <option>Fixed</option>
-                    <option>Hourly</option>
-                  </select>
-                  <input value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ""))} placeholder="Amount" className={`flex-1 rounded-lg border px-3 py-2 ${errors.price ? "border-red-300" : "border-gray-200"}`} />
-                </div>
-                {errors.price && <div className="text-xs text-red-600">{errors.price}</div>}
-              </div>
-
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-gray-700">Short Description</label>
-                <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={6} className={`w-full rounded-lg border px-3 py-2 ${errors.description ? "border-red-300" : "border-gray-200"}`} placeholder="Describe what's included, time estimate, and materials." />
-
-                <label className="text-sm font-medium text-gray-700">Image (optional, preview)</label>
-                <div className="flex items-center gap-3">
-                  <input ref={fileRef} id="img" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                  <label htmlFor="img" className="px-3 py-2 rounded bg-white border cursor-pointer">Choose image</label>
-                  <div className="text-xs text-gray-400">{previewUrl ? "Preview ready" : "No image"}</div>
-                </div>
-                {previewUrl && (
-                  <div className="mt-3 w-full rounded overflow-hidden border">
-                    <Image src={previewUrl} alt="preview" width={800} height={420} className="object-cover w-full h-40" />
-                  </div>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter service title"
+                  className="w-full rounded-xl p-4 border border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-[#D4A574]"
+                />
+                {errors.title && (
+                  <p className="text-[#D4A574] text-sm mt-1">{errors.title}</p>
                 )}
               </div>
 
-              <div className="md:col-span-2 flex items-center justify-between mt-2 pt-3 border-t border-gray-100">
-                <div className="text-sm text-gray-500">Tip: include clear photos and short instructions that help clients prepare.</div>
-                <div className="flex items-center gap-3">
-                  <button type="button" onClick={saveDraft} disabled={saving} className="px-4 py-2 rounded bg-white border">{saving ? "Saving..." : "Save Draft"}</button>
-                  <button type="button" onClick={publish} disabled={saving} className="px-4 py-2 rounded bg-[#D4A574] text-white">{saving ? "Publishing..." : "Publish"}</button>
-                  <button type="button" onClick={closeModal} className="px-3 py-2 rounded bg-gray-50 border">Cancel</button>
-                </div>
+              {/* Description */}
+              <div>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">
+                  Description
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Enter service description"
+                  className="w-full rounded-xl p-4 border border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-[#D4A574]"
+                  rows={5}
+                />
+                {errors.description && (
+                  <p className="text-[#D4A574] text-sm mt-1">
+                    {errors.description}
+                  </p>
+                )}
               </div>
-            </form>
+
+              {/* Category */}
+              <div>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">
+                  Category
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full rounded-xl p-4 border border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-[#D4A574] cursor-pointer"
+                >
+                  <option value="">Select Category</option>
+                  <option>Electrical</option>
+                  <option>Plumbing</option>
+                  <option>Carpentry</option>
+                  <option>Appliances</option>
+                  <option>Painting & Finishing</option>
+                  <option>Cleaning</option>
+                  <option>Landscaping</option>
+                  <option>Renovation</option>
+                  <option>Roofing</option>
+                  <option>General Repairs</option>
+                </select>
+                {errors.category && (
+                  <p className="text-[#D4A574] text-sm mt-1">
+                    {errors.category}
+                  </p>
+                )}
+              </div>
+
+              {/* Price */}
+              <div>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">
+                  Price
+                </label>
+                <div className="flex gap-4">
+                  <select
+                    value={priceType}
+                    onChange={(e) => setPriceType(e.target.value)}
+                    className="rounded-xl p-4 border border-gray-200 bg-white text-gray-800 cursor-pointer"
+                  >
+                    <option>Hourly</option>
+                    <option>Fixed</option>
+                  </select>
+
+                  <input
+                    type="text"
+                    value={price}
+                    onChange={handlePriceChange}
+                    placeholder="Enter price"
+                    className="flex-1 rounded-xl p-4 border border-gray-200 bg-white text-gray-800"
+                  />
+                </div>
+                {errors.price && (
+                  <p className="text-[#D4A574] text-sm mt-1">{errors.price}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Right */}
+            <div className="space-y-6">
+              <div>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">
+                  Image
+                </label>
+
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-[#D4A574]/40 rounded-xl p-6 hover:bg-[#FFF8F0] cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="upload"
+                    onChange={handleImageUpload}
+                  />
+                  <label
+                    htmlFor="upload"
+                    className="cursor-pointer flex flex-col items-center gap-2"
+                  >
+                    <span className="text-[#D4A574] font-medium">
+                      {image ? image.name : "Click to upload image"}
+                    </span>
+                    <p className="text-gray-500 text-sm">
+                      Only JPG, JPEG, PNG allowed
+                    </p>
+                  </label>
+
+                  {imagePreview && (
+                    <div className="w-40 h-40 mt-4 relative rounded-xl overflow-hidden border border-gray-200 shadow-lg">
+                      <Image
+                        src={imagePreview}
+                        fill
+                        alt="preview"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {errors.image && (
+                  <p className="text-[#D4A574] text-sm mt-1">{errors.image}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-6 pt-10 mt-10 border-t border-[#D4A574]/30">
+            <button
+              onClick={openModal}
+              className="px-6 py-3 rounded-xl bg-white text-[#5C4033] border border-gray-300 hover:bg-[#F5F5F0] font-medium"
+            >
+              Browse Services
+            </button>
+
+            <button
+              onClick={() => submitToServer()}
+              disabled={loading}
+              className="px-8 py-3 rounded-xl bg-gradient-to-r from-[#D4A574] to-[#B8A565] text-white font-semibold hover:shadow-lg hover:scale-[1.02] disabled:opacity-70"
+            >
+              Publish Service
+            </button>
+          </div>
+        </div>
+      </main>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-start z-50 py-12 overflow-auto">
+          <div className="bg-white rounded-2xl p-8 w-[90%] max-w-4xl shadow-xl relative border border-gray-200">
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-4 text-gray-800 text-xl font-bold hover:text-[#D4A574]"
+            >
+              ✕
+            </button>
+
+            <h3 className="text-3xl font-bold text-gray-900 text-center mb-8">
+              Published Services
+            </h3>
+
+            {loadingServices ? (
+              <p className="text-center text-gray-500">Loading...</p>
+            ) : services.length === 0 ? (
+              <p className="text-center text-gray-500">No services found.</p>
+            ) : (
+              <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-6">
+                {services.map((s) => (
+                  <div
+                    key={s._id}
+                    className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all p-4 flex gap-4"
+                  >
+                    {s.images && s.images.length > 0 ? (
+                      <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100 border">
+                        <Image
+                          src={`${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}`}
+                          alt={s.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-32 h-32 rounded-lg bg-gray-100 flex items-center justify-center border text-gray-400">
+                        No Image
+                      </div>
+                    )}
+
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div className="space-y-1">
+                        <p className="text-lg font-semibold text-gray-900">
+                          {s.title}
+                        </p>
+                        <p className="text-gray-600 text-sm">{s.description}</p>
+                        <p className="text-gray-700 text-sm">
+                          <span className="font-semibold text-gray-900">
+                            Category:
+                          </span>{" "}
+                          {s.category}
+                        </p>
+                        <p className="text-sm font-semibold text-amber-700">
+                          Price: {s.priceType} — ${s.price}
+                        </p>
+                      </div>
+
+                      <p className="text-sm font-medium text-green-700 mt-2">
+                        Published ✔
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {toast && (
-        <div className="fixed right-6 bottom-6 bg-[#5C4033] text-white px-4 py-2 rounded-lg shadow">{toast}</div>
-      )}
-
-      <style jsx>{`
-        .line-clamp-3 {
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
+      <style jsx global>{`
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.4s ease-out;
         }
       `}</style>
     </div>
