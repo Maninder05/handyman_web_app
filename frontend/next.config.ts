@@ -2,9 +2,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["via.placeholder.com"], // allow this domain
+    remotePatterns: [
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "7000",
+        pathname: "/uploads/**",
+      },
+    ],
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
+
 module.exports = nextConfig;

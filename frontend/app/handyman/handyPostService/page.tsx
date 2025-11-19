@@ -88,7 +88,7 @@ export default function CreateService() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!apiUrl) throw new Error("API URL not set");
 
-      const res = await fetch(`${apiUrl}/api/handymen/services`, {
+      const res = await fetch(`${apiUrl}/api/handyman/services`, {
         method: "POST",
         body: formData,
         credentials: "include",
@@ -127,7 +127,7 @@ export default function CreateService() {
     try {
       setLoadingServices(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${apiUrl}/api/handymen/services`, { credentials: "include" });
+      const res = await fetch(`${apiUrl}/api/handyman/services`, { credentials: "include" });
       const data = await res.json();
       setServices(data);
     } catch (err) {
@@ -198,11 +198,16 @@ export default function CreateService() {
                 >
                   <option value="">Select Category</option>
                   <option>Electrical</option>
-                  <option>Plumbing</option>
-                  <option>Carpentry</option>
-                  <option>Cleaning</option>
-                  <option>Painting</option>
-                  <option>Renovation</option>
+<option>Plumbing</option>
+<option>Carpentry</option>
+<option>Appliances</option>
+<option>Painting & Finishing</option>
+<option>Cleaning</option>
+<option>Landscaping</option>
+<option>Renovation</option>
+<option>Roofing</option>
+<option>General Repairs</option>
+
                 </select>
                 {errors.category && <p className="text-[#D4A574] text-sm mt-1">{errors.category}</p>}
               </div>
@@ -271,58 +276,69 @@ export default function CreateService() {
         </div>
       </main>
 
- {/* Modal */}
-{showModal && (
-  <div className="fixed inset-0 bg-black/50 flex justify-center items-start z-50 py-12 overflow-auto">
-    <div className="bg-[#F5F5F0] rounded-2xl p-6 w-[90%] max-w-4xl shadow-xl relative border border-[#D4A574]/40">
-      <button
-        onClick={closeModal}
-        className="absolute top-4 right-4 text-[#1a1a1a] text-xl font-bold hover:text-[#D4A574]"
-      >
-        ✕
-      </button>
-      <h3 className="text-2xl font-bold text-[#5C4033] text-center mb-6">Published Services</h3>
-
-      {loadingServices ? (
-        <p className="text-center text-gray-500">Loading...</p>
-      ) : services.length === 0 ? (
-        <p className="text-center text-gray-500">No services found.</p>
-      ) : (
-        <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
-          {services.map((s) => (
-            <div
-              key={s._id}
-              className="bg-white/95 rounded-xl shadow-md p-4 border border-[#D4A574]/30 hover:shadow-lg transition flex gap-4"
+      {/* ================= MODAL UPDATED ================= */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-start z-50 py-12 overflow-auto">
+          <div className="bg-white rounded-2xl p-8 w-[90%] max-w-4xl shadow-xl relative border border-gray-200">
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-4 text-gray-800 text-xl font-bold hover:text-[#D4A574]"
             >
-              {s.images && s.images.length > 0 && (
-  <div className="w-32 h-32 relative rounded-xl overflow-hidden flex-shrink-0 border border-[#D4A574]/40">
-    <Image
-      src={s.images[0] as string} // TypeScript needs this cast
-      alt={s.title || "Service Image"} // fallback if title is undefined
-      fill // allows image to fill parent div
-      style={{ objectFit: "cover" }} // ensures image covers the area
-      className="rounded-xl"
-      priority // optional, improves loading
-    />
-  </div>
-)}
+              ✕
+            </button>
 
-              <div className="flex-1 flex flex-col justify-between">
-                <div className="space-y-1">
-                  <p className="text-[#1a1a1a]"><strong>Name:</strong> {s.title}</p>
-                  <p className="text-gray-700"><strong>Description:</strong> {s.description}</p>
-                  <p className="text-gray-700"><strong>Category:</strong> {s.category}</p>
-                  <p className="text-[#D4A574] font-semibold"><strong>Price:</strong> {s.priceType} - ${s.price}</p>
-                </div>
-                <p className="text-green-600 font-bold mt-2"><strong>Status:</strong> Published ✅</p>
+            <h3 className="text-3xl font-bold text-gray-900 text-center mb-8">Published Services</h3>
+
+            {loadingServices ? (
+              <p className="text-center text-gray-500">Loading...</p>
+            ) : services.length === 0 ? (
+              <p className="text-center text-gray-500">No services found.</p>
+            ) : (
+              <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-6">
+                {services.map((s) => (
+                  <div
+                    key={s._id}
+                    className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all p-4 flex gap-4"
+                  >
+                    {/* IMAGE FIXED */}
+                    {s.images && s.images.length > 0 ? (
+                      <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100 border">
+                        <Image
+                          src={`${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}`}
+                          alt={s.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-32 h-32 rounded-lg bg-gray-100 flex items-center justify-center border text-gray-400">
+                        No Image
+                      </div>
+                    )}
+
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div className="space-y-1">
+                        <p className="text-lg font-semibold text-gray-900">{s.title}</p>
+                        <p className="text-gray-600 text-sm">{s.description}</p>
+                        <p className="text-gray-700 text-sm">
+                          <span className="font-semibold text-gray-900">Category:</span> {s.category}
+                        </p>
+                        <p className="text-sm font-semibold text-amber-700">
+                          Price: {s.priceType} — ${s.price}
+                        </p>
+                      </div>
+
+                      <p className="text-sm font-medium text-green-700 mt-2">
+                        Published ✔
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
+            )}
+          </div>
         </div>
       )}
-    </div>
-  </div>
-)}
 
       <style jsx global>{`
         @keyframes fade-in-up {

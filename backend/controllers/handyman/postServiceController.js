@@ -2,25 +2,25 @@ import PostService from "../../models/handyman/PostService.js";
 import Order from "../../models/handyman/Orders.js";
 
 // ➕ Create new service
-export const createService = async (req, res) => {
-  try {
-    const handymanId = req.user.id;
-    const { title, description, price } = req.body;
+//export const createService = async (req, res) => {
+//   try {
+//     const handymanId = req.user.id;
+//     const { title, description, price } = req.body;
 
-    const newService = new PostService({
-      title,
-      description,
-      price,
-      handymanId,
-    });
+//     const newService = new PostService({
+//       title,
+//       description,
+//       price,
+//       handymanId,
+//     });
 
-    await newService.save();
-    res.status(201).json({ message: "Service created successfully", newService });
-  } catch (err) {
-    console.error("Error creating service:", err);
-    res.status(500).json({ message: "Error creating service" });
-  }
-};
+//     await newService.save();
+//     res.status(201).json({ message: "Service created successfully", newService });
+//   } catch (err) {
+//     console.error("Error creating service:", err);
+//     res.status(500).json({ message: "Error creating service" });
+//   }
+// };
 
 // 📋 Get all services by handyman
 export const getMyServices = async (req, res) => {
