@@ -102,14 +102,15 @@ export default function HandyFindJobsPage() {
   });
 
   const Header = () => (
-    <header className="w-full bg-black flex items-center justify-between px-6 py-4 text-white">
-      <h1 className="text-xl font-bold tracking-wide">Find Jobs</h1>
+  <header className="w-full flex items-center justify-between px-16 py-4 bg-black shadow-md">
+      <h1 className="text-2xl font-semibold text-white">Find Jobs</h1>
       <button
-        onClick={goToProfile}
-        className="w-10 h-10 rounded-full bg-white/10 border border-gray-700 flex items-center justify-center hover:bg-white/20 transition"
-        aria-label="Profile"
+        onClick={() => router.push("/handyman/handyDashboard")}
+        className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
       >
-        <span className="text-sm font-semibold">H</span>
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B8A565] text-white flex items-center justify-center font-semibold">
+          H
+        </div>
       </button>
     </header>
   );

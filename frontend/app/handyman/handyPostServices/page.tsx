@@ -156,7 +156,7 @@ export default function HandymanServicesPage() {
   };
 
   const Header = () => (
-    <header className="w-full flex items-center justify-between px-6 py-4 bg-black shadow-md">
+    <header className="w-full flex items-center justify-between px-16 py-4 bg-black shadow-md">
       <h1 className="text-2xl font-semibold text-white">My Services</h1>
       <button
         onClick={() => router.push("/handyman/handyDashboard")}
