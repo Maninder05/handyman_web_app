@@ -58,7 +58,17 @@ export default function MembershipPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <Header pageTitle="Buy Membership" onLogout={handleLogout} />
+      <header className="w-full flex items-center justify-between px-16 py-4 bg-black shadow-md">
+        <h1 className="text-2xl font-semibold text-white">Buy Membership</h1>
+        <button
+          onClick={() => router.push("/handyman/handyDashboard")}
+          className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
+        >
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B8A565] text-white flex items-center justify-center font-semibold">
+            H
+          </div>
+        </button>
+      </header>
 
       <section className="mx-auto max-w-[1100px] px-6 py-10">
         {/* Centered Header & Toggle */}

@@ -153,7 +153,30 @@ export default function CreateService() {
     setShowModal(true);
   };
 
-  const closeModal = () => setShowModal(false);
+  const Header = () => (
+    <header className="w-full flex items-center justify-between px-16 py-4 bg-black shadow-md">
+      <h1 className="text-2xl font-semibold text-white">My Services</h1>
+      <button
+        onClick={() => router.push("/handyman/handyDashboard")}
+        className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
+      >
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B8A565] text-white flex items-center justify-center font-semibold">
+          H
+        </div>
+      </button>
+    </header>
+  );
+
+  const Card: React.FC<{ s: DemoService }> = ({ s }) => (
+    <div className="bg-white rounded-xl shadow-md border border-[#EED9C4] overflow-hidden">
+      <div className="md:flex">
+        <div className="w-full md:w-44 h-40 relative bg-gray-100">
+          {s.img ? (
+            <Image src={s.img} alt={s.title} fill className="object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-sm text-gray-400">No image</div>
+          )}
+        </div>
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F5F5F0] to-[#eae7e1] flex flex-col">
