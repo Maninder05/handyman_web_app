@@ -30,7 +30,7 @@ export const getMyProfile = async (req, res) => {
       profile = await ClientProfile.create({ 
         userId: id, 
         email,
-        userType:'customer'
+        userType:'client'
       });
     }
 
@@ -60,7 +60,7 @@ export const createProfile = async (req, res) => {
     const newClient = await ClientProfile.create({ 
       userId: id, 
       email,
-      userType: 'customer',
+      userType: 'client',
       ...req.body 
     });
     

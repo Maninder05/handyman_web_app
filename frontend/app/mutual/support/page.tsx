@@ -12,9 +12,23 @@ export default function HelpCentrePage() {
   return (
     <div className="min-h-screen bg-white text-black">
       {/* HEADER */}
+
       <div>
         <Header pageTitle="Help Center" onLogout={handleLogout} />
       </div>
+
+      <header className="w-full flex items-center justify-between px-16 py-4 bg-black shadow-md">
+        <h1 className="text-2xl font-semibold text-white">Help Centre</h1>
+        <button
+          onClick={() => router.push("/handyman/handyDashboard")}
+          className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
+        >
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B8A565] text-white flex items-center justify-center font-semibold">
+            H
+          </div>
+        </button>
+      </header>
+
       <main className="mx-auto max-w-[1100px] px-6">
         {/* HERO */}
         <section className="py-20 md:py-28">

@@ -11,11 +11,12 @@ interface HeaderProps {
     profileImage?: string;
     notificationsCount?: number;
     userType?: "client" | "handyman";
+    userType?: "client" | "handyman"; 
   };
   onLogout: () => void;
 }
 
-export default function Header({ pageTitle, profile, onLogout }: HeaderProps) {
+export default function handyHeader({ pageTitle, profile, onLogout }: HeaderProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
@@ -35,7 +36,7 @@ export default function Header({ pageTitle, profile, onLogout }: HeaderProps) {
   };
 
   return (
-    <header className="bg-[#1a1a1a] shadow-md sticky top-0 z-50">
+   <header className="bg-[#1a1a1a] shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         <h1 className="text-2xl font-bold text-white tracking-wide">{pageTitle}</h1>
 
@@ -71,10 +72,14 @@ export default function Header({ pageTitle, profile, onLogout }: HeaderProps) {
                     className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
                     onClick={closeMenus}
                   >
+
+                  <Link href="../handyman/handyProfile"
+                   className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
                     My Account
                   </Link>
                 </li>
                 <li>
+
                   <Link 
                     href="/mutual/settings"
                     className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
@@ -91,6 +96,7 @@ export default function Header({ pageTitle, profile, onLogout }: HeaderProps) {
                     }}
                     className="w-full text-left px-5 py-3 text-[#C41E3A] hover:bg-red-50 transition font-medium"
                   >
+                  <button onClick={onLogout} className="w-full text-left px-5 py-3 text-[#C41E3A] hover:bg-red-50 transition font-medium">
                     Logout
                   </button>
                 </li>
@@ -98,12 +104,16 @@ export default function Header({ pageTitle, profile, onLogout }: HeaderProps) {
             </div>
           )}
 
+
           {/* Menu Button */}
           <button onClick={toggleMenu} className="p-2 rounded-md bg-[#D4A574] text-white hover:bg-[#B8A565] transition flex items-center justify-center">
+
+          <button onClick={toggleMenu} className="p-2 rounded-md bg-[#D4A574] text-white hover:bg-[#B8A565] transition">
             {showMenu ? <X size={26} /> : <Menu size={26} />}
           </button>
 
           {showMenu && (
+
             profile?.userType === "handyman" ? (
               <div className="absolute right-0 top-14 bg-white border border-gray-200 rounded-xl shadow-xl w-72 text-sm z-50 overflow-hidden">
                 <ul className="divide-y divide-gray-100">
@@ -210,9 +220,43 @@ export default function Header({ pageTitle, profile, onLogout }: HeaderProps) {
                 </ul>
               </div>
             )
+
+            <div className="absolute right-0 top-14 bg-white border border-gray-200 rounded-xl shadow-xl w-72 text-sm z-50 overflow-hidden">
+              <ul className="divide-y divide-gray-100">
+                <li>
+                  <Link href="../handyman/handyPostServices" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                    <Wrench size={20} className="text-[#D4A574]" /> My Services
+                  </Link>
+                </li>
+                <li>
+                  <Link href="../handyman/handyFindJobs" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                    <Briefcase size={20} className="text-[#D4A574]" /> Find Jobs
+                  </Link>
+                </li>
+                <li>
+                  <Link href="../mutual/membership" className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                    <Crown size={20} className="text-[#D4A574]" /> Membership Plan
+                  </Link>
+                </li>
+                <li>
+                  <Link href="../mutual/support" className="flex items-center  text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                    <HelpCircle size={20} className="text-[#D4A574]" /> Help & Support
+                  </Link>
+                </li>
+                <li>
+                  <Link href="../mutual/settings" className="flex items-center  text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium">
+                    <Settings size={20} className="text-[#D4A574]" /> Settings
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
           )}
         </div>
       </div>
     </header>
   );
+
 }
+}
+

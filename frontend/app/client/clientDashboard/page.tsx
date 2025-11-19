@@ -1,11 +1,11 @@
 "use client";
-
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Menu, X, Briefcase, Users, Calendar, HelpCircle, Settings, AlertCircle,Bell,Upload,Camera } from "lucide-react";
 import { FiUser, FiDollarSign, FiShoppingBag } from "react-icons/fi";
+import Header from "../../components/clientHeader";
 
 type Booking = {
   _id: string;
@@ -378,6 +378,7 @@ export default function ClientDashboard() {
         </div>
       </header>
 
+      <Header pageTitle="Client Dashboard"  onLogout={handleLogout} />
       {/* PROFILE SECTION */}
       <main className="flex-1 overflow-y-auto pb-10">
         <section className="bg-gradient-to-br from-[#D4A574] to-[#B8A565] py-8">
@@ -477,12 +478,18 @@ export default function ClientDashboard() {
           <h3 className="text-xl font-bold text-[#1a1a1a] mb-6">Quick Actions</h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link href="/client/clientPostJob" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="./clientPostJob" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+
               <Briefcase size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
-              <h4 className="font-bold text-[#1a1a1a]">Post a Job</h4>
+              <h4 className="font-bold text-[#1a1a1a]">Post Jobs</h4>
               <p className="text-gray-500 text-sm mt-1">Hire handymen</p>
             </Link>
 
+
             <Link href="/client/clientFindHandyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+
+            <Link href="./clientFindHandyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+
               <Users size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Find Handyman</h4>
               <p className="text-gray-500 text-sm mt-1">Browse profiles</p>
@@ -494,7 +501,10 @@ export default function ClientDashboard() {
               <p className="text-gray-500 text-sm mt-1">Track orders</p>
             </Link>
 
+
             <Link href="/mutual/support" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="../mutual/support" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+
               <HelpCircle size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Help</h4>
               <p className="text-gray-500 text-sm mt-1">Get support</p>
@@ -518,10 +528,13 @@ export default function ClientDashboard() {
               <p className="text-gray-400 text-lg mb-2">No bookings yet</p>
               <p className="text-gray-500 text-sm mb-4">Post your first job to get started</p>
               <Link 
+
                 href="/client/clientPostJob"
+
+                href="./clientPostJob"
                 className="inline-block px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold shadow-lg hover:shadow-xl"
               >
-                Post a Job
+                Post Jobs
               </Link>
             </div>
           ) : (
@@ -617,5 +630,5 @@ export default function ClientDashboard() {
         </div>
       )}
     </div>
-  );
+  )
 }
