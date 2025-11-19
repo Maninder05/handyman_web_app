@@ -472,14 +472,14 @@ export default function SettingsPage() {
             {alert.type === "success" ? (
               <CheckCircle size={20} />
             ) : (
-              <AlertCircle size={19} />
+              <AlertCircle size={20} />
             )}
             <p className="font-medium">{alert.message}</p>
           </div>
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-6">
         <div className="grid lg:grid-cols-4 gap-6">
           {/* SIDEBAR NAVIGATION */}
           <div className="lg:col-span-1">
