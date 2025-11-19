@@ -472,7 +472,7 @@ export default function SettingsPage() {
             {alert.type === "success" ? (
               <CheckCircle size={20} />
             ) : (
-              <AlertCircle size={20} />
+              <AlertCircle size={19} />
             )}
             <p className="font-medium">{alert.message}</p>
           </div>
