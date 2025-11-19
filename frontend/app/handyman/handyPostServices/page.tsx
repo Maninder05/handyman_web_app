@@ -35,6 +35,14 @@ export default function CreateService() {
   const router = useRouter();
   const handleLogout = () => router.push("/");
 
+  // Helper to construct correct image URLs
+  const getServiceImageUrl = (img?: string) => {
+    if (!img) return "/placeholder.png"; // optional placeholder
+    if (img.startsWith("http")) return img;
+    if (img.startsWith("/")) return `${process.env.NEXT_PUBLIC_API_URL}${img}`;
+    return `${process.env.NEXT_PUBLIC_API_URL}/${img}`;
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -239,7 +247,9 @@ export default function CreateService() {
                   <option>General Repairs</option>
                 </select>
                 {errors.category && (
-                  <p className="text-[#D4A574] text-sm mt-1">{errors.category}</p>
+                  <p className="text-[#D4A574] text-sm mt-1">
+                    {errors.category}
+                  </p>
                 )}
               </div>
 
@@ -340,7 +350,6 @@ export default function CreateService() {
         </div>
       </main>
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-start z-50 py-12 overflow-auto">
           <div className="bg-white rounded-2xl p-8 w-[90%] max-w-4xl shadow-xl relative border border-gray-200">
@@ -369,14 +378,10 @@ export default function CreateService() {
                     {s.images && s.images.length > 0 ? (
                       <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100 border">
                         <Image
-                          src={
-                            s.images[0].startsWith("http")
-                              ? s.images[0]
-                              : `${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}`
-                          }
+                          src={getServiceImageUrl(s.images[0])}
                           width={200}
                           height={200}
-                          alt="service"
+                          alt={s.title}
                           className="object-cover"
                         />
                       </div>
