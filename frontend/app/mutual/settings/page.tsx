@@ -398,7 +398,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-[#F5F5F0]">
       {/* HEADER */}
       <header className="w-full flex items-center justify-between px-16 py-4 bg-black shadow-md">
-        <h1 className="text-2xl font-semibold text-white">Acount settings</h1>
+        <h1 className="text-2xl font-semibold text-white">Acount Settings</h1>
         <button
           onClick={() => router.push("/handyman/handyDashboard")}
           className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
