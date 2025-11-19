@@ -555,7 +555,7 @@ export default function SettingsPage() {
                             className="rounded-full object-cover border-4 border-[#D4A574]"
                           />
                         ) : (
-                          <div className="w-20 h-20 bg-gradient-to-br from-[#D4A574] to-[#B8A565] rounded-full flex items-center justify-center">
+                          <div className="w-20 h-20 bg-linear-to-br from-[#D4A574] to-[#B8A565] rounded-full flex items-center justify-center">
                             <User size={32} className="text-white" />
                           </div>
                         )}
@@ -979,7 +979,7 @@ export default function SettingsPage() {
                             }
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-[#D4A574] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                          <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-[#D4A574] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                         </label>
                       </div>
                     ))}
@@ -1006,7 +1006,7 @@ export default function SettingsPage() {
                     <div className="flex items-start gap-3">
                       <AlertCircle
                         size={24}
-                        className="text-red-600 flex-shrink-0 mt-1"
+                        className="text-red-600 shrink-0 mt-1"
                       />
                       <div>
                         <h3 className="font-bold text-red-900 mb-2">
@@ -1046,7 +1046,7 @@ export default function SettingsPage() {
 
       {/* DELETE CONFIRMATION MODAL */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-100 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
