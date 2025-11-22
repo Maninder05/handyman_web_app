@@ -1,4 +1,3 @@
-
 import express from "express";
 import multer from "multer";
 import path from "path";
@@ -15,6 +14,7 @@ import {
   verifyHandyman
 } from "../controllers/handyman/handyDashboardController.js";
 import authSession from "../middleware/authSession.js";
+import PostService from '../models/handyman/PostService.js';
 
 const router = express.Router();
 
@@ -46,6 +46,21 @@ const certificationStorage = multer.diskStorage({
   },
 });
 
+// Service Image Storage
+const serviceStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${Date.now()}${ext}`);
+  },
+});
+
 // Profile Picture Upload
 const uploadProfile = multer({
   storage: profileStorage,
@@ -74,7 +89,10 @@ const uploadCert = multer({
   },
 });
 
-/* ---------------------- ROUTES ---------------------- */
+// Service Image Upload
+const uploadServiceImage = multer({ storage: serviceStorage });
+
+/* ---------------------- PROFILE ROUTES ---------------------- */
 
 // Get logged-in handyman profile (auto-create if not exists)
 router.get("/", authSession, getMyProfile);
@@ -113,36 +131,10 @@ router.get("/all", getAllHandymen);
 // Verify handyman (Admin only - add admin middleware later)
 router.put("/verify/:handymanId", authSession, verifyHandyman);
 
-export default router;
+/* ---------------------- SERVICE ROUTES ---------------------- */
 
-// routes/handyRoutes.js
-import express from 'express';
-import PostService from '../models/handyman/PostService.js';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-
-const router = express.Router();
-
-// Ensure uploads directory exists
-const uploadsDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Multer Storage Setup
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}${ext}`);
-  },
-});
-
-const upload = multer({ storage });
-
-// POST — Create Service (NO DRAFT ANYMORE)
-router.post('/services', upload.single('image'), async (req, res) => {
+// POST — Create Service
+router.post('/services', uploadServiceImage.single('image'), async (req, res) => {
   try {
     const handymanId = req.body.handymanId || '64f0b8b0a2c6c123456789ab';
     const { title, description, category, price, priceType } = req.body;
@@ -156,8 +148,7 @@ router.post('/services', upload.single('image'), async (req, res) => {
     const images = [];
     if (req.file) {
       const fullUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-images.push(fullUrl);
-
+      images.push(fullUrl);
     }
 
     const newService = new PostService({
@@ -168,7 +159,7 @@ images.push(fullUrl);
       price: Number(price),
       priceType: priceType || 'Hourly',
       images,
-      isActive: true, // ALWAYS ACTIVE NOW
+      isActive: true,
     });
 
     await newService.save();
