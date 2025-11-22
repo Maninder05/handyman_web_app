@@ -1,6 +1,6 @@
 import ClientProfile from "../../models/client/ClientDashboard.js";
 import User from "../../models/auth/User.js";
-import Bookings from "../../models/client/Bookings.js";
+//import Bookings from "../../models/client/Bookings.js";
 import PostJob from "../../models/client/PostJob.js";
 import Reviews from "../../models/mutual/Reviews.js";
 import Messages from "../../models/mutual/Messages.js";

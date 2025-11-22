@@ -21,7 +21,11 @@ import {
   Upload,
   X,
   Menu,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useSettings } from "../../context/SettingsContext";
+import { useTranslation } from "../../lib/translations";
 
 type UserType = "handyman" | "client" | "admin";
 
@@ -41,16 +45,11 @@ interface PasswordData {
   confirmPassword: string;
 }
 
-interface NotificationSettings {
-  emailNotifications: boolean;
-  smsNotifications: boolean;
-  pushNotifications: boolean;
-  jobAlerts: boolean;
-  messageAlerts: boolean;
-}
-
 export default function SettingsPage() {
   const router = useRouter();
+  const settings = useSettings();
+  const { t } = useTranslation(settings.language);
+
   const [activeTab, setActiveTab] = useState<"account" | "password" | "display" | "notifications" | "delete">("account");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -73,18 +72,6 @@ export default function SettingsPage() {
     confirmPassword: "",
   });
 
-  const [theme, setTheme] = useState<"light" | "dark" | "auto">("light");
-  const [language, setLanguage] = useState<"en" | "es" | "fr" | "de">("en");
-  const [timezone, setTimezone] = useState("UTC");
-
-  const [notifications, setNotifications] = useState<NotificationSettings>({
-    emailNotifications: true,
-    smsNotifications: false,
-    pushNotifications: true,
-    jobAlerts: true,
-    messageAlerts: true,
-  });
-
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -93,20 +80,6 @@ export default function SettingsPage() {
     setAlert({ type, message });
     setTimeout(() => setAlert(null), 5000);
   };
-
-  const loadDisplaySettings = useCallback(() => {
-    if (typeof window === "undefined") return;
-
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | "auto" | null;
-    const savedLanguage = localStorage.getItem("language") as "en" | "es" | "fr" | "de" | null;
-    const savedTimezone = localStorage.getItem("timezone");
-    const savedNotifications = localStorage.getItem("notifications");
-
-    if (savedTheme) setTheme(savedTheme);
-    if (savedLanguage) setLanguage(savedLanguage);
-    if (savedTimezone) setTimezone(savedTimezone);
-    if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
-  }, []);
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -117,13 +90,14 @@ export default function SettingsPage() {
         return;
       }
 
+      // Try client endpoint first
       let res = await fetch("http://localhost:7000/api/clients", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.ok) {
         const data = await res.json();
-        setUserType(data.userType || "client");
+        setUserType("client");
         setAccountData({
           firstName: data.firstName || data.name?.split(" ")[0] || "",
           lastName: data.lastName || data.name?.split(" ")[1] || "",
@@ -131,16 +105,17 @@ export default function SettingsPage() {
           phone: data.phone || data.contact || "+1 ",
           address: data.address || "",
           bio: data.bio || "",
-          profileImage: data.profileImage || data.profilePic || "",
+          profileImage: data.profilePic || data.profileImage || "",
         });
       } else {
+        // Try handyman endpoint
         res = await fetch("http://localhost:7000/api/handymen", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (res.ok) {
           const data = await res.json();
-          setUserType(data.userType || "handyman");
+          setUserType("handyman");
           setAccountData({
             firstName: data.firstName || data.name?.split(" ")[0] || "",
             lastName: data.lastName || data.name?.split(" ")[1] || "",
@@ -148,7 +123,7 @@ export default function SettingsPage() {
             phone: data.phone || data.contact || "+1 ",
             address: data.address || "",
             bio: data.bio || "",
-            profileImage: data.profileImage || data.profilePic || "",
+            profileImage: data.profilePic || data.profileImage || "",
           });
         } else if (res.status === 401) {
           localStorage.removeItem("token");
@@ -165,8 +140,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetchProfile();
-    loadDisplaySettings();
-  }, [fetchProfile, loadDisplaySettings]);
+  }, [fetchProfile]);
 
   const handlePhoneChange = (value: string) => {
     let cleaned = value.replace(/[^\d+]/g, "");
@@ -188,7 +162,9 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       const token = localStorage.getItem("token");
-      const endpoint = userType === "handyman" ? "http://localhost:7000/api/handymen" : "http://localhost:7000/api/clients";
+      const endpoint = userType === "handyman" 
+        ? "http://localhost:7000/api/handymen" 
+        : "http://localhost:7000/api/clients";
 
       const res = await fetch(endpoint, {
         method: "PUT",
@@ -207,15 +183,17 @@ export default function SettingsPage() {
         }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        showAlert("success", "Account updated successfully!");
-        router.refresh();
+        showAlert("success", t("accountUpdatedSuccess") || "Account updated successfully!");
+        await fetchProfile();
       } else {
-        const data = await res.json();
-        showAlert("error", data.message || "Failed to update");
+        showAlert("error", data.message || "Failed to update account");
       }
-    } catch {
-      showAlert("error", "Network error");
+    } catch (err) {
+      console.error("Update error:", err);
+      showAlert("error", t("networkError") || "Network error");
     } finally {
       setSaving(false);
     }
@@ -225,19 +203,19 @@ export default function SettingsPage() {
     e.preventDefault();
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      showAlert("error", "Passwords do not match");
+      showAlert("error", t("passwordsDoNotMatch") || "Passwords do not match");
       return;
     }
 
     if (passwordData.newPassword.length < 8) {
-      showAlert("error", "Password must be at least 8 characters");
+      showAlert("error", t("passwordMust8Chars") || "Password must be at least 8 characters");
       return;
     }
 
     setSaving(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:7000/api/users/change-password", {
+      const res = await fetch("http://localhost:7000/api/settings/change-password", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -249,45 +227,82 @@ export default function SettingsPage() {
         }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        showAlert("success", "Password changed successfully!");
+        showAlert("success", t("passwordChangedSuccess") || "Password changed successfully!");
         setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
       } else {
-        const data = await res.json();
         showAlert("error", data.message || "Failed to change password");
       }
-    } catch {
-      showAlert("error", "Network error");
+    } catch (err) {
+      console.error("Password error:", err);
+      showAlert("error", t("networkError") || "Network error");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDisplayUpdate = () => {
-    localStorage.setItem("theme", theme);
-    localStorage.setItem("language", language);
-    localStorage.setItem("timezone", timezone);
-    applyTheme(theme);
-    showAlert("success", "Display settings saved!");
-  };
+  const handleDisplayUpdate = async () => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:7000/api/settings/display", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          theme: settings.theme,
+          language: settings.language,
+          timezone: settings.timezone,
+        }),
+      });
 
-  const applyTheme = (themeValue: "light" | "dark" | "auto") => {
-    if (typeof window === "undefined") return;
-    const root = document.documentElement;
-    if (themeValue === "dark") {
-      root.classList.add("dark");
-    } else if (themeValue === "light") {
-      root.classList.remove("dark");
-    } else {
-      const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (isDark) root.classList.add("dark");
-      else root.classList.remove("dark");
+      const data = await res.json();
+
+      if (res.ok) {
+        showAlert("success", t("displaySettingsUpdatedSuccess") || "Display settings updated!");
+        await settings.refreshSettings();
+      } else {
+        showAlert("error", data.message || "Failed to update display settings");
+      }
+    } catch (err) {
+      console.error("Display error:", err);
+      showAlert("error", t("networkError") || "Network error");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleNotificationUpdate = () => {
-    localStorage.setItem("notifications", JSON.stringify(notifications));
-    showAlert("success", "Notification preferences saved!");
+  const handleNotificationUpdate = async () => {
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:7000/api/settings/notifications", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(settings.notifications),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        showAlert("success", t("notificationsSavedSuccess") || "Notification preferences saved!");
+        await settings.refreshSettings();
+      } else {
+        showAlert("error", data.message || "Failed to update notifications");
+      }
+    } catch (err) {
+      console.error("Notification error:", err);
+      showAlert("error", t("networkError") || "Network error");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -317,24 +332,22 @@ export default function SettingsPage() {
 
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
 
       if (res.ok) {
-        const data = await res.json();
-        setAccountData({
-          ...accountData,
-          profileImage: data.profilePic || data.imageUrl,
-        });
-        showAlert("success", "Profile picture updated!");
+        showAlert("success", "Profile picture updated successfully!");
         await fetchProfile();
       } else {
         const data = await res.json();
         showAlert("error", data.message || "Failed to upload image");
       }
-    } catch {
-      showAlert("error", "Network error");
+    } catch (err) {
+      console.error("Image upload error:", err);
+      showAlert("error", t("networkError") || "Network error");
     } finally {
       setSaving(false);
     }
@@ -342,7 +355,7 @@ export default function SettingsPage() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    router.push("/");
+    router.push("/signup?mode=login");
   };
 
   const handleDeleteAccount = async () => {
@@ -354,7 +367,9 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       const token = localStorage.getItem("token");
-      const endpoint = userType === "handyman" ? "http://localhost:7000/api/handymen" : "http://localhost:7000/api/clients";
+      const endpoint = userType === "handyman" 
+        ? "http://localhost:7000/api/handymen" 
+        : "http://localhost:7000/api/clients";
 
       const res = await fetch(endpoint, {
         method: "DELETE",
@@ -363,17 +378,19 @@ export default function SettingsPage() {
 
       if (res.ok) {
         localStorage.removeItem("token");
-        showAlert("success", "Account deleted");
+        showAlert("success", "Account deleted successfully");
         setTimeout(() => router.push("/signup?mode=signup"), 1500);
       } else {
         const data = await res.json();
-        showAlert("error", data.message || "Failed to delete");
+        showAlert("error", data.message || "Failed to delete account");
       }
-    } catch {
-      showAlert("error", "Network error");
+    } catch (err) {
+      console.error("Delete error:", err);
+      showAlert("error", t("networkError") || "Network error");
     } finally {
       setSaving(false);
       setShowDeleteModal(false);
+      setDeleteConfirmation("");
     }
   };
 
@@ -583,6 +600,7 @@ export default function SettingsPage() {
                           value={accountData.bio}
                           onChange={(e) => setAccountData({ ...accountData, bio: e.target.value })}
                           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A574] min-h-[120px]"
+                          placeholder="Tell clients about your skills and experience..."
                         />
                       </div>
                     )}
@@ -612,6 +630,7 @@ export default function SettingsPage() {
                         value={passwordData.currentPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
+                        placeholder="Enter current password"
                         required
                       />
                     </div>
@@ -624,10 +643,11 @@ export default function SettingsPage() {
                         value={passwordData.newPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
+                        placeholder="Enter new password"
                         required
                         minLength={8}
                       />
-                      <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
+                      <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters long</p>
                     </div>
                     <div>
                       <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -638,6 +658,7 @@ export default function SettingsPage() {
                         value={passwordData.confirmPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
+                        placeholder="Confirm new password"
                         required
                       />
                     </div>
@@ -658,50 +679,85 @@ export default function SettingsPage() {
                   <h2 className="text-2xl font-bold text-[#1a1a1a] dark:text-gray-100 mb-6">Display Settings</h2>
                   <div className="space-y-6 max-w-lg">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Theme</label>
-                      <select
-                        value={theme}
-                        onChange={(e) => setTheme(e.target.value as "light" | "dark" | "auto")}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
-                      >
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
-                        <option value="auto">Auto</option>
-                      </select>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 block">Theme</label>
+                      <div className="grid grid-cols-3 gap-4">
+                        <button
+                          type="button"
+                          onClick={() => settings.setTheme("light")}
+                          className={`p-4 border-2 rounded-lg transition ${
+                            settings.theme === "light"
+                              ? "border-[#D4A574] bg-[#D4A574]/10"
+                              : "border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                          }`}
+                        >
+                          <Sun size={32} className="mx-auto mb-2 text-yellow-500" />
+                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">Light</p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => settings.setTheme("dark")}
+                          className={`p-4 border-2 rounded-lg transition ${
+                            settings.theme === "dark"
+                              ? "border-[#D4A574] bg-[#D4A574]/10"
+                              : "border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                          }`}
+                        >
+                          <Moon size={32} className="mx-auto mb-2 text-gray-700 dark:text-gray-300" />
+                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">Dark</p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => settings.setTheme("auto")}
+                          className={`p-4 border-2 rounded-lg transition ${
+                            settings.theme === "auto"
+                              ? "border-[#D4A574] bg-[#D4A574]/10"
+                              : "border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                          }`}
+                        >
+                          <Monitor size={32} className="mx-auto mb-2 text-gray-600 dark:text-gray-400" />
+                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">Auto</p>
+                        </button>
+                      </div>
                     </div>
+
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Language</label>
                       <select
-                        value={language}
-                        onChange={(e) => setLanguage(e.target.value as "en" | "es" | "fr" | "de")}
+                        value={settings.language}
+                        onChange={(e) => settings.setLanguage(e.target.value as "en" | "es" | "fr" | "de")}
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
                       >
                         <option value="en">English</option>
-                        <option value="es">Spanish</option>
-                        <option value="fr">French</option>
-                        <option value="de">German</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                        <option value="de">Deutsch</option>
                       </select>
                     </div>
+
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timezone</label>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Timezone</label>
                       <select
-                        value={timezone}
-                        onChange={(e) => setTimezone(e.target.value)}
+                        value={settings.timezone}
+                        onChange={(e) => settings.setTimezone(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
                       >
-                        <option value="UTC">UTC</option>
-                        <option value="EST">Eastern (EST)</option>
-                        <option value="CST">Central (CST)</option>
-                        <option value="MST">Mountain (MST)</option>
-                        <option value="PST">Pacific (PST)</option>
+                        <option value="UTC">UTC (Coordinated Universal Time)</option>
+                        <option value="EST">EST (Eastern Time)</option>
+                        <option value="CST">CST (Central Time)</option>
+                        <option value="MST">MST (Mountain Time)</option>
+                        <option value="PST">PST (Pacific Time)</option>
                       </select>
                     </div>
+
                     <button
                       onClick={handleDisplayUpdate}
-                      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold"
+                      disabled={saving}
+                      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold disabled:opacity-50"
                     >
                       <Save size={20} />
-                      Save Display Settings
+                      {saving ? "Saving..." : "Save Changes"}
                     </button>
                   </div>
                 </div>
@@ -709,37 +765,43 @@ export default function SettingsPage() {
 
               {activeTab === "notifications" && (
                 <div>
-                  <h2 className="text-2xl font-bold text-[#1a1a1a] dark:text-gray-100 mb-6">Notifications</h2>
+                  <h2 className="text-2xl font-bold text-[#1a1a1a] dark:text-gray-100 mb-6">Notification Settings</h2>
                   <div className="space-y-4">
                     {[
-                      { key: "emailNotifications", label: "Email Notifications", desc: "Receive updates via email" },
-                      { key: "smsNotifications", label: "SMS Notifications", desc: "Receive updates via text" },
-                      { key: "pushNotifications", label: "Push Notifications", desc: "Browser notifications" },
-                      { key: "jobAlerts", label: "Job Alerts", desc: "New job opportunities" },
-                      { key: "messageAlerts", label: "Message Alerts", desc: "New messages" },
-                    ].map((item) => (
-                      <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#2a2a2a] rounded-lg">
+                      { key: "emailNotifications", label: "Email Notifications", desc: "Receive notifications via email" },
+                      { key: "smsNotifications", label: "SMS Notifications", desc: "Receive notifications via SMS" },
+                      { key: "pushNotifications", label: "Push Notifications", desc: "Receive push notifications in browser" },
+                      { key: "jobAlerts", label: "Job Alerts", desc: "Get notified about new job opportunities" },
+                      { key: "messageAlerts", label: "Message Alerts", desc: "Get notified when you receive new messages" },
+                    ].map(({ key, label, desc }) => (
+                      <div key={key} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-[#D4A574] transition">
                         <div>
-                          <h3 className="font-semibold text-[#1a1a1a] dark:text-gray-100">{item.label}</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{item.desc}</p>
+                          <h3 className="font-semibold text-[#1a1a1a] dark:text-gray-100">{label}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{desc}</p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={notifications[item.key as keyof NotificationSettings]}
-                            onChange={(e) => setNotifications({ ...notifications, [item.key]: e.target.checked })}
+                            checked={settings.notifications[key as keyof typeof settings.notifications]}
+                            onChange={(e) =>
+                              settings.updateNotifications({
+                                ...settings.notifications,
+                                [key]: e.target.checked,
+                              })
+                            }
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#D4A574]/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#D4A574]"></div>
+                          <div className="w-11 h-6 bg-gray-300 rounded-full peer dark:bg-gray-700 peer-checked:bg-[#D4A574] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                         </label>
                       </div>
                     ))}
                     <button
                       onClick={handleNotificationUpdate}
-                      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold"
+                      disabled={saving}
+                      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold disabled:opacity-50"
                     >
                       <Save size={20} />
-                      Save Preferences
+                      {saving ? "Saving..." : "Save Changes"}
                     </button>
                   </div>
                 </div>
@@ -752,8 +814,14 @@ export default function SettingsPage() {
                     <div className="flex items-start gap-3">
                       <AlertCircle size={24} className="text-red-600 flex-shrink-0 mt-1" />
                       <div>
-                        <h3 className="font-bold text-red-900 dark:text-red-100 mb-2">⚠️ Warning: Irreversible!</h3>
-                        <p className="text-red-700 dark:text-red-300 text-sm">This will permanently delete all your data.</p>
+                        <h3 className="font-bold text-red-900 dark:text-red-100 mb-2">⚠️ Warning: This action is irreversible!</h3>
+                        <p className="text-red-700 dark:text-red-300 text-sm mb-2">Deleting your account will permanently remove:</p>
+                        <ul className="text-red-700 dark:text-red-300 text-sm space-y-1 list-disc list-inside">
+                          <li>Your profile and all personal information</li>
+                          <li>All your {userType === "handyman" ? "services and job history" : "bookings and job postings"}</li>
+                          <li>All messages and conversations</li>
+                          <li>Access to the platform</li>
+                        </ul>
                       </div>
                     </div>
                   </div>
@@ -775,35 +843,53 @@ export default function SettingsPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
           <div className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
-              <AlertCircle size={24} className="text-red-600" />
-              <h3 className="text-xl font-bold text-red-600">Confirm Deletion</h3>
-              <button onClick={() => setShowDeleteModal(false)} className="ml-auto">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                <AlertCircle size={24} className="text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-red-600">Confirm Account Deletion</h3>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmation("");
+                }}
+                className="ml-auto p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+              >
                 <X size={20} />
               </button>
             </div>
-            <p className="text-gray-700 dark:text-gray-300 mb-4">
-              Type <span className="font-bold text-red-600">DELETE</span> to confirm
-            </p>
-            <input
-              type="text"
-              value={deleteConfirmation}
-              onChange={(e) => setDeleteConfirmation(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-red-300 dark:border-red-700 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 mb-6"
-              placeholder="Type DELETE here"
-            />
+
+            <p className="text-gray-700 dark:text-gray-300 mb-4">This action cannot be undone. All your data will be permanently deleted.</p>
+
+            <div className="mb-6">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                Type <span className="font-bold text-red-600">DELETE</span> to confirm
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-red-300 dark:border-red-700 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="Type DELETE here"
+              />
+            </div>
+
             <div className="flex gap-3">
               <button
-                onClick={() => setShowDeleteModal(false)}
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmation("");
+                }}
                 className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium"
               >
                 Cancel
               </button>
+
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleteConfirmation.toLowerCase() !== "delete" || saving}
-                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50"
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {saving ? "Deleting..." : "Delete"}
+                {saving ? "Deleting..." : "Delete Account"}
               </button>
             </div>
           </div>
