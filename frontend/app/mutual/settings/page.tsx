@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useSettings } from "../../context/SettingsContext";
 import { useTranslation } from "../../lib/translations";
+} from "lucide-react";
 
 type UserType = "handyman" | "client" | "admin";
 
@@ -72,6 +73,19 @@ export default function SettingsPage() {
     confirmPassword: "",
   });
 
+
+  const [theme, setTheme] = useState<"light" | "dark" | "auto">("light");
+  const [language, setLanguage] = useState<"en" | "es" | "fr" | "de">("en");
+  const [timezone, setTimezone] = useState("UTC");
+
+  const [notifications, setNotifications] = useState<NotificationSettings>({
+    emailNotifications: true,
+    smsNotifications: false,
+    pushNotifications: true,
+    jobAlerts: true,
+    messageAlerts: true,
+  });
+
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -80,6 +94,20 @@ export default function SettingsPage() {
     setAlert({ type, message });
     setTimeout(() => setAlert(null), 5000);
   };
+
+  const loadDisplaySettings = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | "auto" | null;
+    const savedLanguage = localStorage.getItem("language") as "en" | "es" | "fr" | "de" | null;
+    const savedTimezone = localStorage.getItem("timezone");
+    const savedNotifications = localStorage.getItem("notifications");
+
+    if (savedTheme) setTheme(savedTheme);
+    if (savedLanguage) setLanguage(savedLanguage);
+    if (savedTimezone) setTimezone(savedTimezone);
+    if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
+  }, []);
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -98,6 +126,7 @@ export default function SettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setUserType("client");
+        setUserType(data.userType || "client");
         setAccountData({
           firstName: data.firstName || data.name?.split(" ")[0] || "",
           lastName: data.lastName || data.name?.split(" ")[1] || "",
@@ -109,13 +138,18 @@ export default function SettingsPage() {
         });
       } else {
         // Try handyman endpoint
+          profileImage: data.profileImage || data.profilePic || "",
+        });
+      } else {
         res = await fetch("http://localhost:7000/api/handymen", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (res.ok) {
           const data = await res.json();
+
           setUserType("handyman");
+          setUserType(data.userType || "handyman");
           setAccountData({
             firstName: data.firstName || data.name?.split(" ")[0] || "",
             lastName: data.lastName || data.name?.split(" ")[1] || "",
@@ -124,6 +158,7 @@ export default function SettingsPage() {
             address: data.address || "",
             bio: data.bio || "",
             profileImage: data.profilePic || data.profileImage || "",
+            profileImage: data.profileImage || data.profilePic || "",
           });
         } else if (res.status === 401) {
           localStorage.removeItem("token");
@@ -141,6 +176,8 @@ export default function SettingsPage() {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+    loadDisplaySettings();
+  }, [fetchProfile, loadDisplaySettings]);
 
   const handlePhoneChange = (value: string) => {
     let cleaned = value.replace(/[^\d+]/g, "");
@@ -165,6 +202,7 @@ export default function SettingsPage() {
       const endpoint = userType === "handyman" 
         ? "http://localhost:7000/api/handymen" 
         : "http://localhost:7000/api/clients";
+      const endpoint = userType === "handyman" ? "http://localhost:7000/api/handymen" : "http://localhost:7000/api/clients";
 
       const res = await fetch(endpoint, {
         method: "PUT",
@@ -194,6 +232,15 @@ export default function SettingsPage() {
     } catch (err) {
       console.error("Update error:", err);
       showAlert("error", t("networkError") || "Network error");
+      if (res.ok) {
+        showAlert("success", "Account updated successfully!");
+        router.refresh();
+      } else {
+        const data = await res.json();
+        showAlert("error", data.message || "Failed to update");
+      }
+    } catch {
+      showAlert("error", "Network error");
     } finally {
       setSaving(false);
     }
@@ -204,11 +251,13 @@ export default function SettingsPage() {
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       showAlert("error", t("passwordsDoNotMatch") || "Passwords do not match");
+      showAlert("error", "Passwords do not match");
       return;
     }
 
     if (passwordData.newPassword.length < 8) {
       showAlert("error", t("passwordMust8Chars") || "Password must be at least 8 characters");
+      showAlert("error", "Password must be at least 8 characters");
       return;
     }
 
@@ -233,11 +282,15 @@ export default function SettingsPage() {
         showAlert("success", t("passwordChangedSuccess") || "Password changed successfully!");
         setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
       } else {
+      if (res.ok) {
+        showAlert("success", "Password changed successfully!");
+        setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      } else {
+        const data = await res.json();
         showAlert("error", data.message || "Failed to change password");
       }
-    } catch (err) {
-      console.error("Password error:", err);
-      showAlert("error", t("networkError") || "Network error");
+    } catch {
+      showAlert("error", "Network error");
     } finally {
       setSaving(false);
     }
@@ -303,6 +356,31 @@ export default function SettingsPage() {
     } finally {
       setSaving(false);
     }
+  const handleDisplayUpdate = () => {
+    localStorage.setItem("theme", theme);
+    localStorage.setItem("language", language);
+    localStorage.setItem("timezone", timezone);
+    applyTheme(theme);
+    showAlert("success", "Display settings saved!");
+  };
+
+  const applyTheme = (themeValue: "light" | "dark" | "auto") => {
+    if (typeof window === "undefined") return;
+    const root = document.documentElement;
+    if (themeValue === "dark") {
+      root.classList.add("dark");
+    } else if (themeValue === "light") {
+      root.classList.remove("dark");
+    } else {
+      const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (isDark) root.classList.add("dark");
+      else root.classList.remove("dark");
+    }
+  };
+
+  const handleNotificationUpdate = () => {
+    localStorage.setItem("notifications", JSON.stringify(notifications));
+    showAlert("success", "Notification preferences saved!");
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -335,11 +413,18 @@ export default function SettingsPage() {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
       if (res.ok) {
         showAlert("success", "Profile picture updated successfully!");
+        const data = await res.json();
+        setAccountData({
+          ...accountData,
+          profileImage: data.profilePic || data.imageUrl,
+        });
+        showAlert("success", "Profile picture updated!");
         await fetchProfile();
       } else {
         const data = await res.json();
@@ -348,6 +433,8 @@ export default function SettingsPage() {
     } catch (err) {
       console.error("Image upload error:", err);
       showAlert("error", t("networkError") || "Network error");
+    } catch {
+      showAlert("error", "Network error");
     } finally {
       setSaving(false);
     }
@@ -370,6 +457,7 @@ export default function SettingsPage() {
       const endpoint = userType === "handyman" 
         ? "http://localhost:7000/api/handymen" 
         : "http://localhost:7000/api/clients";
+      const endpoint = userType === "handyman" ? "http://localhost:7000/api/handymen" : "http://localhost:7000/api/clients";
 
       const res = await fetch(endpoint, {
         method: "DELETE",
@@ -386,7 +474,14 @@ export default function SettingsPage() {
       }
     } catch (err) {
       console.error("Delete error:", err);
-      showAlert("error", t("networkError") || "Network error");
+        showAlert("success", "Account deleted");
+        setTimeout(() => router.push("/signup?mode=signup"), 1500);
+      } else {
+        const data = await res.json();
+        showAlert("error", data.message || "Failed to delete");
+      }
+    } catch {
+      showAlert("error", "Network error");
     } finally {
       setSaving(false);
       setShowDeleteModal(false);
@@ -648,6 +743,10 @@ export default function SettingsPage() {
                         minLength={8}
                       />
                       <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters long</p>
+                        required
+                        minLength={8}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
                     </div>
                     <div>
                       <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -758,6 +857,50 @@ export default function SettingsPage() {
                     >
                       <Save size={20} />
                       {saving ? "Saving..." : "Save Changes"}
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Theme</label>
+                      <select
+                        value={theme}
+                        onChange={(e) => setTheme(e.target.value as "light" | "dark" | "auto")}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
+                      >
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                        <option value="auto">Auto</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
+                      <select
+                        value={language}
+                        onChange={(e) => setLanguage(e.target.value as "en" | "es" | "fr" | "de")}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
+                      >
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timezone</label>
+                      <select
+                        value={timezone}
+                        onChange={(e) => setTimezone(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4A574]"
+                      >
+                        <option value="UTC">UTC</option>
+                        <option value="EST">Eastern (EST)</option>
+                        <option value="CST">Central (CST)</option>
+                        <option value="MST">Mountain (MST)</option>
+                        <option value="PST">Pacific (PST)</option>
+                      </select>
+                    </div>
+                    <button
+                      onClick={handleDisplayUpdate}
+                      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold"
+                    >
+                      <Save size={20} />
+                      Save Display Settings
                     </button>
                   </div>
                 </div>
@@ -775,6 +918,16 @@ export default function SettingsPage() {
                       { key: "messageAlerts", label: "Message Alerts", desc: "Get notified when you receive new messages" },
                     ].map(({ key, label, desc }) => (
                       <div key={key} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-[#D4A574] transition">
+                  <h2 className="text-2xl font-bold text-[#1a1a1a] dark:text-gray-100 mb-6">Notifications</h2>
+                  <div className="space-y-4">
+                    {[
+                      { key: "emailNotifications", label: "Email Notifications", desc: "Receive updates via email" },
+                      { key: "smsNotifications", label: "SMS Notifications", desc: "Receive updates via text" },
+                      { key: "pushNotifications", label: "Push Notifications", desc: "Browser notifications" },
+                      { key: "jobAlerts", label: "Job Alerts", desc: "New job opportunities" },
+                      { key: "messageAlerts", label: "Message Alerts", desc: "New messages" },
+                    ].map((item) => (
+                      <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#2a2a2a] rounded-lg">
                         <div>
                           <h3 className="font-semibold text-[#1a1a1a] dark:text-gray-100">{label}</h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400">{desc}</p>
@@ -792,6 +945,11 @@ export default function SettingsPage() {
                             className="sr-only peer"
                           />
                           <div className="w-11 h-6 bg-gray-300 rounded-full peer dark:bg-gray-700 peer-checked:bg-[#D4A574] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                            checked={notifications[item.key as keyof NotificationSettings]}
+                            onChange={(e) => setNotifications({ ...notifications, [item.key]: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#D4A574]/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#D4A574]"></div>
                         </label>
                       </div>
                     ))}
@@ -802,6 +960,10 @@ export default function SettingsPage() {
                     >
                       <Save size={20} />
                       {saving ? "Saving..." : "Save Changes"}
+                      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold"
+                    >
+                      <Save size={20} />
+                      Save Preferences
                     </button>
                   </div>
                 </div>
@@ -822,6 +984,8 @@ export default function SettingsPage() {
                           <li>All messages and conversations</li>
                           <li>Access to the platform</li>
                         </ul>
+                        <h3 className="font-bold text-red-900 dark:text-red-100 mb-2">⚠️ Warning: Irreversible!</h3>
+                        <p className="text-red-700 dark:text-red-300 text-sm">This will permanently delete all your data.</p>
                       </div>
                     </div>
                   </div>
@@ -879,6 +1043,25 @@ export default function SettingsPage() {
                   setShowDeleteModal(false);
                   setDeleteConfirmation("");
                 }}
+              <AlertCircle size={24} className="text-red-600" />
+              <h3 className="text-xl font-bold text-red-600">Confirm Deletion</h3>
+              <button onClick={() => setShowDeleteModal(false)} className="ml-auto">
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-gray-700 dark:text-gray-300 mb-4">
+              Type <span className="font-bold text-red-600">DELETE</span> to confirm
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmation}
+              onChange={(e) => setDeleteConfirmation(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-red-300 dark:border-red-700 dark:bg-[#2a2a2a] dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 mb-6"
+              placeholder="Type DELETE here"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
                 className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium"
               >
                 Cancel
@@ -890,6 +1073,12 @@ export default function SettingsPage() {
                 className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? "Deleting..." : "Delete Account"}
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmation.toLowerCase() !== "delete" || saving}
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50"
+              >
+                {saving ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
