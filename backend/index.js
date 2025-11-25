@@ -20,7 +20,7 @@ import settingsRoutes from './routes/mutualRoutes.js';
 
 dotenv.config();
 
-const app = express();
+const app = express();  // ✅ CREATE APP FIRST!
 const PORT = process.env.PORT || 7000;
 
 // HTTP server
@@ -54,11 +54,11 @@ const __dirname = path.dirname(__filename);
 const uploadsPath = path.join(__dirname, "uploads");
 app.use("/uploads", express.static(uploadsPath));
 
-// API Routes - ONLY ONE USE PER ROUTE!
+// API Routes - ✅ ALL ROUTES HERE AFTER APP IS CREATED!
 app.use('/api/auth', authRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/handymen', handymanRoutes);
-app.use('/api/settings', settingsRoutes);
+app.use('/api/settings', settingsRoutes);  // ✅ ALREADY HERE, PERFECT!
 
 // Socket.io Events
 io.on('connection', (socket) => {

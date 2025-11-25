@@ -5,24 +5,20 @@ import {
   updateDisplay,
   updateNotifications,
   changePassword,
-  deleteAccount,
 } from '../controllers/mutual/settingsController.js';
 
 const router = express.Router();
 
-// Get all settings
+// GET settings
 router.get('/', authSession, getSettings);
 
-// Update display settings
+// UPDATE display settings
 router.put('/display', authSession, updateDisplay);
 
-// Update notification settings
+// UPDATE notifications
 router.put('/notifications', authSession, updateNotifications);
 
-// Change password
+// CHANGE password
 router.put('/change-password', authSession, changePassword);
-
-// Delete account
-router.delete('/account', authSession, deleteAccount);
 
 export default router;
