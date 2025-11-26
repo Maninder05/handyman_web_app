@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Menu, X, Briefcase, Users, Calendar, HelpCircle, Settings, AlertCircle,Bell,Upload,Camera } from "lucide-react";
+import { Briefcase, Users, Calendar, HelpCircle, Upload, Camera } from "lucide-react";
 import { FiUser, FiDollarSign, FiShoppingBag } from "react-icons/fi";
 import Header from "../../components/clientHeader";
 
@@ -35,12 +35,9 @@ type ClientProfile = {
 };
 
 export default function ClientDashboard() {
-  const [showMenu, setShowMenu] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -50,7 +47,6 @@ export default function ClientDashboard() {
   useEffect(() => {
     fetchProfile();
     
-    // Refetch when page becomes visible (e.g., returning from settings)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         fetchProfile();
@@ -62,12 +58,10 @@ export default function ClientDashboard() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchProfile = async () => {
     setLoading(true);
-    setError(null);
     
     try {
       const token = localStorage.getItem("token");
@@ -76,26 +70,19 @@ export default function ClientDashboard() {
         return;
       }
 
-      const res = await fetch("http://localhost:7000/api/client", {
+      const res = await fetch("http://localhost:7000/api/clients", {
         headers: { "Authorization": `Bearer ${token}` },
       });
 
       if (res.ok) {
         const data = await res.json();
         setProfile(data);
-        setError(null);
       } else if (res.status === 401) {
         localStorage.removeItem("token");
         router.push("/signup?mode=login");
-      } else if (res.status === 404) {
-        setError("Profile not found. Please complete your profile setup.");
-      } else if (res.status >= 500) {
-        setError("Our servers are experiencing issues. Please try again in a moment.");
-      } else {
-        setError("Unable to load your profile. Please try again.");
       }
     } catch (err) {
-      setError("Connection error. Please check your internet connection and try again.");
+      console.error("Error fetching profile:", err);
     } finally {
       setLoading(false);
     }
@@ -104,13 +91,11 @@ export default function ClientDashboard() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         alert('Please select an image file');
         return;
       }
       
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert('File size must be less than 5MB');
         return;
@@ -118,7 +103,6 @@ export default function ClientDashboard() {
 
       setSelectedFile(file);
       
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewUrl(reader.result as string);
@@ -135,30 +119,26 @@ export default function ClientDashboard() {
     try {
       const token = localStorage.getItem("token");
       const formData = new FormData();
-      formData.append('profileImage', selectedFile); // Must match backend field name
+      formData.append('profileImage', selectedFile);
 
-      const res = await fetch("http://localhost:7000/api/client/upload-profile-image", {
+      const res = await fetch("http://localhost:7000/api/clients/upload-profile-pic", {
         method: 'POST',
         headers: {
           "Authorization": `Bearer ${token}`,
-          // DO NOT set Content-Type - browser sets it automatically with boundary
         },
-        body: formData, // Send FormData, not JSON
+        body: formData,
       });
 
       if (res.ok) {
         const data = await res.json();
-        // Update with the URL returned from backend
         setProfile(prev => prev ? { 
           ...prev, 
-          profileImage: data.profilePic || data.imageUrl,
-          profilePic: data.profilePic || data.imageUrl
+          profileImage: data.profilePic || data.imageUrl
         } : null);
         setShowUploadModal(false);
         setSelectedFile(null);
         setPreviewUrl(null);
         
-        // Refetch to get fresh data
         fetchProfile();
       } else {
         const error = await res.json();
@@ -177,16 +157,6 @@ export default function ClientDashboard() {
     router.push("/");
   };
 
-  const toggleMenu = () => {
-    setShowMenu(!showMenu);
-    setShowProfileMenu(false);
-  };
-
-  const toggleProfile = () => {
-    setShowProfileMenu(!showProfileMenu);
-    setShowMenu(false);
-  };
-
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'accepted': return 'bg-green-100 text-green-700';
@@ -197,7 +167,6 @@ export default function ClientDashboard() {
     }
   };
 
-  // Loading State
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center">
@@ -209,46 +178,21 @@ export default function ClientDashboard() {
     );
   }
 
-  // Error State
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center p-6">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle size={32} className="text-red-600" />
-          </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Unable to Load Dashboard</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <div className="flex gap-3 justify-center">
-            <button 
-              onClick={() => fetchProfile()} 
-              className="px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-medium"
-            >
-              Try Again
-            </button>
-            <button 
-              onClick={() => router.push("/")} 
-              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
-            >
-              Go Home
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Main Dashboard
   return (
     <div className="min-h-screen bg-[#F5F5F0] flex flex-col text-gray-900">
-      {/* HEADER */}
-      <Header pageTitle="Client Dashboard"  onLogout={handleLogout} />
-      {/* PROFILE SECTION */}
+      <Header 
+        pageTitle="Client Dashboard" 
+        onLogout={handleLogout}
+        profile={{
+          profileImage: profile?.profileImage,
+          notificationsCount: profile?.notificationsCount || 0
+        }}
+      />
+
       <main className="flex-1 overflow-y-auto pb-10">
         <section className="bg-gradient-to-br from-[#D4A574] to-[#B8A565] py-8">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col items-center text-center mb-8">
-              {/* Profile Picture with Upload Button */}
               <div className="relative mb-4">
                 {profile?.profileImage ? (
                   <Image
@@ -264,7 +208,6 @@ export default function ClientDashboard() {
                   </div>
                 )}
                 
-                {/* Camera Icon Button */}
                 <button
                   onClick={() => setShowUploadModal(true)}
                   className="absolute bottom-0 right-0 bg-[#D4A574] p-2 rounded-full border-4 border-white shadow-lg hover:bg-[#B8A565] transition"
@@ -288,7 +231,6 @@ export default function ClientDashboard() {
               )}
             </div>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center border border-white/30">
                 <p className="text-3xl font-bold text-white">{profile?.servicesBooked || 0}</p>
@@ -306,7 +248,6 @@ export default function ClientDashboard() {
           </div>
         </section>
 
-        {/* SPENDING & BOOKINGS */}
         <section className="max-w-7xl mx-auto px-6 py-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100 hover:shadow-lg transition">
@@ -337,17 +278,16 @@ export default function ClientDashboard() {
           </div>
         </section>
 
-        {/* QUICK ACTIONS */}
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <h3 className="text-xl font-bold text-[#1a1a1a] mb-6">Quick Actions</h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="./clientPostJob" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="/client/clientPostJob" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Briefcase size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Post Jobs</h4>
               <p className="text-gray-500 text-sm mt-1">Hire handymen</p>
             </Link>
 
-            <Link href="./clientFindHandyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="/client/clientFindHandyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Users size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Find Handyman</h4>
               <p className="text-gray-500 text-sm mt-1">Browse profiles</p>
@@ -359,7 +299,7 @@ export default function ClientDashboard() {
               <p className="text-gray-500 text-sm mt-1">Track orders</p>
             </Link>
 
-            <Link href="../mutual/support" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+            <Link href="/mutual/support" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <HelpCircle size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Help</h4>
               <p className="text-gray-500 text-sm mt-1">Get support</p>
@@ -367,7 +307,6 @@ export default function ClientDashboard() {
           </div>
         </section>
 
-        {/* RECENT BOOKINGS WITH STATUS */}
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-[#1a1a1a]">Recent Bookings</h3>
@@ -384,7 +323,7 @@ export default function ClientDashboard() {
               <p className="text-gray-400 text-lg mb-2">No bookings yet</p>
               <p className="text-gray-500 text-sm mb-4">Post your first job to get started</p>
               <Link 
-                href="./clientPostJob"
+                href="/client/clientPostJob"
                 className="inline-block px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold shadow-lg hover:shadow-xl"
               >
                 Post Jobs
@@ -411,13 +350,11 @@ export default function ClientDashboard() {
         </section>
       </main>
 
-      {/* UPLOAD PROFILE IMAGE MODAL */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-[#1a1a1a] mb-4">Upload Profile Picture</h3>
             
-            {/* Preview Area */}
             <div className="mb-6">
               {previewUrl ? (
                 <div className="relative w-40 h-40 mx-auto mb-4">
@@ -436,7 +373,6 @@ export default function ClientDashboard() {
               )}
             </div>
 
-            {/* File Input */}
             <input
               ref={fileInputRef}
               type="file"
@@ -445,7 +381,6 @@ export default function ClientDashboard() {
               className="hidden"
             />
 
-            {/* Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={() => fileInputRef.current?.click()}

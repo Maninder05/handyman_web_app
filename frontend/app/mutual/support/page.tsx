@@ -12,6 +12,11 @@ export default function HelpCentrePage() {
   return (
     <div className="min-h-screen bg-white text-black">
       {/* HEADER */}
+
+      <div>
+        <Header pageTitle="Help Center" onLogout={handleLogout} />
+      </div>
+
       <header className="w-full flex items-center justify-between px-16 py-4 bg-black shadow-md">
         <h1 className="text-2xl font-semibold text-white">Help Centre</h1>
         <button
