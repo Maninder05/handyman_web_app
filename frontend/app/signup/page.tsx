@@ -12,13 +12,11 @@ export default function Signup() {
   const [showSignup, setShowSignup] = useState(!defaultMode);
   const [showLogin, setShowLogin] = useState(defaultMode);
 
-  // Signup state
   const [username, setUsername] = useState("");
   const [userType, setUserType] = useState("client");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
@@ -26,7 +24,6 @@ export default function Signup() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
 
-  // ---------- Validation ----------
   const validateSignup = () => {
     const errs: Record<string, string> = {};
     if (username.trim().length < 3)
@@ -49,30 +46,27 @@ export default function Signup() {
     return Object.keys(errs).length === 0;
   };
 
-  // If OAuth returned token in query -> save and redirect
   useEffect(() => {
     const token = searchParams.get("token");
     const type = searchParams.get("userType");
 
     if (token) {
       localStorage.setItem("token", token);
-
       if (type === "client") {
-        router.push("../client/clientDashboard");
+        router.push("/client/clientDashboard");
       } else {
-        router.push("../handyman/handyDashboard");
+        router.push("/handyman/handyDashboard");
       }
     }
   }, [searchParams, router]);
 
-  // ---------- API Calls ----------
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateSignup()) return;
 
     try {
       const res = await axios.post(
-        `${API_BASE}/api/users/signup`,
+        `${API_BASE}/api/auth/signup`,
         { username, email, password, userType },
         { withCredentials: true }
       );
@@ -80,16 +74,14 @@ export default function Signup() {
       alert(res.data.message || "Signup successful");
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
-  
       }
 
       setShowSignup(false);
 
-      // Redirect based on userType
       if (userType === "client") {
-        router.push("../client/clientDashboard");
+        router.push("/client/clientDashboard");
       } else {
-        router.push("../handyman//handyDashboard");
+        router.push("/handyman/handyDashboard");
       }
     } catch (err: any) {
       alert(err.response?.data?.message || "Signup failed");
@@ -102,7 +94,7 @@ export default function Signup() {
 
     try {
       const res = await axios.post(
-        `${API_BASE}/api/users/login`,
+        `${API_BASE}/api/auth/login`,
         { email: loginEmail, password: loginPassword },
         { withCredentials: true }
       );
@@ -113,33 +105,29 @@ export default function Signup() {
 
       setShowLogin(false);
 
-      //  FIXED: Redirect based on userType from backend response
-      // Redirect based on userType from backend response
       if (res.data.userType === "client") {
-        router.push("../client/clientDashboard");
+        router.push("/client/clientDashboard");
       } else {
-        router.push("../handyman/handyDashboard");
+        router.push("/handyman/handyDashboard");
       }
     } catch (err: any) {
       alert(err.response?.data?.message || "Login failed");
     }
   };
 
-  // OAuth redirects to backend. Backend will redirect back to this page with ?token=...
   const oauthGoogle = () => {
-    window.location.href = `${API_BASE}/api/users/auth/google`;
+    window.location.href = `${API_BASE}/api/auth/google`;
   };
+
   const oauthFacebook = () => {
-    // localStorage.setItem("userType", userType);
-    window.location.href = `${API_BASE}/api/users/auth/facebook`;
+    window.location.href = `${API_BASE}/api/auth/facebook`;
   };
 
   return (
     <main className="min-h-screen bg-black flex items-center justify-center">
-      {/* Signup Modal */}
       {showSignup && (
         <div className="fixed inset-0 bg-gray-300 flex items-center justify-center z-50">
-          <div className="relative bg-black border border-neutral-700 rounded-2xl shadow-2xl w-full max-w-md p-8 scale-95 hover:scale-100 transition-transform">
+          <div className="relative bg-black border border-neutral-700 rounded-2xl shadow-2xl w-full max-w-md p-8">
             <button
               onClick={() => {
                 setShowSignup(false);
@@ -162,7 +150,7 @@ export default function Signup() {
                   placeholder="Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 focus:border-[#D4A574] outline-none"
+                  className="w-full px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 focus:border-[#D4A574] outline-none text-white"
                   required
                 />
                 {errors.username && (
@@ -175,7 +163,7 @@ export default function Signup() {
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 focus:border-[#D4A574] outline-none"
+                  className="w-full px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 focus:border-[#D4A574] outline-none text-white"
                   required
                 />
                 {errors.email && (
@@ -188,7 +176,7 @@ export default function Signup() {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 focus:border-[#D4A574] outline-none"
+                  className="w-full px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 focus:border-[#D4A574] outline-none text-white"
                   required
                 />
                 {errors.password && (
@@ -196,7 +184,6 @@ export default function Signup() {
                 )}
               </div>
 
-              {/* User Type Buttons */}
               <div className="flex gap-3">
                 <button
                   type="button"
@@ -246,17 +233,16 @@ export default function Signup() {
               </button>
             </form>
 
-            {/* Social Buttons */}
             <div className="flex items-center my-6">
               <div className="flex-1 h-px bg-neutral-700"></div>
               <span className="px-2 text-neutral-500 text-xs">OR</span>
               <div className="flex-1 h-px bg-neutral-700"></div>
             </div>
-            {/* Google Sign In */}
+
             <div className="flex flex-col gap-3">
               <button
                 onClick={oauthGoogle}
-                className="flex items-center gap-2 justify-center px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-sm cursor-pointer hover:border-[#D4A574] transition"
+                className="flex items-center gap-2 justify-center px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-sm cursor-pointer hover:border-[#D4A574] transition text-white"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -278,9 +264,10 @@ export default function Signup() {
                 </svg>
                 <span>Sign up with Google</span>
               </button>
+
               <button
                 onClick={oauthFacebook}
-                className="flex items-center gap-2 justify-center px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-sm cursor-pointer hover:border-[#D4A574] transition"
+                className="flex items-center gap-2 justify-center px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-sm cursor-pointer hover:border-[#D4A574] transition text-white"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -294,7 +281,7 @@ export default function Signup() {
 
             <p className="text-sm text-neutral-400 mt-4 text-center">
               Already have an account?{" "}
-              <a
+              <button
                 onClick={() => {
                   setShowSignup(false);
                   setShowLogin(true);
@@ -302,16 +289,15 @@ export default function Signup() {
                 className="text-[#D4A574] cursor-pointer hover:underline"
               >
                 Login
-              </a>
+              </button>
             </p>
           </div>
         </div>
       )}
 
-      {/* Login Modal */}
       {showLogin && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="relative bg-neutral-900 border border-neutral-700 rounded-2xl shadow-2xl w-full max-w-md p-8 scale-95 hover:scale-100 transition-transform">
+          <div className="relative bg-neutral-900 border border-neutral-700 rounded-2xl shadow-2xl w-full max-w-md p-8">
             <button
               onClick={() => {
                 setShowLogin(false);
@@ -334,7 +320,7 @@ export default function Signup() {
                   placeholder="Email"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 focus:border-[#D4A574] outline-none"
+                  className="w-full px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 focus:border-[#D4A574] outline-none text-white"
                   required
                 />
                 {errors.email && (
@@ -347,7 +333,7 @@ export default function Signup() {
                   placeholder="Password"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 focus:border-[#D4A574] outline-none"
+                  className="w-full px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 focus:border-[#D4A574] outline-none text-white"
                   required
                 />
                 {errors.password && (
@@ -362,16 +348,16 @@ export default function Signup() {
               </button>
             </form>
 
-            {/* Social */}
             <div className="flex items-center my-6">
               <div className="flex-1 h-px bg-neutral-700"></div>
               <span className="px-2 text-neutral-500 text-xs">OR</span>
               <div className="flex-1 h-px bg-neutral-700"></div>
             </div>
+
             <div className="flex flex-col gap-3">
               <button
                 onClick={oauthGoogle}
-                className="flex items-center gap-2 justify-center px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-sm cursor-pointer hover:border-[#D4A574] transition"
+                className="flex items-center gap-2 justify-center px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-sm cursor-pointer hover:border-[#D4A574] transition text-white"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -393,9 +379,10 @@ export default function Signup() {
                 </svg>
                 <span>Login with Google</span>
               </button>
+
               <button
                 onClick={oauthFacebook}
-                className="flex items-center gap-2 justify-center px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-sm cursor-pointer hover:border-[#D4A574] transition"
+                className="flex items-center gap-2 justify-center px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-sm cursor-pointer hover:border-[#D4A574] transition text-white"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -409,7 +396,7 @@ export default function Signup() {
 
             <p className="text-sm text-neutral-400 mt-4 text-center">
               Don&apos;t have an account?{" "}
-              <a
+              <button
                 onClick={() => {
                   setShowLogin(false);
                   setShowSignup(true);
@@ -417,7 +404,7 @@ export default function Signup() {
                 className="text-[#D4A574] hover:underline cursor-pointer"
               >
                 Sign Up
-              </a>
+              </button>
             </p>
           </div>
         </div>

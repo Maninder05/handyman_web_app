@@ -24,6 +24,18 @@ interface Handyman {
   price?: number;
 }
 
+interface HandymanResponse {
+  handymanId?: {
+    name?: string;
+    rating?: number;
+    location?: string;
+    experience?: string;
+  };
+  images?: string[];
+  price?: number;
+}
+
+
 export default function BrowseServicesPage(): React.JSX.Element {
   const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
@@ -68,12 +80,31 @@ export default function BrowseServicesPage(): React.JSX.Element {
     { name: "Furniture Assembly", category: "General Repairs", image: "/images/furnitureassemble.jpg" },
   ];
 
-  const handymen: Handyman[] = [
-    { name: "John Electric", rating: 4.8, location: "Toronto", experience: "5+", image: "/images/handyman1.jpg", paymentType: "Hourly", price: 40 },
-    { name: "Mark Fixit", rating: 4.5, location: "Ottawa", experience: "3-5", image: "/images/handyman2.jpg", paymentType: "Fixed", price: 120 },
-    { name: "Sarah Sparks", rating: 4.9, location: "Toronto", experience: "5+", image: "/images/handyman3.jpg", paymentType: "Hourly", price: 50 },
-    { name: "Leo Builder", rating: 4.2, location: "Montreal", experience: "1-3", image: "/images/handyman4.jpg", paymentType: "Fixed", price: 90 },
-  ];
+const [handymen, setHandymen] = useState<Handyman[]>([]);
+
+React.useEffect(() => {
+  if (selectedService) {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/find-handyman?category=${selectedService.category}`)
+      .then(res => res.json())
+      .then((data: HandymanResponse[]) => {
+        setHandymen(
+          data.map((s) => ({
+            name: s.handymanId?.name || "Unknown",
+            rating: s.handymanId?.rating || 0,
+            location: s.handymanId?.location || "N/A",
+            experience: s.handymanId?.experience || "N/A",
+            image: s.images?.[0] 
+              ? `${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}`
+              : "/images/default-handyman.jpg",
+            paymentType: "Hourly",
+            price: s.price || 0
+          }))
+        );
+      })
+      .catch(err => console.error("Fetch error:", err));
+  }
+}, [selectedService]);
+
 
   const handleSelectService = (service: Service): void => {
     setSelectedService(service);
