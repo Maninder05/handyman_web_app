@@ -1,7 +1,7 @@
 import PostService from "../../models/handyman/PostService.js";
 import Order from "../../models/handyman/Orders.js";
 
-// ➕ Create new service
+// Create new service
 export const createService = async (req, res) => {
   try {
     const handymanId = req.user.id;
