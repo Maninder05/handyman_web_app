@@ -13,7 +13,7 @@ type ProfileFormData = {
   skills: string[];
 };
 
-export default function AddProfilePage() {
+export default function AddHandymanProfile() {
   const router = useRouter();
   const [profilePic, setProfilePic] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -30,14 +30,12 @@ export default function AddProfilePage() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [saving, setSaving] = useState(false);
 
-  // Profile Pic
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     setProfilePic(f);
     setPreviewUrl(f ? URL.createObjectURL(f) : null);
   };
 
-  // Input Change
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === "phone") {
@@ -61,7 +59,6 @@ export default function AddProfilePage() {
     }
   };
 
-  // Services
   const addService = () => {
     const s = newService.trim();
     if (!s) return;
@@ -71,7 +68,6 @@ export default function AddProfilePage() {
   const removeService = (s: string) =>
     setFormData({ ...formData, services: formData.services.filter((svc) => svc !== s) });
 
-  // Skills
   const addSkill = () => {
     const s = newSkill.trim();
     if (!s) return;
@@ -81,7 +77,6 @@ export default function AddProfilePage() {
   const removeSkill = (s: string) =>
     setFormData({ ...formData, skills: formData.skills.filter((sk) => sk !== s) });
 
-  // Validate
   const validate = () => {
     const errs: { [key: string]: string } = {};
     if (!formData.name.trim() || formData.name.length < 3)
@@ -101,7 +96,6 @@ export default function AddProfilePage() {
       reader.readAsDataURL(file);
     });
 
-  // Submit
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -140,18 +134,15 @@ export default function AddProfilePage() {
       if (!res.ok) {
         const errorData = await res.json().catch(() => null);
         
-        // If profile already exists, that's fine - just go to dashboard
         if (res.status === 400 && errorData?.message?.includes("already have a profile")) {
-          router.push("/handyDashboard");
+          router.push("/handyman/handyDashboard");
           return;
         }
         
-        console.log(" Backend Status:", res.status);
-        console.log(" Backend Error:", errorData);
         throw new Error(errorData?.message || "Failed to create profile");
       }
       
-      router.push("/handyDashboard");
+      router.push("/handyman/handyDashboard");
     } catch (err) {
       alert("Error: Could not create profile. See console for details.");
       console.error(err);
@@ -220,7 +211,7 @@ export default function AddProfilePage() {
                 onChange={handleChange} 
                 placeholder="+1 (XXX) XXX XXXX" 
                 maxLength={17} 
-                className="w-full p-3 rounded-lg  text-gray-900 border-2 border-gray-300 focus:border-[#D4A574] outline-none text-center transition" 
+                className="w-full p-3 rounded-lg text-gray-900 border-2 border-gray-300 focus:border-[#D4A574] outline-none text-center transition" 
                 required
               />
             </div>
@@ -235,7 +226,7 @@ export default function AddProfilePage() {
                 onChange={handleChange} 
                 placeholder="Tell us about yourself and your experience..." 
                 maxLength={250} 
-                className={`w-full p-4 rounded-lg  text-gray-900 border-2 ${errors.bio ? "border-red-500" : "border-gray-300"} focus:border-[#D4A574] outline-none resize-none h-28`} 
+                className={`w-full p-4 rounded-lg text-gray-900 border-2 ${errors.bio ? "border-red-500" : "border-gray-300"} focus:border-[#D4A574] outline-none resize-none h-28`} 
                 required
               />
               <div className="flex justify-between items-center mt-1">
@@ -302,7 +293,7 @@ export default function AddProfilePage() {
                   onChange={(e)=>setNewSkill(e.target.value)} 
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
                   placeholder="e.g., Tile Work, Drywall, Painting..." 
-                  className="flex-1 p-3 rounded-lg  text-gray-900 border-2 border-gray-300 focus:border-[#D4A574] outline-none transition"
+                  className="flex-1 p-3 rounded-lg text-gray-900 border-2 border-gray-300 focus:border-[#D4A574] outline-none transition"
                 />
                 <button 
                   type="button" 
@@ -324,7 +315,7 @@ export default function AddProfilePage() {
               </button>
               <button 
                 type="button" 
-                onClick={()=>router.push("/handyDashboard")} 
+                onClick={()=>router.push("/handyman/handyDashboard")} 
                 className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-4 rounded-lg transition shadow-lg"
               >
                 Cancel

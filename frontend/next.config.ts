@@ -1,4 +1,3 @@
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -6,13 +5,11 @@ const nextConfig = {
       {
         protocol: "http",
         hostname: "localhost",
-        port: "7000",
-        pathname: "/uploads/**",
+        port: "7000",         // your backend port
+        pathname: "/**",
       },
     ],
   },
 };
-
-module.exports = nextConfig;
 
 module.exports = nextConfig;

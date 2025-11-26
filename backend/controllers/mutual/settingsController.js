@@ -1,5 +1,5 @@
-import UserSetting from '../models/UserSetting.js';
-import User from '../models/ModelUser.js';
+import UserSetting from '../../models/mutual/Settings.js';
+import User from '../../models/auth/User.js';
 import bcrypt from 'bcryptjs';
 
 // Get all settings for logged-in user
@@ -17,7 +17,7 @@ export const getSettings = async (req, res) => {
       settings = await UserSetting.create({
         userId: id,
         email,
-        userType, // client, handyman, or admin
+        userType,
         theme: 'light',
         language: 'en',
         timezone: 'UTC',
@@ -143,10 +143,10 @@ export const deleteAccount = async (req, res) => {
     await UserSetting.findOneAndDelete({ userId: id });
 
     if (userType === 'client') {
-      const Client = (await import('../models/clientProfile.js')).default;
+      const Client = (await import('../../models/client/ClientDashboard.js')).default;
       await Client.findOneAndDelete({ userId: id });
     } else if (userType === 'handyman') {
-      const HandyProfile = (await import('../models/HandyAddProfile.js')).default;
+      const HandyProfile = (await import('../../models/handyman/HandyDashboard.js')).default;
       await HandyProfile.findOneAndDelete({ userId: id });
     }
 
