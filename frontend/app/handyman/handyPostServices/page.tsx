@@ -204,7 +204,6 @@ export default function CreateService() {
                 )}
               </div>
 
-              {/* Description */}
               <div>
                 <label className="block mb-2 font-semibold text-[#1a1a1a]">
                   Description
