@@ -215,7 +215,7 @@ export default function SettingsPage() {
       }
 
       const data = await response.json();
-      console.log("✅ Upload success:", data);
+      console.log(" Upload success:", data);
       
       setAccountData({ 
         ...accountData, 
@@ -230,7 +230,7 @@ export default function SettingsPage() {
       }, 1500);
     } catch (err) {
       const errorMessage = (err as Error).message || "Failed to upload image";
-      console.error("❌ Upload failed:", err);
+      console.error(" Upload failed:", err);
       showAlert("error", errorMessage);
     } finally {
       setSaving(false);
@@ -277,7 +277,7 @@ export default function SettingsPage() {
         router.push(getDashboardPath());
       }, 1500);
     } catch (err) {
-      console.error("❌ Update failed:", err);
+      console.error(" Update failed:", err);
       showAlert("error", "Failed to update account");
     } finally {
       setSaving(false);
