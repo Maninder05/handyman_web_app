@@ -1,28 +1,7 @@
 import PostService from "../../models/handyman/PostService.js";
 import Order from "../../models/handyman/Orders.js";
-
-// Create new service
-export const createService = async (req, res) => {
-  try {
-    const handymanId = req.user.id;
-    const { title, description, price } = req.body;
-
-    const newService = new PostService({
-      title,
-      description,
-      price,
-      handymanId,
-    });
-
-    await newService.save();
-    res.status(201).json({ message: "Service created successfully", newService });
-  } catch (err) {
-    console.error("Error creating service:", err);
-    res.status(500).json({ message: "Error creating service" });
-  }
-};
-
-// 📋 Get all services by handyman
+ 
+// Get all services for logged-in handyman
 export const getMyServices = async (req, res) => {
   try {
     const handymanId = req.user.id;
@@ -33,8 +12,8 @@ export const getMyServices = async (req, res) => {
     res.status(500).json({ message: "Error fetching services" });
   }
 };
-
-// 🧾 Get orders for handyman
+ 
+// Get all orders
 export const getMyOrders = async (req, res) => {
   try {
     const handymanId = req.user.id;
@@ -47,8 +26,8 @@ export const getMyOrders = async (req, res) => {
     res.status(500).json({ message: "Error fetching orders" });
   }
 };
-
-// 🔁 Update order status
+ 
+// Update order status
 export const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -60,3 +39,5 @@ export const updateOrderStatus = async (req, res) => {
     res.status(500).json({ message: "Error updating order" });
   }
 };
+ 
+ 
