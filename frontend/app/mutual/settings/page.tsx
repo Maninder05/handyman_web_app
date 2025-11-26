@@ -90,7 +90,7 @@ export default function SettingsPage() {
     }
 
     try {
-      // Try handyman first (more likely to have issues)
+      // Try handyman first
       let response = await fetch("http://localhost:7000/api/handymen", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -115,7 +115,7 @@ export default function SettingsPage() {
       localStorage.setItem("userType", detectedType);
       setUserType(detectedType);
       
-      console.log("✅ User Type Detected:", detectedType);
+      console.log(" User Type Detected:", detectedType);
 
       const nameParts = data.name ? data.name.split(" ") : ["", ""];
       setAccountData({
@@ -143,7 +143,7 @@ export default function SettingsPage() {
         setNotifications(settings.notifications || notifications);
       }
     } catch (err) {
-      console.error("❌ Error fetching data:", err);
+      console.error(" Error fetching data:", err);
       showAlert("error", "Failed to load settings");
     } finally {
       setLoading(false);
@@ -185,7 +185,7 @@ export default function SettingsPage() {
 
     const token = localStorage.getItem("token");
     const formData = new FormData();
-    formData.append("profileImage", selectedImage); // ✅ CORRECT FIELD NAME
+    formData.append("profileImage", selectedImage);
 
     setSaving(true);
 
@@ -197,25 +197,25 @@ export default function SettingsPage() {
         ? "http://localhost:7000/api/handymen/upload-profile-pic"
         : "http://localhost:7000/api/clients/upload-profile-pic";
 
-      console.log("📤 Uploading to:", endpoint);
+      console.log(" Uploading to:", endpoint);
 
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { 
           Authorization: `Bearer ${token}`,
-          // ❌ DON'T SET Content-Type for FormData - browser sets it automatically
+        
         },
         body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("❌ Upload error:", errorData);
+        console.error(" Upload error:", errorData);
         throw new Error(errorData.message || "Failed to upload image");
       }
 
       const data = await response.json();
-      console.log("✅ Upload success:", data);
+      console.log(" Upload success:", data);
       
       setAccountData({ 
         ...accountData, 
@@ -230,7 +230,7 @@ export default function SettingsPage() {
       }, 1500);
     } catch (err) {
       const errorMessage = (err as Error).message || "Failed to upload image";
-      console.error("❌ Upload failed:", err);
+      console.error(" Upload failed:", err);
       showAlert("error", errorMessage);
     } finally {
       setSaving(false);
@@ -277,7 +277,7 @@ export default function SettingsPage() {
         router.push(getDashboardPath());
       }, 1500);
     } catch (err) {
-      console.error("❌ Update failed:", err);
+      console.error(" Update failed:", err);
       showAlert("error", "Failed to update account");
     } finally {
       setSaving(false);
