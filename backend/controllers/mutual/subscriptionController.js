@@ -6,9 +6,8 @@ import mongoose from 'mongoose'; // ✅ ADDED: Import Mongoose for ObjectId hand
 // NOTE: You'll also need to import verifyPaypalOrder from your paypal.client.js 
 // if you choose to implement the full PayPal verification.
 
-// =========================================================================
 // 1. EXISTING FUNCTION: createCheckoutSession (For redirect flow)
-// =========================================================================
+
 export const createCheckoutSession = async (req, res) => {
     const { priceId } = req.body;
     const handymanId = req.user.id;
@@ -48,10 +47,7 @@ export const createCheckoutSession = async (req, res) => {
     }
 };
 
-
-// =========================================================================
 // 2. NEW FUNCTION: createInlineSubscription (For Stripe Elements flow)
-// =========================================================================
 /**
  * Creates a Stripe Subscription directly using PaymentMethod ID 
  * received from the Stripe Elements form (inline payment).
@@ -92,7 +88,7 @@ export const createInlineSubscription = async (req, res) => {
         } else {
              // Case 2: EXISTING Customer 
              
-             // 🚨 FIX APPLIED: Explicitly ATTACH the payment method first
+             //  FIX APPLIED: Explicitly ATTACH the payment method first
              await stripe.paymentMethods.attach(
                  paymentMethodId,
                  { customer: customerId }
@@ -156,12 +152,8 @@ export const confirmPayPalSubscription = async (req, res) => {
         
         console.log(`Received PayPal Order ID ${orderId} for user ${handymanId} on ${planName} plan.`);
 
-        // 🚨 CRITICAL TODO: 
-        // 1. IMPORT `verifyPaypalOrder` from your paypal.client.js
-        // 2. CALL `const orderDetails = await verifyPaypalOrder(orderId);`
-        // 3. CHECK `if (orderDetails.status !== 'COMPLETED')` and return error if needed.
-        
-        // Placeholder: Update user status in MongoDB here.
+        // 🚨 Placeholder: Update user status in MongoDB here.
+        // const handyman = await User.findById(handymanId);
         // if (handyman) {
         //    await User.updateOne({ _id: handymanId }, { subscriptionStatus: 'active', paymentMethod: 'PayPal', subscriptionPlan: planName });
         // }

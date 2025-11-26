@@ -20,7 +20,7 @@ const UserSettingSchema = new mongoose.Schema(
     
     userType: {
       type: String,
-      enum: ['customer', 'handyman', 'admin'],
+      enum: ['client', 'handyman', 'admin'],
       required: true
     },
     

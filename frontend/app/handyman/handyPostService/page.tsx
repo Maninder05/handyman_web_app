@@ -198,15 +198,15 @@ export default function CreateService() {
                 >
                   <option value="">Select Category</option>
                   <option>Electrical</option>
-<option>Plumbing</option>
-<option>Carpentry</option>
-<option>Appliances</option>
-<option>Painting & Finishing</option>
-<option>Cleaning</option>
-<option>Landscaping</option>
-<option>Renovation</option>
-<option>Roofing</option>
-<option>General Repairs</option>
+                  <option>Plumbing</option>
+                  <option>Carpentry</option>
+                  <option>Appliances</option>
+                  <option>Painting & Finishing</option>
+                  <option>Cleaning</option>
+                  <option>Landscaping</option>
+                  <option>Renovation</option>
+                  <option>Roofing</option>
+                  <option>General Repairs</option>
 
                 </select>
                 {errors.category && <p className="text-[#D4A574] text-sm mt-1">{errors.category}</p>}
