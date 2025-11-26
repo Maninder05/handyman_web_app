@@ -29,7 +29,7 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
-// 🔁 Update order status
+// Update order status
 export const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
