@@ -45,7 +45,7 @@ router.post("/mark-read/:id", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to mark notification as read" });
   }
 });
-
+`1`;
 // Mark all notifications as read
 router.post("/mark-all-read", authenticateToken, async (req, res) => {
   try {
