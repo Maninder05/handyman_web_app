@@ -34,7 +34,7 @@ export default function CreateService() {
   const router = useRouter();
   const handleLogout = () => router.push("/");
 
-  // Helper to construct correct image URLs
+
   const getServiceImageUrl = (img?: string) => {
     if (!img) return "/placeholder.png"; // optional placeholder
     if (img.startsWith("http")) return img;
