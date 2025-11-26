@@ -2,8 +2,6 @@ import PostService from "../../models/handyman/PostService.js";
 import Order from "../../models/handyman/Orders.js";
 
 
-
-// Get all services by handyman
 export const getMyServices = async (req, res) => {
   try {
     const handymanId = req.user.id;
