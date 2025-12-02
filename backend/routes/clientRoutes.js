@@ -2,7 +2,15 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import {getMyProfile, createProfile, updateProfile, uploadProfilePic, saveHandyman, removeSavedHandyman,deleteAccount } from "../controllers/client/clientDashboardController.js";
+import { 
+  getMyProfile, 
+  createProfile, 
+  updateProfile, 
+  uploadProfilePic, 
+  saveHandyman, 
+  removeSavedHandyman,
+  deleteAccount 
+} from "../controllers/client/clientDashboardController.js";
 import authSession from "../middleware/authSession.js";
 import PostService from "../models/handyman/PostService.js";
 
@@ -33,7 +41,15 @@ const upload = multer({
   },
 });
 
-// CLIENT — Search for handymen by category
+/* ---------------------- SECURITY: PREVENT HANDYMAN FROM USING CLIENT ROUTES ---------------------- */
+const ensureClient = (req, res, next) => {
+  if (req.user?.userType !== "client") {
+    return res.status(403).json({ message: "Access denied: Client account required" });
+  }
+  next();
+};
+
+/* ---------------------- CLIENT — Search for handymen ---------------------- */
 router.get("/find-handyman", async (req, res) => {
   try {
     const { category } = req.query;
@@ -56,31 +72,24 @@ router.get("/find-handyman", async (req, res) => {
 
 /* ---------------------- ROUTES ---------------------- */
 
-// Get logged-in client profile (auto-create if not exists)
-router.get("/", authSession, getMyProfile);
+router.get("/", authSession, ensureClient, getMyProfile);
 
-// Create client profile manually
-router.post("/", authSession, createProfile);
+router.post("/", authSession, ensureClient, createProfile);
 
-// Update existing profile details
-router.put("/", authSession, updateProfile);
+router.put("/", authSession, ensureClient, updateProfile);
 
-// Upload or update profile picture
 router.post(
   "/upload-profile-pic",
   authSession,
+  ensureClient,
   upload.single("profileImage"),
   uploadProfilePic
 );
 
-// Save a handyman (favorite)
-router.post("/save-handyman", authSession, saveHandyman);
+router.post("/save-handyman", authSession, ensureClient, saveHandyman);
 
-// Remove saved handyman
-router.delete("/remove-handyman/:handymanId", authSession, removeSavedHandyman);
+router.delete("/remove-handyman/:handymanId", authSession, ensureClient, removeSavedHandyman);
 
-// Delete account (profile + user)
-router.delete("/", authSession, deleteAccount);
-
+router.delete("/", authSession, ensureClient, deleteAccount);
 
 export default router;

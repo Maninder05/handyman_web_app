@@ -59,6 +59,7 @@ export default function HandyDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  // ------------------------- EXISTING FETCH USEEFFECT -------------------------
   useEffect(() => {
     fetchProfile();
     
@@ -75,6 +76,41 @@ export default function HandyDashboard() {
     };
 
   }, []);
+
+  // ------------------------- ⭐ ADDED THEME-SYNC USEEFFECT ⭐ -------------------------
+  useEffect(() => {
+    const applyThemeSettings = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await fetch("http://localhost:7000/api/settings", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const settings = await res.json();
+
+          if (settings.theme === "dark") {
+            document.documentElement.classList.add("dark");
+          } else if (settings.theme === "light") {
+            document.documentElement.classList.remove("dark");
+          } else if (settings.theme === "auto") {
+            if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+              document.documentElement.classList.add("dark");
+            } else {
+              document.documentElement.classList.remove("dark");
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error applying theme:", err);
+      }
+    };
+
+    applyThemeSettings();
+  }, []);
+  // ------------------------- END THEME CODE -------------------------
 
   const fetchProfile = async () => {
     try {
@@ -185,7 +221,7 @@ export default function HandyDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] text-gray-900 flex flex-col">
+    <div className="min-h-screen bg-[#F5F5F0] dark:bg-[#0a0a0a] text-gray-900 dark:text-white flex flex-col">
       <Header 
         pageTitle="Handyman Dashboard" 
         onLogout={handleLogout}
