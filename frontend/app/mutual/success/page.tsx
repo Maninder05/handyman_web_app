@@ -10,7 +10,6 @@ export default function SubscriptionSuccessPage() {
     // Read the 'plan' parameter passed from the checkout page
     const searchParams = useSearchParams();
     const planName = searchParams.get('plan') || 'your new plan';
-
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-50">
             <div className="p-10 bg-white rounded-xl shadow-2xl max-w-lg w-full text-center border-t-8 border-green-500">

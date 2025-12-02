@@ -35,7 +35,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             user = new User({
               username: profile.displayName || email.split('@')[0],
               email,
-              userType: 'customer',
+              userType: 'client',
               authProvider: 'google',
               oauthId: profile.id,
             });
@@ -82,7 +82,7 @@ if (process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET) {
             user = new User({
               username: profile.displayName || email.split('@')[0],
               email,
-              userType: 'customer',
+              userType: 'client',
               authProvider: 'facebook',
               oauthId: profile.id,
             });
