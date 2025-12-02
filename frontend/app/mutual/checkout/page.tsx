@@ -12,7 +12,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import {
-  PayPalScriptProvider,
+PayPalScriptProvider,
   PayPalButtons,
 } from "@paypal/react-paypal-js";
 import {
@@ -71,6 +71,7 @@ const getPlanData = (planName: string, billing: "monthly" | "yearly") => {
 };
 
 // ====================================================================
+// 🧾 ORDER SUMMARY (Sticky Left)
 // 🧭 HEADER
 // ====================================================================
 const Header = () => (
@@ -78,7 +79,7 @@ const Header = () => (
     <div className="flex items-center space-x-3 max-w-6xl w-full justify-between">
       <div className="flex items-center space-x-2">
         <img src="/images/handymanNovember.png" alt="Handyman Logo" className="h-7 w-7" />
-        <span className="text-lg font-bold tracking-wider">HANDYMAN</span>
+        <span className="text-lg font-bold tracking-wider">PAYMENT</span>
       </div>
       <div className="flex items-center space-x-2 text-sm text-gray-500 font-semibold">
         <Lock className="w-4 h-4 text-gray-500" />

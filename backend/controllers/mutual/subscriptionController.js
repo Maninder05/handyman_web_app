@@ -1,10 +1,7 @@
 // subscriptionController.js
 
-import stripe from '../../config/stripe.js';
-import User from '../../models/auth/User.js'; 
-import mongoose from 'mongoose'; // ✅ ADDED: Import Mongoose for ObjectId handling
-// NOTE: You'll also need to import verifyPaypalOrder from your paypal.client.js 
-// if you choose to implement the full PayPal verification.
+import { stripe } from '../../services/stripeService.js';
+import User from '../../models/auth/User.js'; // Assuming this is the correct path to your User model
 
 // 1. EXISTING FUNCTION: createCheckoutSession (For redirect flow)
 
