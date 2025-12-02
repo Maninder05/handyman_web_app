@@ -70,7 +70,29 @@ const getPlanData = (planName: string, billing: "monthly" | "yearly") => {
 };
 
 // ====================================================================
+<<<<<<< Updated upstream
 // 🧾 ORDER SUMMARY (Sticky Left)
+=======
+// 🧭 HEADER
+// ====================================================================
+const Header = () => (
+  <header className="w-full bg-white text-gray-900 py-4 px-6 flex items-center justify-center shadow-md border-b border-gray-100 fixed top-0 z-50">
+    <div className="flex items-center space-x-3 max-w-6xl w-full justify-between">
+      <div className="flex items-center space-x-2">
+        <img src="/images/handymanNovember.png" alt="Handyman Logo" className="h-7 w-7" />
+        <span className="text-lg font-bold tracking-wider">PAYMENT</span>
+      </div>
+      <div className="flex items-center space-x-2 text-sm text-gray-500 font-semibold">
+        <Lock className="w-4 h-4 text-gray-500" />
+        <span>Secure Checkout</span>
+      </div>
+    </div>
+  </header>
+);
+
+// ====================================================================
+// 🧾 ORDER SUMMARY
+>>>>>>> Stashed changes
 // ====================================================================
 const OrderSummary = ({ details }: { details: ReturnType<typeof getPlanData> }) => {
   if (!details) return null;
