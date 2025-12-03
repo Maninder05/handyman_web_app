@@ -65,7 +65,7 @@ const uploadProfile = multer({ storage: profileStorage });
 const uploadCert = multer({ storage: certificationStorage });
 const uploadServiceImage = multer({ storage: serviceStorage });
 
-/* ---------------------- SECURITY: Prevent Client From Using Handyman Routes ---------------------- */
+/*  Prevent Client From Using Handyman Routes */
 const ensureHandyman = (req, res, next) => {
   if (req.user?.userType !== "handyman") {
     return res.status(403).json({ message: "Access denied: Handyman account required" });
