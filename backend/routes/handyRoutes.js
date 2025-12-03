@@ -1,31 +1,141 @@
-// routes/handyRoutes.js
-import express from 'express';
+import express from "express";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import {
+  getMyProfile,
+  createProfile,
+  updateProfile,
+  uploadProfilePic,
+  uploadCertification,
+  deleteCertification,
+  deleteAccount,
+  getAllHandymen,
+  verifyHandyman
+} from "../controllers/handyman/handyDashboardController.js";
+import authSession from "../middleware/authSession.js";
 import PostService from '../models/handyman/PostService.js';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 
 const router = express.Router();
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+/* ---------------------- MULTER CONFIGURATION ---------------------- */
 
-// Multer Storage Setup
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
+// Profile Picture Storage
+const profileStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = "./uploads/profiles";
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    cb(null, req.user.id + "-" + Date.now() + ext);
+  },
+});
+
+// Certification Storage
+const certificationStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = "./uploads/certifications";
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    cb(null, req.user.id + "-cert-" + Date.now() + ext);
+  },
+});
+
+// Service Image Storage
+const serviceStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    cb(null, uploadsDir);
+  },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `${Date.now()}${ext}`);
   },
 });
 
-const upload = multer({ storage });
+// Profile Picture Upload
+const uploadProfile = multer({
+  storage: profileStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      cb(new Error("Only image files are allowed!"), false);
+    } else {
+      cb(null, true);
+    }
+  },
+});
 
-// POST — Create Service (NO DRAFT ANYMORE)
-router.post('/services', upload.single('image'), async (req, res) => {
+// Certification Upload
+const uploadCert = multer({
+  storage: certificationStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /pdf|doc|docx|jpg|jpeg|png/;
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedTypes.test(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF, DOC, DOCX, JPG, JPEG, PNG files are allowed!"), false);
+    }
+  },
+});
+
+// Service Image Upload
+const uploadServiceImage = multer({ storage: serviceStorage });
+
+/* ---------------------- PROFILE ROUTES ---------------------- */
+
+// Get logged-in handyman profile (auto-create if not exists)
+router.get("/", authSession, getMyProfile);
+router.get("/me", authSession, getMyProfile);
+
+// Create handyman profile manually
+router.post("/", authSession, createProfile);
+
+// Update handyman profile
+router.put("/", authSession, updateProfile);
+
+// Upload or update profile picture
+router.post(
+  "/upload-profile-pic",
+  authSession,
+  uploadProfile.single("profileImage"),
+  uploadProfilePic
+);
+
+// Upload certification
+router.post(
+  "/upload-certification",
+  authSession,
+  uploadCert.single("certification"),
+  uploadCertification
+);
+
+// Delete certification
+router.delete("/certification/:certificationId", authSession, deleteCertification);
+
+// Delete account (profile + user)
+router.delete("/", authSession, deleteAccount);
+
+// Get all handymen (for browsing/search)
+router.get("/all", getAllHandymen);
+
+// Verify handyman (Admin only - add admin middleware later)
+router.put("/verify/:handymanId", authSession, verifyHandyman);
+
+/* ---------------------- SERVICE ROUTES ---------------------- */
+
+// POST — Create Service
+router.post('/services', uploadServiceImage.single('image'), async (req, res) => {
   try {
     const handymanId = req.body.handymanId || '64f0b8b0a2c6c123456789ab';
     const { title, description, category, price, priceType } = req.body;
@@ -39,8 +149,7 @@ router.post('/services', upload.single('image'), async (req, res) => {
     const images = [];
     if (req.file) {
       const fullUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
-images.push(fullUrl);
-
+      images.push(fullUrl);
     }
 
     const newService = new PostService({
@@ -51,7 +160,7 @@ images.push(fullUrl);
       price: Number(price),
       priceType: priceType || 'Hourly',
       images,
-      isActive: true, // ALWAYS ACTIVE NOW
+      isActive: true,
     });
 
     await newService.save();

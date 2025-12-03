@@ -1,4 +1,3 @@
-// index.js
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -9,19 +8,19 @@ import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import http from 'http';
 import { Server } from 'socket.io';
-import fs from 'fs';
 
 // Passport config
 import './config/passport.js';
 
-// Routes
+// Routes - ONLY ONE IMPORT PER FILE!
 import authRoutes from './routes/authRoutes.js';
-import handyRoutes from './routes/handyRoutes.js';
 import clientRoutes from './routes/clientRoutes.js';
+import handymanRoutes from './routes/handyRoutes.js';
+import settingsRoutes from './routes/mutualRoutes.js';
 
 dotenv.config();
 
-const app = express();
+const app = express();  // ✅ CREATE APP FIRST!
 const PORT = process.env.PORT || 7000;
 
 // HTTP server
@@ -51,25 +50,15 @@ app.use(passport.initialize());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure uploads folder exists
+// Static files
 const uploadsPath = path.join(__dirname, "uploads");
 app.use("/uploads", express.static(uploadsPath));
 
-
-// API Routes
-app.use('/api/users', authRoutes);
-app.use('/api/client', clientRoutes);
-app.use('/api/handyman', handyRoutes);
-
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URL)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch((err) => console.error('MongoDB connection error:', err));
+// API Routes - ✅ ALL ROUTES HERE AFTER APP IS CREATED!
+app.use('/api/auth', authRoutes);
+app.use('/api/clients', clientRoutes);
+app.use('/api/handymen', handymanRoutes);
+app.use('/api/settings', settingsRoutes);  // ✅ ALREADY HERE, PERFECT!
 
 // Socket.io Events
 io.on('connection', (socket) => {
@@ -87,3 +76,15 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
   });
 });
+
+// Connect to MongoDB and start server
+mongoose.connect(process.env.MONGO_URL)
+  .then(() => {
+    console.log('✅ Connected to MongoDB successfully!');
+    server.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('❌ Database connection error:', err);
+  });
