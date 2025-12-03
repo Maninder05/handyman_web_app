@@ -9,9 +9,9 @@ import {
   Settings,
   Briefcase,
   Wrench,
-  Crown
+  Crown,  Bell
 } from "lucide-react";
-import { FiUser } from "react-icons/fi";
+import { FiUser,  } from "react-icons/fi";
 
 interface HeaderProps {
   pageTitle: string;
@@ -50,6 +50,20 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
         </h1>
 
         <div className="flex items-center gap-4 relative">
+
+           {/* NOTIFICATIONS */}
+           <Link
+            href="/mutual/notifications"
+            className="relative p-2 rounded-full hover:bg-[#2a2a2a] transition"
+          >
+            <Bell size={22} className="text-white" />
+
+            {profile?.notificationsCount && profile.notificationsCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                {profile.notificationsCount > 9 ? "9+" : profile.notificationsCount}
+              </span>
+            )}
+          </Link>
 
           {/* PROFILE BUTTON header*/}
           <button
