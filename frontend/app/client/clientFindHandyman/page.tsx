@@ -63,7 +63,7 @@ export default function BrowseServicesPage(): React.JSX.Element {
 
   const handleLogout = (): void => router.push("/");
 
-  // ✅ Services list
+  
   const services: Service[] = [
     { name: "Wiring Repair", category: "Electrical", image: "/images/wiringrepair.jpg" },
     { name: "Pipe Leakage Fix", category: "Plumbing", image: "/images/pipefix.webp" },
