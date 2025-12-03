@@ -272,7 +272,6 @@ export default function CreateService() {
         </div>
       </main>
 
-      {/* ================= MODAL UPDATED ================= */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-start z-50 py-12 overflow-auto">
           <div className="bg-white rounded-2xl p-8 w-[90%] max-w-4xl shadow-xl relative border border-gray-200">
