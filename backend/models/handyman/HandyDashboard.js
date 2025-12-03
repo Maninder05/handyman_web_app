@@ -196,7 +196,7 @@ const HandymanSchema = new mongoose.Schema({
   jobsDoneCount: { type: Number, default: 0 }, 
   jobsInProgressCount: { type: Number, default: 0 },
   activeOrdersCount: { type: Number, default: 0 },
-  activeOrderCount: { type: Number, default: 0 }, // compatibility
+  activeOrderCount: { type: Number, default: 0 },
 
   // other stats
   rating: { type: Number, default: 0 }, // average rating
