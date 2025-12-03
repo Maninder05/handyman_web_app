@@ -36,7 +36,7 @@ export default function CreateService() {
 
 
   const getServiceImageUrl = (img?: string) => {
-    if (!img) return "/placeholder.png"; // optional placeholder
+    if (!img) return "/placeholder.png"; 
     if (img.startsWith("http")) return img;
     if (img.startsWith("/")) return `${process.env.NEXT_PUBLIC_API_URL}${img}`;
     return `${process.env.NEXT_PUBLIC_API_URL}/${img}`;
