@@ -105,7 +105,7 @@ router.delete("/certification/:certificationId", authSession, ensureHandyman, de
 
 router.delete("/", authSession, ensureHandyman, deleteAccount);
 
-/* ---------------------- PUBLIC ROUTES ---------------------- */
+/*  PUBLIC ROUTES*/
 
 router.get("/all", getAllHandymen);
 
