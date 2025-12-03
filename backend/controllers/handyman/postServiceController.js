@@ -13,7 +13,6 @@ export const getMyServices = async (req, res) => {
   }
 };
 
-// Get orders for handyman
 export const getMyOrders = async (req, res) => {
   try {
     const handymanId = req.user.id;

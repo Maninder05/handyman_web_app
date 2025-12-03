@@ -1,15 +1,16 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
         protocol: "http",
         hostname: "localhost",
-        port: "7000",         // your backend port
-        pathname: "/**",
+        port: "7000",
+        pathname: "/uploads/**",
       },
     ],
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

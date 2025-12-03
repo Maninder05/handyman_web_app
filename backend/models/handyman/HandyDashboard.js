@@ -1,4 +1,3 @@
-// models/handyman/HandymanProfile.js
 import mongoose from 'mongoose';
 
 const ServiceSchema = new mongoose.Schema({
@@ -194,13 +193,13 @@ const HandymanSchema = new mongoose.Schema({
 
   // numeric counters used by frontend
   jobsDone: { type: Number, default: 0 },
-  jobsDoneCount: { type: Number, default: 0 }, // kept for compatibility
+  jobsDoneCount: { type: Number, default: 0 }, 
   jobsInProgressCount: { type: Number, default: 0 },
   activeOrdersCount: { type: Number, default: 0 },
-  activeOrderCount: { type: Number, default: 0 }, // compatibility
+  activeOrderCount: { type: Number, default: 0 },
 
   // other stats
-  rating: { type: Number, default: 0 }, // average rating
+  rating: { type: Number, default: 0 }, 
   earnings: { type: Number, default: 0 },
   jobAcceptCount: { type: Number, default: 0 },
   reviewsCount: { type: Number, default: 0 },
