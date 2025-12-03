@@ -49,7 +49,7 @@ const ensureClient = (req, res, next) => {
   next();
 };
 
-/* ---------------------- CLIENT — Search for handymen ---------------------- */
+/*  CLIENT — Search for handymen */
 router.get("/find-handyman", async (req, res) => {
   try {
     const { category } = req.query;
