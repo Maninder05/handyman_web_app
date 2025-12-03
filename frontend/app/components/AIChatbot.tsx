@@ -18,17 +18,13 @@ interface AIChatbotProps {
 }
 
 export default function AIChatbot({ isOpen, onClose, userType, onTransferToAgent }: AIChatbotProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: "Hi! I'm your AI assistant. How can I help you today? I can answer questions about bookings, payments, memberships, or guide you through our platform.",
-      sender: "bot",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [typingMessage, setTypingMessage] = useState<string>("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [initialMessageShown, setInitialMessageShown] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -38,7 +34,7 @@ export default function AIChatbot({ isOpen, onClose, userType, onTransferToAgent
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, typingMessage]);
 
   useEffect(() => {
     if (isOpen && !isMinimized) {
@@ -46,34 +42,89 @@ export default function AIChatbot({ isOpen, onClose, userType, onTransferToAgent
     }
   }, [isOpen, isMinimized]);
 
-  // FAQ knowledge base for context-aware responses
-  const faqKnowledge = {
-    bookings: [
-      "How do I book a handyman? Search for a service, pick a time that works, and confirm your booking. You'll get a confirmation email with the details.",
-      "Can I cancel or reschedule? Yes. You can cancel or reschedule from your bookings page. Fees may apply for late cancellations depending on the provider's policy.",
-      "Can I change my booking after payment? Yes! You can reschedule or modify bookings up to 24 hours before the scheduled time.",
-    ],
-    payments: [
-      "What are the payment options? We accept credit/debit cards and major digital wallets. Payments are held securely and released after the job is completed.",
-      "When do I get paid? Payment is released 24-48 hours after job completion and customer confirmation.",
-      "How do I request a refund? Go to your booking details, click 'Request Refund', select your reason, and submit. Refunds are typically processed within 24-48 hours after review.",
-      "Is my payment secure? Yes. All payments go through our secure system. Providers are paid only after the work is confirmed as complete.",
-    ],
-    membership: [
-      "How do I become a handyman on the platform? Sign up, complete verification, and list your services. Once approved, you'll start receiving customer requests in your area.",
-      "What membership plans are available? We offer Basic, Seasonal, and Pro plans with different features and pricing options.",
-    ],
-    general: [
-      "Are handymen verified? All pros complete ID verification and profile checks. Check ratings and reviews on each profile before booking.",
-      "What if I'm not satisfied with the work? You can report issues directly in the app. Our support team will step in to resolve disputes and ensure fair outcomes.",
-      "Do you offer insurance or protection? Yes, jobs booked through our platform are covered by HandyCover for customers, giving you peace of mind in case of accidents or damages.",
-    ],
+  // Smooth typing animation function
+  const typeMessage = (fullText: string, callback: (message: Message) => void) => {
+    setIsTyping(true);
+    setTypingMessage("");
+    let currentIndex = 0;
+    
+    const typingInterval = setInterval(() => {
+      if (currentIndex < fullText.length) {
+        setTypingMessage(fullText.substring(0, currentIndex + 1));
+        currentIndex++;
+        scrollToBottom();
+      } else {
+        clearInterval(typingInterval);
+        setIsTyping(false);
+        
+        // Create the final message after typing completes
+        const finalMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: fullText,
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        
+        setTypingMessage("");
+        callback(finalMessage);
+      }
+    }, 15); // Adjust speed: lower = faster typing (15ms = ~67 chars/sec)
   };
 
-  // Simple AI response generator (can be replaced with actual API call)
+  // Show initial welcome message with typing animation when chatbot opens
+  useEffect(() => {
+    if (isOpen && !isMinimized && !initialMessageShown) {
+      const welcomeText = "Hi! I'm your AI assistant. How can I help you today? I can answer questions about bookings, payments, memberships, or guide you through our platform.";
+      typeMessage(welcomeText, (welcomeMessage) => {
+        setMessages([welcomeMessage]);
+        setInitialMessageShown(true);
+      });
+    }
+  }, [isOpen, isMinimized, initialMessageShown]);
+
+  // Expanded FAQ knowledge base for comprehensive responses
+  const faqKnowledge = {
+    bookings: {
+      how: "To book a handyman, first search for the service you need using our search bar. Browse through available handymen in your area, check their ratings and reviews, then select a time slot that works for you. Once you confirm, you'll receive a confirmation email with all booking details including the handyman's contact information.",
+      cancel: "Yes, you can cancel or reschedule bookings! Go to your bookings page, select the booking you want to modify, and choose 'Cancel' or 'Reschedule'. You can make changes up to 24 hours before the scheduled time without fees. Late cancellations may incur charges depending on the provider's policy.",
+      time: "Booking times are flexible! Most handymen offer slots throughout the week. You can select from available time slots when making a booking. If you need a specific time, use the 'Request Custom Time' option and the handyman will respond within a few hours.",
+      modify: "Yes! You can modify your booking details including time, location, or service requirements up to 24 hours before the appointment. Just go to your booking details and click 'Edit Booking'.",
+      confirmation: "You'll receive a confirmation email immediately after booking. This includes the handyman's name, contact info, scheduled time, service details, and payment information. Keep this email for your records!",
+      tools: "Yes, professional handymen bring their own tools! Most handymen come fully equipped with all the standard tools needed for their services. This typically includes drills, saws, hammers, screwdrivers, measuring tools, and other common equipment. For specialized projects requiring unique tools, the handyman will either bring them or let you know beforehand if any special tools or materials are needed. You can always confirm tool requirements when booking or by messaging the handyman directly through the platform.",
+      equipment: "Handymen typically bring all necessary tools and equipment for standard jobs. However, for large projects or specialized work, some materials (like lumber, paint, fixtures, or parts) may need to be purchased separately. The handyman's service listing usually specifies what's included, and you can discuss any specific tool or material requirements when you book. Most handymen will confirm what they're bringing before the appointment.",
+      materials: "Handymen usually provide tools, but materials (like wood, paint, nails, screws, fixtures) are typically not included unless specifically stated in the service description. When booking, you'll see what's included. Some handymen offer 'materials included' packages, while others charge separately for materials purchased on your behalf. You can always discuss material needs with the handyman before or after booking through the messaging feature.",
+      preparation: "Before your handyman arrives, clear the work area of personal items and furniture if possible. Make sure there's good lighting and access to the workspace. For electrical or plumbing work, ensure the handyman can access circuit breakers or water shut-off valves. Most handymen will arrive with their tools, but you can always confirm what they'll bring when you book.",
+    },
+    payments: {
+      methods: "We accept all major credit and debit cards (Visa, Mastercard, American Express), as well as PayPal and Apple Pay. All payments are processed securely through encrypted payment gateways. Your card information is never stored on our servers.",
+      security: "Your payments are completely secure. We use industry-standard encryption and are PCI-DSS compliant. Payments are held securely until the job is completed and confirmed. If there are any issues, we have a dispute resolution process to protect both customers and handymen.",
+      refund: "To request a refund, go to your booking details page, click 'Request Refund', select your reason (e.g., work not completed, quality issues, cancellation), and submit. Our support team reviews all refund requests within 24-48 hours. Refunds are typically processed back to your original payment method within 3-5 business days.",
+      handyman_payment: "As a handyman, you'll receive payment 24-48 hours after job completion and customer confirmation. Payments are automatically deposited to your linked bank account or PayPal. You can track all earnings and payment history in your dashboard under 'Earnings'.",
+      disputes: "If there's a payment dispute, both parties can submit evidence through our dispute resolution center. Our support team will review and make a fair decision within 48 hours. We aim to protect both customers and service providers.",
+    },
+    membership: {
+      plans: "We offer three membership tiers: Basic ($10/month or $96/year) for new handymen, Seasonal ($12/month or $108/year) with featured listings, and Pro ($15/month or $144/year) with unlimited features and priority support. Each plan includes different benefits like verification badges, priority placement in search results, and marketing tools.",
+      features: "Membership features include: profile verification badges, priority placement in search results, featured listings, access to analytics dashboard, marketing tools, and priority customer support. Pro members also get unlimited featured listings and a dedicated account manager.",
+      cancel: "Yes, you can cancel your membership anytime from your account settings. Your membership will remain active until the end of your billing cycle, and you'll continue to have access to all features until then. No penalties or fees for cancellation.",
+      upgrade: "You can upgrade your membership at any time! Go to the membership page, select your desired plan, and complete the upgrade. The new plan features will be activated immediately, and you'll be charged a prorated amount for the remainder of your billing cycle.",
+      benefits: "Membership helps you stand out from competitors, get more visibility, build trust with customers through verification badges, and access powerful tools to grow your business. Many handymen see 2-3x more bookings after upgrading to a paid membership.",
+    },
+    general: {
+      verification: "All handymen go through a verification process including ID verification, background checks, and skill assessments. You can see verification badges on each profile. We also monitor ratings and reviews to ensure quality service. Customers can report issues, and verified handymen with consistent high ratings are more trusted.",
+      insurance: "Yes! All jobs booked through our platform are covered by HandyCover protection. This includes liability coverage for damages and accidents that occur during the job. Coverage applies automatically when you book through our platform - no additional steps needed.",
+      ratings: "Ratings and reviews help maintain quality. After each completed job, both parties can leave ratings (1-5 stars) and written reviews. This helps future customers make informed decisions and helps handymen build their reputation. Reviews are verified to prevent fake reviews.",
+      support: "Our support team is available 24/7 through this chat, email, or phone. For urgent issues during an active booking, we have priority support. General questions can be answered by me (your AI assistant) or you can request to speak with a human agent anytime.",
+      safety: "Safety is our top priority. All handymen are verified, we have secure payment processing, insurance coverage, and a robust reporting system. If you ever feel unsafe or encounter issues, you can use our emergency contact feature or report concerns immediately through the app.",
+      profile: "To create or update your profile, go to Settings. You can add your skills, experience, certifications, portfolio photos, service areas, availability, and pricing. A complete profile with photos and good reviews gets significantly more bookings. Keep your profile updated regularly!",
+      service_areas: "Handymen can set their service areas when creating their profile. Customers can search by location to find handymen available in their area. You can add multiple service areas and set different pricing for different locations if needed.",
+      what_to_expect: "When you book a handyman through our platform, they'll arrive at the scheduled time with their own tools. They'll assess the job, discuss the work with you, and complete the service professionally. After completion, you'll be asked to confirm the work is done, and payment will be processed. You can leave a review to help other customers. All communication can happen through the platform's messaging system for your convenience and security.",
+    },
+  };
+
+  // Enhanced AI response generator with expanded knowledge
   const generateAIResponse = async (userMessage: string): Promise<string | null> => {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1000));
+    // Simulate API delay for realism
+    await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 500));
 
     const lowerMessage = userMessage.toLowerCase();
 
@@ -85,43 +136,160 @@ export default function AIChatbot({ isOpen, onClose, userType, onTransferToAgent
       lowerMessage.includes("human agent") ||
       lowerMessage.includes("real person") ||
       lowerMessage.includes("transfer to agent") ||
+      lowerMessage.includes("live agent") ||
       (lowerMessage.includes("agent") && (lowerMessage.includes("connect") || lowerMessage.includes("transfer")))
     ) {
-      // Return null to signal transfer
-      return null;
+      return null; // Signal transfer to agent
     }
 
-    // Check for keywords and provide relevant answers
-    if (lowerMessage.includes("book") || lowerMessage.includes("booking") || lowerMessage.includes("schedule")) {
-      return faqKnowledge.bookings[0] + " You can also cancel or reschedule from your bookings page up to 24 hours before the appointment.";
-    }
-    if (lowerMessage.includes("payment") || lowerMessage.includes("pay") || lowerMessage.includes("refund")) {
-      if (userType === "handyman") {
-        return faqKnowledge.payments[1] + " All payments are secure and processed automatically after job completion.";
+    // Tools and Equipment - Check this FIRST as it's a common question
+    if (lowerMessage.includes("tool") || lowerMessage.includes("equipment") || lowerMessage.includes("supplies")) {
+      if ((lowerMessage.includes("bring") || lowerMessage.includes("have") || lowerMessage.includes("will") || 
+           lowerMessage.includes("do they") || lowerMessage.includes("does he") || lowerMessage.includes("does she") ||
+           lowerMessage.includes("come with") || lowerMessage.includes("include")) && !lowerMessage.includes("book")) {
+        if (lowerMessage.includes("material") && !lowerMessage.includes("tool")) {
+          return faqKnowledge.bookings.materials;
+        }
+        return faqKnowledge.bookings.tools;
       }
-      return faqKnowledge.payments[0] + " " + faqKnowledge.payments[2] + " If you need help with a specific payment issue, please contact our support team.";
-    }
-    if (lowerMessage.includes("membership") || lowerMessage.includes("plan") || lowerMessage.includes("subscription")) {
-      return "We offer three membership plans: Basic ($10/month), Seasonal ($12/month), and Pro ($15/month). Each plan comes with different features like featured listings, priority placement, and verification badges. You can view all plans and subscribe from the membership page. Would you like to know more about a specific plan?";
-    }
-    if (lowerMessage.includes("cancel") || lowerMessage.includes("reschedule")) {
-      return faqKnowledge.bookings[1] + " For more specific questions about cancellation policies, please check your booking details or contact support.";
-    }
-    if (lowerMessage.includes("verified") || lowerMessage.includes("safe") || lowerMessage.includes("security")) {
-      return faqKnowledge.general[0] + " " + faqKnowledge.general[2];
-    }
-    if (lowerMessage.includes("profile") || lowerMessage.includes("update")) {
-      return "To update your profile, go to the Settings page. You can edit your name, contact information, bio, skills, and upload a profile picture. Keeping your profile updated helps you get better matches!";
-    }
-    if (lowerMessage.includes("help") || lowerMessage.includes("support") || lowerMessage.includes("contact")) {
-      return "I'm here to help! I can answer questions about bookings, payments, memberships, and more. If you need to speak with a real person, just type 'contact agent' and I'll connect you with one of our support agents.";
-    }
-    if (lowerMessage.includes("hello") || lowerMessage.includes("hi") || lowerMessage.includes("hey")) {
-      return `Hello! I'm your AI assistant. I can help you with questions about bookings, payments, memberships, profile management, and more. What would you like to know?`;
     }
 
-    // Default response
-    return "I understand you're asking about: \"" + userMessage + "\". I can help you with questions about bookings, payments, memberships, and using our platform. Could you provide more details, or would you like me to connect you with our human support team?";
+    if ((lowerMessage.includes("bring") || lowerMessage.includes("will bring") || lowerMessage.includes("do they bring")) && 
+        (lowerMessage.includes("tool") || lowerMessage.includes("equipment"))) {
+      return faqKnowledge.bookings.tools;
+    }
+
+    if (lowerMessage.includes("material") && (lowerMessage.includes("include") || lowerMessage.includes("bring") || 
+        lowerMessage.includes("need") || lowerMessage.includes("provide") || lowerMessage.includes("supply"))) {
+      return faqKnowledge.bookings.materials;
+    }
+
+    // Bookings - Comprehensive responses
+    if (lowerMessage.includes("book") || lowerMessage.includes("booking") || lowerMessage.includes("schedule") || lowerMessage.includes("appointment")) {
+      if (lowerMessage.includes("cancel") || lowerMessage.includes("cancel")) {
+        return faqKnowledge.bookings.cancel;
+      }
+      if (lowerMessage.includes("how") || lowerMessage.includes("process") || lowerMessage.includes("steps")) {
+        return faqKnowledge.bookings.how;
+      }
+      if (lowerMessage.includes("time") || lowerMessage.includes("when") || lowerMessage.includes("available")) {
+        return faqKnowledge.bookings.time;
+      }
+      if (lowerMessage.includes("modify") || lowerMessage.includes("change") || lowerMessage.includes("edit")) {
+        return faqKnowledge.bookings.modify;
+      }
+      if (lowerMessage.includes("confirm") || lowerMessage.includes("email")) {
+        return faqKnowledge.bookings.confirmation;
+      }
+      if (lowerMessage.includes("prepare") || lowerMessage.includes("what should i") || lowerMessage.includes("ready")) {
+        return faqKnowledge.bookings.preparation;
+      }
+      return faqKnowledge.bookings.how + " " + faqKnowledge.bookings.cancel;
+    }
+
+    if (lowerMessage.includes("prepare") || lowerMessage.includes("what should i do before") || lowerMessage.includes("ready")) {
+      return faqKnowledge.bookings.preparation;
+    }
+
+    if (lowerMessage.includes("expect") || (lowerMessage.includes("what happens") && lowerMessage.includes("handyman")) || lowerMessage.includes("what to expect")) {
+      return faqKnowledge.general.what_to_expect;
+    }
+
+    // Payments - Detailed responses
+    if (lowerMessage.includes("payment") || lowerMessage.includes("pay") || lowerMessage.includes("money") || lowerMessage.includes("cost") || lowerMessage.includes("price")) {
+      if (lowerMessage.includes("refund") || lowerMessage.includes("return")) {
+        return faqKnowledge.payments.refund;
+      }
+      if (lowerMessage.includes("method") || lowerMessage.includes("card") || lowerMessage.includes("how to pay")) {
+        return faqKnowledge.payments.methods;
+      }
+      if (lowerMessage.includes("secure") || lowerMessage.includes("safe") || lowerMessage.includes("protection")) {
+        return faqKnowledge.payments.security;
+      }
+      if (lowerMessage.includes("dispute") || lowerMessage.includes("issue") || lowerMessage.includes("problem")) {
+        return faqKnowledge.payments.disputes;
+      }
+      if (userType === "handyman" && (lowerMessage.includes("receive") || lowerMessage.includes("paid") || lowerMessage.includes("earnings"))) {
+        return faqKnowledge.payments.handyman_payment;
+      }
+      if (userType === "handyman") {
+        return faqKnowledge.payments.handyman_payment + " " + faqKnowledge.payments.disputes;
+      }
+      return faqKnowledge.payments.methods + " " + faqKnowledge.payments.security;
+    }
+
+    // Memberships - Expanded information
+    if (lowerMessage.includes("membership") || lowerMessage.includes("plan") || lowerMessage.includes("subscription") || lowerMessage.includes("tier")) {
+      if (lowerMessage.includes("cancel") || lowerMessage.includes("stop")) {
+        return faqKnowledge.membership.cancel;
+      }
+      if (lowerMessage.includes("upgrade") || lowerMessage.includes("change plan")) {
+        return faqKnowledge.membership.upgrade;
+      }
+      if (lowerMessage.includes("feature") || lowerMessage.includes("benefit") || lowerMessage.includes("include")) {
+        return faqKnowledge.membership.features;
+      }
+      if (lowerMessage.includes("worth") || lowerMessage.includes("benefit") || lowerMessage.includes("why")) {
+        return faqKnowledge.membership.benefits;
+      }
+      return faqKnowledge.membership.plans + " " + faqKnowledge.membership.features;
+    }
+
+    // General topics - Comprehensive coverage
+    if (lowerMessage.includes("verify") || lowerMessage.includes("verified") || lowerMessage.includes("trust") || lowerMessage.includes("safe") || lowerMessage.includes("legit")) {
+      return faqKnowledge.general.verification + " " + faqKnowledge.general.safety;
+    }
+
+    if (lowerMessage.includes("insurance") || lowerMessage.includes("cover") || lowerMessage.includes("protected")) {
+      return faqKnowledge.general.insurance;
+    }
+
+    if (lowerMessage.includes("rating") || lowerMessage.includes("review") || lowerMessage.includes("feedback")) {
+      return faqKnowledge.general.ratings;
+    }
+
+    if (lowerMessage.includes("profile") || lowerMessage.includes("update profile") || lowerMessage.includes("edit profile")) {
+      return faqKnowledge.general.profile;
+    }
+
+    if (lowerMessage.includes("support") || lowerMessage.includes("help") || lowerMessage.includes("contact")) {
+      return faqKnowledge.general.support + " If you need to speak with a human agent, just type 'contact agent' and I'll connect you right away.";
+    }
+
+    if (lowerMessage.includes("service area") || lowerMessage.includes("location") || lowerMessage.includes("where")) {
+      return faqKnowledge.general.service_areas;
+    }
+
+    if (lowerMessage.includes("hello") || lowerMessage.includes("hi") || lowerMessage.includes("hey") || lowerMessage.includes("greetings")) {
+      return `Hello! I'm your AI assistant for the Handyman platform. I can help you with:\n\n• Bookings: How to book, cancel, reschedule, or modify appointments\n• Payments: Payment methods, security, refunds, and dispute resolution\n• Memberships: Plan details, features, upgrades, and benefits\n• Profiles: Creating and updating your profile\n• Safety: Verification, insurance, and security measures\n• General Support: Any other questions about our platform\n\nWhat would you like to know? Or type "contact agent" to speak with a human.`;
+    }
+
+    if (lowerMessage.includes("thank") || lowerMessage.includes("thanks")) {
+      return "You're very welcome! I'm here 24/7 to help. If you have any more questions, feel free to ask. Have a great day!";
+    }
+
+    // Intelligent default response with suggestions
+    const suggestions = [];
+    if (lowerMessage.includes("how") || lowerMessage.includes("what") || lowerMessage.includes("when") || lowerMessage.includes("where") || lowerMessage.includes("why")) {
+      suggestions.push("I can explain how things work on our platform");
+    }
+    if (lowerMessage.includes("can i") || lowerMessage.includes("is it possible") || lowerMessage.includes("able to")) {
+      suggestions.push("I can tell you what's possible on our platform");
+    }
+
+    const defaultResponse = `I understand you're asking about: "${userMessage}". ` +
+      `I can help you with questions about:\n\n` +
+      `📅 Bookings and scheduling\n` +
+      `💳 Payments and refunds\n` +
+      `⭐ Memberships and plans\n` +
+      `👤 Profile management\n` +
+      `🔒 Safety and verification\n` +
+      `📞 Support and help\n\n` +
+      `Could you rephrase your question with more specific details? ` +
+      `For example: "How do I book a handyman?" or "What payment methods do you accept?" ` +
+      `Or if you'd prefer, type "contact agent" to speak with a human support representative.`;
+
+    return defaultResponse;
   };
 
   const handleSendMessage = async () => {
@@ -143,29 +311,23 @@ export default function AIChatbot({ isOpen, onClose, userType, onTransferToAgent
       
       // If response is null, transfer to agent
       if (response === null && onTransferToAgent) {
-        const transferMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: "I'm connecting you with a real support agent now. They'll be able to help you with more complex issues. Please wait a moment...",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, transferMessage]);
-        
-        // Wait a moment then transfer
-        setTimeout(() => {
-          onTransferToAgent();
-          onClose();
-        }, 1500);
+        typeMessage("I'm connecting you with a real support agent now. They'll be able to help you with more complex issues. Please wait a moment...", (transferMessage) => {
+          setMessages((prev) => [...prev, transferMessage]);
+          // Wait a moment then transfer
+          setTimeout(() => {
+            onTransferToAgent();
+            onClose();
+          }, 1000);
+        });
         return;
       }
       
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: response,
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, botMessage]);
+      // Use typing animation for bot response
+      if (response) {
+        typeMessage(response, (botMessage) => {
+          setMessages((prev) => [...prev, botMessage]);
+        });
+      }
     } catch (error) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -247,10 +409,10 @@ export default function AIChatbot({ isOpen, onClose, userType, onTransferToAgent
                   className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                     message.sender === "user"
                       ? "bg-[#D4A574] text-[#5C4033] rounded-br-sm"
-                      : "bg-white text-[#5C4033] border border-[#EED9C4] rounded-bl-sm"
+                      : "bg-white border border-[#EED9C4] rounded-bl-sm"
                   }`}
                 >
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+                  <p className={`text-sm leading-relaxed whitespace-pre-wrap ${message.sender === "bot" ? "text-black" : "text-[#5C4033]"}`}>{message.text}</p>
                   <span className="text-xs opacity-60 mt-1 block">
                     {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </span>
@@ -262,13 +424,23 @@ export default function AIChatbot({ isOpen, onClose, userType, onTransferToAgent
                 )}
               </div>
             ))}
-            {isLoading && (
+            {isLoading && !isTyping && (
               <div className="flex gap-3 justify-start">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#D4A574] flex items-center justify-center">
                   <Bot className="w-5 h-5 text-[#5C4033]" />
                 </div>
                 <div className="bg-white rounded-2xl rounded-bl-sm px-4 py-3 border border-[#EED9C4]">
                   <Loader2 className="w-5 h-5 text-[#D4A574] animate-spin" />
+                </div>
+              </div>
+            )}
+            {isTyping && typingMessage && (
+              <div className="flex gap-3 justify-start">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#D4A574] flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-[#5C4033]" />
+                </div>
+                <div className="bg-white rounded-2xl rounded-bl-sm px-4 py-3 border border-[#EED9C4] max-w-[80%]">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap text-black">{typingMessage}<span className="inline-block w-2 h-4 bg-[#5C4033] ml-1 animate-pulse">|</span></p>
                 </div>
               </div>
             )}
