@@ -38,6 +38,7 @@ const upload = multer({
   },
 });
 
+/* ---------------------- ROUTES ---------------------- */
 
 // Get logged-in handyman profile (auto-create if not exists)
 router.get("/me", authSession, getMyProfile);
