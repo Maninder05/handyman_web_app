@@ -127,7 +127,7 @@ export default function CreateService() {
     try {
       setLoadingServices(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${apiUrl}/api/handyman/services`, { credentials: "include" });
+      const res = await fetch(`${apiUrl}/api/handymen/services`, { credentials: "include" });
       const data = await res.json();
       setServices(data);
     } catch (err) {
