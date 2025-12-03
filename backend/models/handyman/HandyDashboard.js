@@ -1,4 +1,3 @@
-// models/handyman/HandymanProfile.js
 import mongoose from 'mongoose';
 
 const ServiceSchema = new mongoose.Schema({
