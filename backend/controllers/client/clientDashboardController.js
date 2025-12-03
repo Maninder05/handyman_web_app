@@ -26,13 +26,25 @@ export const getMyProfile = async (req, res) => {
       return res.status(403).json({ message: "Not a client account" });
     }
 
+
+    // Get user to fetch username
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Try to find existing client
     let profile = await ClientProfile.findOne({ userId: id });
 
     if (!profile) {
       return res.status(404).json({ message: "Client profile not found" });
     }
 
-    res.status(200).json(profile);
+    // Convert to object and add username
+    const profileObj = profile.toObject();
+    profileObj.username = user.username;
+
+    res.status(200).json(profileObj);
     
   } catch (err) {
     console.error("Error fetching client profile:", err);

@@ -76,7 +76,11 @@ const ensureHandyman = (req, res, next) => {
 
 /* ---------------------- PROFILE ROUTES ---------------------- */
 
+
 router.get("/", authSession, ensureHandyman, getMyProfile);
+// Get logged-in handyman profile (auto-create if not exists)
+router.get("/", authSession, getMyProfile);
+router.get("/me", authSession, getMyProfile);
 
 router.post("/", authSession, ensureHandyman, createProfile);
 
