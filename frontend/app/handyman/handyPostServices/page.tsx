@@ -161,7 +161,6 @@ export default function CreateService() {
             {loading && <span className="text-sm text-[#D4A574] animate-pulse">Saving...</span>}
           </h2>
 
-          {/* Form */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-10">
             {/* Left */}
             <div className="space-y-6">
