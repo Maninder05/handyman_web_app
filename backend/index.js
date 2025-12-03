@@ -20,7 +20,7 @@ import settingsRoutes from './routes/mutualRoutes.js';
 
 dotenv.config();
 
-const app = express();  // ✅ CREATE APP FIRST!
+const app = express();  
 const PORT = process.env.PORT || 7000;
 
 // HTTP server
