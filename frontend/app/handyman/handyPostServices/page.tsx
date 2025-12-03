@@ -27,6 +27,7 @@ export default function CreateService() {
   const [popup, setPopup] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(false);
@@ -34,18 +35,9 @@ export default function CreateService() {
   const router = useRouter();
   const handleLogout = () => router.push("/");
 
-
-  const getServiceImageUrl = (img?: string) => {
-    if (!img) return "/placeholder.png"; 
-    if (img.startsWith("http")) return img;
-    if (img.startsWith("/")) return `${process.env.NEXT_PUBLIC_API_URL}${img}`;
-    return `${process.env.NEXT_PUBLIC_API_URL}/${img}`;
-  };
-
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
       setErrors({ image: "Only JPG, JPEG, and PNG are allowed" });
       return;
@@ -54,7 +46,6 @@ export default function CreateService() {
       setErrors({ image: "Image must be less than 35MB" });
       return;
     }
-
     setErrors({});
     setImage(file);
     setImagePreview(URL.createObjectURL(file));
@@ -62,7 +53,6 @@ export default function CreateService() {
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-
     if (/^\d*\.?\d*$/.test(val)) {
       setPrice(val);
       setErrors((prev) => ({ ...prev, price: "" }));
@@ -71,14 +61,13 @@ export default function CreateService() {
     }
   };
 
-  const submitToServer = async () => {
+  const submitToServer = async (isDraft = false) => {
     const newErrors: { [key: string]: string } = {};
-
     if (!title) newErrors.title = "Title is required";
     if (!description) newErrors.description = "Description is required";
     if (!category) newErrors.category = "Category is required";
-    if (!price) newErrors.price = "Price is required";
-    if (!image) newErrors.image = "Image is required";
+    if (!price && !isDraft) newErrors.price = "Price is required";
+    if (!image && !isDraft) newErrors.image = "Image is required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -87,14 +76,13 @@ export default function CreateService() {
 
     try {
       setLoading(true);
-
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
       formData.append("category", category);
       formData.append("price", price);
       formData.append("priceType", priceType);
-
+      formData.append("isDraft", isDraft ? "true" : "false");
       if (image) formData.append("image", image);
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -107,7 +95,7 @@ export default function CreateService() {
       });
 
       if (res.ok) {
-        setPopup("🎉 Service published successfully!");
+        setPopup(isDraft ? "✅ Draft saved successfully!" : "🎉 Service published successfully!");
         setTitle("");
         setDescription("");
         setCategory("");
@@ -121,7 +109,6 @@ export default function CreateService() {
         try {
           data = JSON.parse(text);
         } catch {}
-
         setPopup(data.message || "❌ Failed to submit service");
       }
     } catch (err) {
@@ -140,11 +127,7 @@ export default function CreateService() {
     try {
       setLoadingServices(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-      const res = await fetch(`${apiUrl}/api/handyman/services`, {
-        credentials: "include",
-      });
-
+      const res = await fetch(`${apiUrl}/api/handyman/services`, { credentials: "include" });
       const data = await res.json();
       setServices(data);
     } catch (err) {
@@ -159,7 +142,6 @@ export default function CreateService() {
     fetchServices();
     setShowModal(true);
   };
-
   const closeModal = () => setShowModal(false);
 
   return (
@@ -176,22 +158,15 @@ export default function CreateService() {
         <div className="w-full max-w-5xl bg-white/95 backdrop-blur-md rounded-2xl shadow-lg p-12 border border-[#D4A574]/30 hover:shadow-[#D4A574]/20 transition-all duration-300">
           <h2 className="text-4xl font-bold text-[#5C4033] border-b pb-4 flex items-center justify-between">
             Create a New Service
-            {loading && (
-              <span className="text-sm text-[#D4A574] animate-pulse">
-                Saving...
-              </span>
-            )}
+            {loading && <span className="text-sm text-[#D4A574] animate-pulse">Saving...</span>}
           </h2>
 
           {/* Form */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-10">
             {/* Left */}
             <div className="space-y-6">
-              {/* Title */}
               <div>
-                <label className="block mb-2 font-semibold text-[#1a1a1a]">
-                  Title
-                </label>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">Title</label>
                 <input
                   type="text"
                   value={title}
@@ -199,15 +174,11 @@ export default function CreateService() {
                   placeholder="Enter service title"
                   className="w-full rounded-xl p-4 border border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-[#D4A574]"
                 />
-                {errors.title && (
-                  <p className="text-[#D4A574] text-sm mt-1">{errors.title}</p>
-                )}
+                {errors.title && <p className="text-[#D4A574] text-sm mt-1">{errors.title}</p>}
               </div>
 
               <div>
-                <label className="block mb-2 font-semibold text-[#1a1a1a]">
-                  Description
-                </label>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -215,18 +186,11 @@ export default function CreateService() {
                   className="w-full rounded-xl p-4 border border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-[#D4A574]"
                   rows={5}
                 />
-                {errors.description && (
-                  <p className="text-[#D4A574] text-sm mt-1">
-                    {errors.description}
-                  </p>
-                )}
+                {errors.description && <p className="text-[#D4A574] text-sm mt-1">{errors.description}</p>}
               </div>
 
-
               <div>
-                <label className="block mb-2 font-semibold text-[#1a1a1a]">
-                  Category
-                </label>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
@@ -243,19 +207,13 @@ export default function CreateService() {
                   <option>Renovation</option>
                   <option>Roofing</option>
                   <option>General Repairs</option>
+
                 </select>
-                {errors.category && (
-                  <p className="text-[#D4A574] text-sm mt-1">
-                    {errors.category}
-                  </p>
-                )}
+                {errors.category && <p className="text-[#D4A574] text-sm mt-1">{errors.category}</p>}
               </div>
 
-              {/* Price */}
               <div>
-                <label className="block mb-2 font-semibold text-[#1a1a1a]">
-                  Price
-                </label>
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">Price</label>
                 <div className="flex gap-4">
                   <select
                     value={priceType}
@@ -265,7 +223,6 @@ export default function CreateService() {
                     <option>Hourly</option>
                     <option>Fixed</option>
                   </select>
-
                   <input
                     type="text"
                     value={price}
@@ -274,56 +231,27 @@ export default function CreateService() {
                     className="flex-1 rounded-xl p-4 border border-gray-200 bg-white text-gray-800"
                   />
                 </div>
-                {errors.price && (
-                  <p className="text-[#D4A574] text-sm mt-1">{errors.price}</p>
-                )}
+                {errors.price && <p className="text-[#D4A574] text-sm mt-1">{errors.price}</p>}
               </div>
             </div>
 
             {/* Right */}
             <div className="space-y-6">
               <div>
-                <label className="block mb-2 font-semibold text-[#1a1a1a]">
-                  Image
-                </label>
-
+                <label className="block mb-2 font-semibold text-[#1a1a1a]">Image</label>
                 <div className="flex flex-col items-center justify-center border-2 border-dashed border-[#D4A574]/40 rounded-xl p-6 hover:bg-[#FFF8F0] cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    id="upload"
-                    onChange={handleImageUpload}
-                  />
-                  <label
-                    htmlFor="upload"
-                    className="cursor-pointer flex flex-col items-center gap-2"
-                  >
-                    <span className="text-[#D4A574] font-medium">
-                      {image ? image.name : "Click to upload image"}
-                    </span>
-                    <p className="text-gray-500 text-sm">
-                      Only JPG, JPEG, PNG allowed
-                    </p>
+                  <input type="file" accept="image/*" className="hidden" id="upload" onChange={handleImageUpload} />
+                  <label htmlFor="upload" className="cursor-pointer flex flex-col items-center gap-2">
+                    <span className="text-[#D4A574] font-medium">{image ? image.name : "Click to upload image"}</span>
+                    <p className="text-gray-500 text-sm">Only JPG, JPEG, PNG allowed</p>
                   </label>
-
-                  {/* ✅ Updated Preview */}
                   {imagePreview && (
                     <div className="w-40 h-40 mt-4 relative rounded-xl overflow-hidden border border-gray-200 shadow-lg">
-                      <Image
-                        src={imagePreview}
-                        alt="Preview"
-                        width={200}
-                        height={200}
-                        className="object-cover"
-                      />
+                      <Image src={imagePreview} alt="Preview" fill className="object-cover" />
                     </div>
                   )}
                 </div>
-
-                {errors.image && (
-                  <p className="text-[#D4A574] text-sm mt-1">{errors.image}</p>
-                )}
+                {errors.image && <p className="text-[#D4A574] text-sm mt-1">{errors.image}</p>}
               </div>
             </div>
           </div>
@@ -338,7 +266,7 @@ export default function CreateService() {
             </button>
 
             <button
-              onClick={() => submitToServer()}
+              onClick={() => submitToServer(false)}
               disabled={loading}
               className="px-8 py-3 rounded-xl bg-gradient-to-r from-[#D4A574] to-[#B8A565] text-white font-semibold hover:shadow-lg hover:scale-[1.02] disabled:opacity-70"
             >
@@ -348,6 +276,7 @@ export default function CreateService() {
         </div>
       </main>
 
+      {/* ================= MODAL UPDATED ================= */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-start z-50 py-12 overflow-auto">
           <div className="bg-white rounded-2xl p-8 w-[90%] max-w-4xl shadow-xl relative border border-gray-200">
@@ -358,9 +287,7 @@ export default function CreateService() {
               ✕
             </button>
 
-            <h3 className="text-3xl font-bold text-gray-900 text-center mb-8">
-              Published Services
-            </h3>
+            <h3 className="text-3xl font-bold text-gray-900 text-center mb-8">Published Services</h3>
 
             {loadingServices ? (
               <p className="text-center text-gray-500">Loading...</p>
@@ -373,13 +300,13 @@ export default function CreateService() {
                     key={s._id}
                     className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all p-4 flex gap-4"
                   >
+                    {/* IMAGE FIXED */}
                     {s.images && s.images.length > 0 ? (
                       <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100 border">
                         <Image
-                          src={getServiceImageUrl(s.images[0])}
-                          width={200}
-                          height={200}
+                          src={`${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}`}
                           alt={s.title}
+                          fill
                           className="object-cover"
                         />
                       </div>
@@ -391,15 +318,10 @@ export default function CreateService() {
 
                     <div className="flex-1 flex flex-col justify-between">
                       <div className="space-y-1">
-                        <p className="text-lg font-semibold text-gray-900">
-                          {s.title}
-                        </p>
+                        <p className="text-lg font-semibold text-gray-900">{s.title}</p>
                         <p className="text-gray-600 text-sm">{s.description}</p>
                         <p className="text-gray-700 text-sm">
-                          <span className="font-semibold text-gray-900">
-                            Category:
-                          </span>{" "}
-                          {s.category}
+                          <span className="font-semibold text-gray-900">Category:</span> {s.category}
                         </p>
                         <p className="text-sm font-semibold text-amber-700">
                           Price: {s.priceType} — ${s.price}
