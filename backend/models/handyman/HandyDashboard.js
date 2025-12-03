@@ -193,7 +193,7 @@ const HandymanSchema = new mongoose.Schema({
 
   // numeric counters used by frontend
   jobsDone: { type: Number, default: 0 },
-  jobsDoneCount: { type: Number, default: 0 }, // kept for compatibility
+  jobsDoneCount: { type: Number, default: 0 }, 
   jobsInProgressCount: { type: Number, default: 0 },
   activeOrdersCount: { type: Number, default: 0 },
   activeOrderCount: { type: Number, default: 0 }, // compatibility
