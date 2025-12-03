@@ -74,7 +74,7 @@ export const createInlineSubscription = async (req, res) => {
              return res.status(404).json({ error: 'Authenticated user record not found.' });
         }
 
-        // ✅ Verify user is a handyman
+        //  Verify user is a handyman
         if (handyman.userType !== 'handyman') {
             return res.status(403).json({ error: 'Only handymen can purchase memberships.' });
         }
