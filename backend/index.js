@@ -12,7 +12,7 @@ import { Server } from 'socket.io';
 // Passport config
 import './config/passport.js';
 
-// Routes - ONLY ONE IMPORT PER FILE!
+// Routes
 import authRoutes from './routes/authRoutes.js';
 import clientRoutes from './routes/clientRoutes.js';
 import handymanRoutes from './routes/handyRoutes.js';
@@ -20,13 +20,12 @@ import settingsRoutes from './routes/mutualRoutes.js';
 
 dotenv.config();
 
-const app = express();  // ✅ CREATE APP FIRST!
+const app = express();
 const PORT = process.env.PORT || 7000;
 
-// HTTP server
+// HTTP + Socket server
 const server = http.createServer(app);
 
-// Socket.io
 const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
@@ -35,14 +34,16 @@ const io = new Server(server, {
   },
 });
 
+//  Increase request limit 
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
 // Core middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
 
@@ -54,13 +55,13 @@ const __dirname = path.dirname(__filename);
 const uploadsPath = path.join(__dirname, "uploads");
 app.use("/uploads", express.static(uploadsPath));
 
-// API Routes - ✅ ALL ROUTES HERE AFTER APP IS CREATED!
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/handymen', handymanRoutes);
-app.use('/api/settings', settingsRoutes);  // ✅ ALREADY HERE, PERFECT!
+app.use('/api/settings', settingsRoutes);
 
-// Socket.io Events
+// Socket.io
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
@@ -77,14 +78,14 @@ io.on('connection', (socket) => {
   });
 });
 
-// Connect to MongoDB and start server
+// MongoDB + Server
 mongoose.connect(process.env.MONGO_URL)
   .then(() => {
-    console.log('✅ Connected to MongoDB successfully!');
+    console.log(' Connected to MongoDB successfully!');
     server.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(` Server is running on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error('❌ Database connection error:', err);
+    console.error(' Database connection error:', err);
   });

@@ -76,7 +76,7 @@ export default function AddHandymanProfile() {
   };
   const removeSkill = (s: string) =>
     setFormData({ ...formData, skills: formData.skills.filter((sk) => sk !== s) });
-
+// profile data
   const validate = () => {
     const errs: { [key: string]: string } = {};
     if (!formData.name.trim() || formData.name.length < 3)

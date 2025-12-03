@@ -1,4 +1,4 @@
-import stripe from '../../config/stripe.js';
+import { stripe } from '../../services/stripeService.js';
 import User from '../../models/auth/User.js';
 import HandymanSubscription from '../../models/mutual/HandymanSubscriptionModel.js';
 

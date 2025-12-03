@@ -11,7 +11,7 @@ export const findHandyman = async (req, res) => {
 
     const handymen = await HandymanService.find({
       category: { $regex: new RegExp(`^${categoryQuery}$`, "i") },
-    }).populate("handymanId"); // populate if needed
+    }).populate("handymanId"); 
 
     res.json(handymen);
   } catch (err) {

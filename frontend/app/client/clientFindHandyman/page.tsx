@@ -63,7 +63,7 @@ export default function BrowseServicesPage(): React.JSX.Element {
 
   const handleLogout = (): void => router.push("/");
 
-  // ✅ Services list
+  
   const services: Service[] = [
     { name: "Wiring Repair", category: "Electrical", image: "/images/wiringrepair.jpg" },
     { name: "Pipe Leakage Fix", category: "Plumbing", image: "/images/pipefix.webp" },
@@ -126,7 +126,6 @@ React.useEffect(() => {
 
   return (
     <main className="bg-[#F5F5F0] min-h-screen text-[#1a1a1a] flex flex-col">
-      {/* ================= HEADER ================= */}
       <header className="bg-[#1a1a1a] shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <h1 className="text-2xl font-bold text-white tracking-wide">Browse Services</h1>
@@ -226,7 +225,6 @@ React.useEffect(() => {
         </div>
       </header>
 
-      {/* ================= STEP 1: BROWSE SERVICES ================= */}
       {step === "browse" && (
         <section className="px-6 py-12 max-w-[1400px] mx-auto w-full">
           <h2 className="text-3xl font-bold mb-10 text-[#D4A574] text-center">
@@ -254,7 +252,6 @@ React.useEffect(() => {
         </section>
       )}
 
-      {/* ================= STEP 2: RESULTS WITH FILTER PANEL ================= */}
       {step === "results" && (
         <section className="px-6 py-12 max-w-[1400px] mx-auto w-full">
           <h2 className="text-3xl font-bold mb-10 text-[#D4A574] text-center">
@@ -262,7 +259,6 @@ React.useEffect(() => {
           </h2>
 
           <div className="flex flex-col lg:flex-row gap-10">
-            {/* LEFT SIDE: HANDYMEN RESULTS */}
             <div className="flex-1">
               {filteredHandymen.length === 0 ? (
                 <p className="text-center text-gray-500 mt-10">
@@ -298,7 +294,6 @@ React.useEffect(() => {
               )}
             </div>
 
-            {/* RIGHT SIDE: FILTERS */}
             <aside className="w-full lg:w-[320px] bg-white border border-gray-200 shadow-lg rounded-xl p-6 h-fit sticky top-24 self-start">
               <h3 className="text-xl font-semibold mb-6 text-[#D4A574]">Filters</h3>
 
