@@ -308,7 +308,7 @@ const StripeCardForm = ({ selectedPriceId, details, userEmail }: { selectedPrice
   );
 };
 
-// ====================================================================
+// ==================================================================
 // 💰 PAYPAL
 // ====================================================================
 const PayPalBlock = ({ selectedPriceId, details }: any) => {
