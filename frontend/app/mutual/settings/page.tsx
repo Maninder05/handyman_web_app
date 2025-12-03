@@ -111,7 +111,7 @@ export default function SettingsPage() {
 
       const data = await response.json();
       
-      // Store userType in localStorage
+
       localStorage.setItem("userType", detectedType);
       setUserType(detectedType);
 
@@ -153,7 +153,7 @@ export default function SettingsPage() {
     setTimeout(() => setAlert(null), 5000);
   };
 
-  // 🚀🚀 ADDED EXACTLY WHERE IT BELONGS 🚀🚀
+
   const getDashboardPath = (): string => {
     const storedType = localStorage.getItem("userType") as "client" | "handyman" | null;
     const finalType = storedType || userType;

@@ -51,7 +51,7 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
 
         <div className="flex items-center gap-4 relative">
 
-          {/* PROFILE BUTTON */}
+          {/* PROFILE BUTTON header*/}
           <button
             onClick={toggleProfile}
             className="p-2 rounded-full hover:bg-[#2a2a2a] transition"
