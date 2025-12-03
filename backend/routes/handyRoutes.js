@@ -111,7 +111,7 @@ router.get("/all", getAllHandymen);
 
 router.put("/verify/:handymanId", authSession, verifyHandyman);
 
-/* ---------------------- SERVICE ROUTES ---------------------- */
+/*  SERVICE ROUTES */
 
 router.post(
   "/services",
