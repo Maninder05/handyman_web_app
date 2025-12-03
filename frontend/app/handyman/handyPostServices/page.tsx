@@ -27,7 +27,6 @@ export default function CreateService() {
   const [popup, setPopup] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(false);
