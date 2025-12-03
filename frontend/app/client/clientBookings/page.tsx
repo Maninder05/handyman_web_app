@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Bell, MessageCircle, X, Calendar, User, Check, Loader2 } from "lucide-react";
 
-/* -------------------- Types -------------------- */
+/* Types */
 type BookingStatus = "pending" | "accepted" | "in-progress" | "completed" | "cancelled" | "declined";
 
 type Booking = {
