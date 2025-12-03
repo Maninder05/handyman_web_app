@@ -225,7 +225,7 @@ export default function ClientBookingsPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentItems = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  /* -------------------- Actions -------------------- */
+  /* Actions  */
 
   const openChat = (handymanId: string) => {
     // navigate to chat page; placeholder route
