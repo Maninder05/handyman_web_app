@@ -16,7 +16,7 @@ import PostService from "../models/handyman/PostService.js";
 
 const router = express.Router();
 
-/* ---------------------- MULTER CONFIGURATION ---------------------- */
+/* MULTER CONFIGURATION */
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const dir = "./uploads/profiles";
@@ -41,7 +41,7 @@ const upload = multer({
   },
 });
 
-/* ---------------------- SECURITY: PREVENT HANDYMAN FROM USING CLIENT ROUTES ---------------------- */
+/* SECURITY: PREVENT HANDYMAN FROM USING CLIENT ROUTES*/
 const ensureClient = (req, res, next) => {
   if (req.user?.userType !== "client") {
     return res.status(403).json({ message: "Access denied: Client account required" });
@@ -49,7 +49,7 @@ const ensureClient = (req, res, next) => {
   next();
 };
 
-/* ---------------------- CLIENT — Search for handymen ---------------------- */
+/*  CLIENT — Search for handymen */
 router.get("/find-handyman", async (req, res) => {
   try {
     const { category } = req.query;
@@ -70,7 +70,7 @@ router.get("/find-handyman", async (req, res) => {
   }
 });
 
-/* ---------------------- ROUTES ---------------------- */
+/* ROUTES  */
 
 router.get("/", authSession, ensureClient, getMyProfile);
 

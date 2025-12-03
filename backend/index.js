@@ -34,7 +34,7 @@ const io = new Server(server, {
   },
 });
 
-//  Increase request limit to stop PayloadTooLargeError
+//  Increase request limit 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -81,11 +81,11 @@ io.on('connection', (socket) => {
 // MongoDB + Server
 mongoose.connect(process.env.MONGO_URL)
   .then(() => {
-    console.log('✅ Connected to MongoDB successfully!');
+    console.log(' Connected to MongoDB successfully!');
     server.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(` Server is running on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error('❌ Database connection error:', err);
+    console.error(' Database connection error:', err);
   });

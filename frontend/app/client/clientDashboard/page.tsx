@@ -45,7 +45,7 @@ export default function ClientDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  // ------------------------- EXISTING FETCH USEEFFECT -------------------------
+
   useEffect(() => {
     fetchProfile();
     
@@ -62,7 +62,6 @@ export default function ClientDashboard() {
     };
   }, []);
 
-  // ------------------------- ⭐ ADDED THEME SYNC USEEFFECT ⭐ -------------------------
   useEffect(() => {
     const applyThemeSettings = async () => {
       try {
@@ -95,7 +94,7 @@ export default function ClientDashboard() {
 
     applyThemeSettings();
   }, []);
-  // ------------------------- END THEME CODE -------------------------
+
 
   const fetchProfile = async () => {
     setLoading(true);

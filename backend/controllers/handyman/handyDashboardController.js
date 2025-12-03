@@ -15,9 +15,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/*============================================================================
-    GET LOGGED-IN HANDYMAN PROFILE (FIXED)
-============================================================================*/
+   // GET LOGGED-IN HANDYMAN PROFILE (FIXED)
 export const getMyProfile = async (req, res) => {
   try {
     const { id, email, userType } = req.user;
