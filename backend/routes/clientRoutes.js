@@ -16,7 +16,7 @@ import PostService from "../models/handyman/PostService.js";
 
 const router = express.Router();
 
-/* ---------------------- MULTER CONFIGURATION ---------------------- */
+/* MULTER CONFIGURATION */
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const dir = "./uploads/profiles";
