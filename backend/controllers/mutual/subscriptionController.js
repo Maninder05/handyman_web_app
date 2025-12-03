@@ -10,7 +10,7 @@ export const createCheckoutSession = async (req, res) => {
     const handymanId = req.user.id;
     
     try {
-        // ✅ FIX 1: Explicitly cast the string ID to an ObjectId
+        //  FIX 1: Explicitly cast the string ID to an ObjectId
         const objectId = new mongoose.Types.ObjectId(handymanId);
         const handyman = await User.findById(objectId);
 
