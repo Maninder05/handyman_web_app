@@ -41,7 +41,7 @@ const upload = multer({
   },
 });
 
-/* ---------------------- SECURITY: PREVENT HANDYMAN FROM USING CLIENT ROUTES ---------------------- */
+/* SECURITY: PREVENT HANDYMAN FROM USING CLIENT ROUTES*/
 const ensureClient = (req, res, next) => {
   if (req.user?.userType !== "client") {
     return res.status(403).json({ message: "Access denied: Client account required" });
