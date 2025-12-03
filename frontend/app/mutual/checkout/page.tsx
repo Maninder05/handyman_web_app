@@ -488,7 +488,7 @@ const Footer = () => (
 );
 
 // ====================================================================
-// 🧩 MAIN PAGE (FINAL CLEAN LAYOUT)
+//  MAIN PAGE (FINAL CLEAN LAYOUT)
 // ====================================================================
 export default function CheckoutPage() {
   const sp = useSearchParams();
