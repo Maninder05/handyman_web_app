@@ -32,7 +32,7 @@ type Booking = {
   progress?: number; // 0 - 100
 };
 
-/* -------------------- Helpers & Mock Data -------------------- */
+/*  Helpers & Mock Data  */
 
 const STATUS_LABEL: Record<BookingStatus, { label: string; style: string }> = {
   pending: { label: "Pending", style: "bg-yellow-100 text-yellow-800" },
@@ -135,7 +135,7 @@ const MOCK_BOOKINGS: Booking[] = [
   // add more mocked bookings if needed
 ];
 
-/* -------------------- Component -------------------- */
+/*  Component  */
 
 export default function ClientBookingsPage() {
   const router = useRouter();
