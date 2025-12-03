@@ -62,7 +62,6 @@ export default function ClientDashboard() {
     };
   }, []);
 
-  // ------------------------- ⭐ ADDED THEME SYNC USEEFFECT ⭐ -------------------------
   useEffect(() => {
     const applyThemeSettings = async () => {
       try {
