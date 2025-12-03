@@ -205,7 +205,6 @@ export default function CreateService() {
                   <option>Renovation</option>
                   <option>Roofing</option>
                   <option>General Repairs</option>
-
                 </select>
                 {errors.category && <p className="text-[#D4A574] text-sm mt-1">{errors.category}</p>}
               </div>
@@ -290,49 +289,51 @@ export default function CreateService() {
               <p className="text-center text-gray-500">No services found.</p>
             ) : (
               <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-6">
-                {services.map((s) => (
-                  <div
-                    key={s._id}
-                    className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all p-4 flex gap-4"
-                  >
-                    {s.images && s.images.length > 0 ? (
-                      <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100 border">
-                        <Image
-  src={
-    s.images[0].startsWith("http")
-      ? s.images[0] // already a full URL
-      : `${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}` // relative → add domain
-  }
-  alt={s.title}
-  fill
-  className="object-cover"
-/>
+                {services.map((s) => {
+                  // SAFELY FIX IMAGE URL → THIS IS THE ONLY FIX
+                  const raw = s.images?.[0] || "";
+                  const finalImg =
+                    raw.startsWith("http")
+                      ? raw
+                      : `${process.env.NEXT_PUBLIC_API_URL}/${raw.replace(/^\/+/, "")}`;
 
-                      </div>
-                    ) : (
-                      <div className="w-32 h-32 rounded-lg bg-gray-100 flex items-center justify-center border text-gray-400">
-                        No Image
-                      </div>
-                    )}
+                  return (
+                    <div
+                      key={s._id}
+                      className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all p-4 flex gap-4"
+                    >
+                      {raw ? (
+                        <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100 border">
+                          <Image
+                            src={finalImg}
+                            alt={s.title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-32 h-32 rounded-lg bg-gray-100 flex items-center justify-center border text-gray-400">
+                          No Image
+                        </div>
+                      )}
 
-                    <div className="flex-1 flex flex-col justify-between">
-                      <div className="space-y-1">
-                        <p className="text-lg font-semibold text-gray-900">{s.title}</p>
-                        <p className="text-gray-600 text-sm">{s.description}</p>
-                        <p className="text-gray-700 text-sm">
-                          <span className="font-semibold text-gray-900">Category:</span> {s.category}
-                        </p>
-                        <p className="text-sm font-semibold text-amber-700">
-                          Price: {s.priceType} — ${s.price}
-                        </p>
-                      </div>
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div className="space-y-1">
+                          <p className="text-lg font-semibold text-gray-900">{s.title}</p>
+                          <p className="text-gray-600 text-sm">{s.description}</p>
+                          <p className="text-gray-700 text-sm">
+                            <span className="font-semibold text-gray-900">Category:</span> {s.category}
+                          </p>
+                          <p className="text-sm font-semibold text-amber-700">
+                            Price: {s.priceType} — ${s.price}
+                          </p>
+                        </div>
 
-                      <p className="text-sm font-medium text-green-700 mt-2">
-                        Published ✔
-                      </p>
+                        <p className="text-sm font-medium text-green-700 mt-2">Published ✔</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
