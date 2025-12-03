@@ -45,7 +45,7 @@ export default function ClientDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  // ------------------------- EXISTING FETCH USEEFFECT -------------------------
+
   useEffect(() => {
     fetchProfile();
     
