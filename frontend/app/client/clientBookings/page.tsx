@@ -184,7 +184,7 @@ export default function ClientBookingsPage() {
     fetchBookings();
   }, []);
 
-  /* -------------------- Derived Lists -------------------- */
+  /* Derived Lists */
 
   const filtered = useMemo(() => {
     if (!bookings) return [];
