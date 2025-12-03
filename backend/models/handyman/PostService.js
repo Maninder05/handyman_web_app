@@ -1,4 +1,4 @@
-// models/handyman/PostService.js
+// models/handyman/
 import mongoose from 'mongoose';
 
 const postServiceSchema = new mongoose.Schema({
