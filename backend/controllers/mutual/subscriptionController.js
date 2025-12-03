@@ -1,4 +1,4 @@
-// subscriptionController.js
+// subscriptionController.js Author Navindu
 
 import { stripe } from '../../services/stripeService.js';
 import User from '../../models/auth/User.js'; // Assuming this is the correct path to your User model
