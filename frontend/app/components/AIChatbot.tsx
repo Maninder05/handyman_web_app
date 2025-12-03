@@ -9,7 +9,7 @@ interface Message {
   sender: "user" | "bot";
   timestamp: Date;
 }
-//A
+
 interface AIChatbotProps {
   isOpen: boolean;
   onClose: () => void;
