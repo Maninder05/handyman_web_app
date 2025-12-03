@@ -1,10 +1,7 @@
 // subscriptionController.js
 
-import stripe from '../../config/stripe.js';
-import User from '../../models/auth/User.js'; 
-import mongoose from 'mongoose'; // ✅ ADDED: Import Mongoose for ObjectId handling
-// NOTE: You'll also need to import verifyPaypalOrder from your paypal.client.js 
-// if you choose to implement the full PayPal verification.
+import { stripe } from '../../services/stripeService.js';
+import User from '../../models/auth/User.js'; // Assuming this is the correct path to your User model
 
 // 1. EXISTING FUNCTION: createCheckoutSession (For redirect flow)
 
@@ -20,6 +17,11 @@ export const createCheckoutSession = async (req, res) => {
         if (!handyman) {
             console.error(`User not found for ID: ${handymanId}`);
             return res.status(404).json({error: 'Authenticated user record not found.'});
+        }
+
+        // ✅ Verify user is a handyman
+        if (handyman.userType !== 'handyman') {
+            return res.status(403).json({ error: 'Only handymen can purchase memberships.' });
         }
         
         let customerId = handyman.stripeCustomerId;
@@ -70,6 +72,11 @@ export const createInlineSubscription = async (req, res) => {
         
         if (!handyman) {
              return res.status(404).json({ error: 'Authenticated user record not found.' });
+        }
+
+        // ✅ Verify user is a handyman
+        if (handyman.userType !== 'handyman') {
+            return res.status(403).json({ error: 'Only handymen can purchase memberships.' });
         }
         
         let customerId = handyman.stripeCustomerId;
@@ -142,6 +149,17 @@ export const confirmPayPalSubscription = async (req, res) => {
     }
 
     try {
+
+        // ✅ Verify user exists and is a handyman
+        const handyman = await User.findById(handymanId);
+        if (!handyman) {
+            return res.status(404).json({ error: 'Authenticated user record not found.' });
+        }
+        if (handyman.userType !== 'handyman') {
+            return res.status(403).json({ error: 'Only handymen can purchase memberships.' });
+        }
+
+
         // ✅ FIX 3: Explicitly cast the string ID to an ObjectId
         const objectId = new mongoose.Types.ObjectId(handymanId);
         const handyman = await User.findById(objectId);

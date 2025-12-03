@@ -30,14 +30,40 @@ export const getMyProfile = async (req, res) => {
       return res.status(403).json({ message: "Not a handyman account" });
     }
 
+    // Get user to fetch username
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify userType is handyman
+    if (user.userType !== 'handyman') {
+      return res.status(403).json({ message: "Only handymen can access this endpoint" });
+    }
+
+    // Try to find existing handyman
     let profile = await HandyProfile.findOne({ userId: id });
 
     // FIX: DO NOT AUTO-CREATE
     if (!profile) {
       return res.status(404).json({ message: "Handyman profile not found" });
+      profile = await HandyProfile.create({
+        userId: id,
+        email,
+        name: user.username || email.split('@')[0], // Use username or email prefix as name
+        userType: 'handyman'
+      });
     }
 
-    res.status(200).json(profile);
+    // Convert to object and add username
+    const profileObj = profile.toObject();
+    profileObj.username = user.username;
+    // Ensure userType is set (in case profile doesn't have it)
+    if (!profileObj.userType) {
+      profileObj.userType = user.userType || 'handyman';
+    }
+
+    res.status(200).json(profileObj);
     
   } catch (err) {
     console.error("Error fetching handyman profile:", err);
