@@ -253,7 +253,6 @@ export default function CreateService() {
             </div>
           </div>
 
-          {/* Buttons */}
           <div className="flex justify-end gap-6 pt-10 mt-10 border-t border-[#D4A574]/30">
             <button
               onClick={openModal}
