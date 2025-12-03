@@ -87,5 +87,5 @@ mongoose.connect(process.env.MONGO_URL)
     });
   })
   .catch((err) => {
-    console.error('❌ Database connection error:', err);
+    console.error(' Database connection error:', err);
   });
