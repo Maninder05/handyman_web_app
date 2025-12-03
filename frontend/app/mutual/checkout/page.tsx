@@ -35,7 +35,7 @@ const PAYPAL_API_ENDPOINT = `${EXPRESS_BASE_URL}/api/subscriptions/subscribe-pay
 
 const stripePromise = PUBLIC_KEY ? loadStripe(PUBLIC_KEY) : null;
 
-// ====================================================================
+// ==================================================================
 // 💡 PLAN DATA
 // ====================================================================
 const PLANS = [
