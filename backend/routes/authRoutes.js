@@ -33,7 +33,6 @@ router.post(
     body("userType")
       .notEmpty().withMessage("User type is required")
       .isIn(["customer", "handyman", "admin"]).withMessage("User type must be customer, handyman, or admin"),
-      .isIn(["client", "handyman"]).withMessage("User type must be customer or handyman"),
 
   ],
   validate,

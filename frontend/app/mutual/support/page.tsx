@@ -18,6 +18,7 @@ export default function HelpCentrePage() {
   const [showContactForm, setShowContactForm] = useState(false);
   const [selectedRole, setSelectedRole] = useState<"customer" | "handyman" | "all">("all");
   const [userType, setUserType] = useState<"customer" | "handyman" | null>(null);
+  const [userName, setUserName] = useState<string>("User");
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
@@ -35,7 +36,7 @@ export default function HelpCentrePage() {
   const [showAgentChat, setShowAgentChat] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
 
-  // Fetch user type on mount
+  // Fetch user type and username on mount
   useEffect(() => {
     const fetchUserType = async () => {
       try {
@@ -43,6 +44,16 @@ export default function HelpCentrePage() {
         if (!token) {
           setIsLoadingUser(false);
           return;
+        }
+
+        // First, try to get username from JWT token
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.username) {
+            setUserName(payload.username);
+          }
+        } catch (e) {
+          console.log("Could not decode username from token");
         }
 
         // Try client first, then handyman
@@ -62,6 +73,10 @@ export default function HelpCentrePage() {
           const detectedType = type === 'customer' || type === 'client' ? 'customer' : 'handyman';
           setUserType(detectedType);
           setSelectedRole(detectedType); // Auto-select user's role
+          
+          // Get user's username - prioritize username from profile, fallback to name/firstName
+          const name = profileData.username || profileData.name || profileData.firstName || "User";
+          setUserName(name);
         }
       } catch (error) {
         console.error("Error fetching user type:", error);
@@ -342,6 +357,9 @@ export default function HelpCentrePage() {
               <span className="w-2 h-2 bg-[#D4A574] rounded-full animate-pulse"></span>
               Support available 24/7
             </div>
+            <p className="text-xl sm:text-2xl text-[#5C4033]/90 mb-3 font-medium">
+              Hello, {userName}!
+            </p>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight text-[#5C4033] mb-4">
               How can we <span className="text-[#D4A574]">help you</span> today?
             </h1>
@@ -441,14 +459,14 @@ export default function HelpCentrePage() {
 
         {/* CONTACT OPTIONS */}
         <section className="mt-12 mb-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <button
               onClick={() => setShowContactForm(true)}
-              className="group flex items-center gap-4 p-6 rounded-2xl bg-white border-2 border-[#EED9C4] shadow-md hover:shadow-xl hover:border-[#D4A574] hover:-translate-y-1 transition-all"
+              className="group flex items-center gap-3 p-4 rounded-xl bg-white border-2 border-[#EED9C4] shadow-md hover:shadow-xl hover:border-[#D4A574] hover:-translate-y-1 transition-all"
             >
-              <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-200 transition">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-200 transition">
                 <svg
-                  className="w-7 h-7"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -462,18 +480,18 @@ export default function HelpCentrePage() {
                 </svg>
               </div>
               <div className="text-left flex-1">
-                <h3 className="text-base font-bold text-[#5C4033] mb-1">Email Support</h3>
-                <p className="text-sm text-[#5C4033]/70">Response within 24 hours</p>
+                <h3 className="text-sm font-bold text-[#5C4033] mb-0.5">Email Support</h3>
+                <p className="text-xs text-[#5C4033]/70">Response within 24 hours</p>
               </div>
             </button>
 
             <a
               href="tel:+1234567890"
-              className="group flex items-center gap-4 p-6 rounded-2xl bg-white border-2 border-[#EED9C4] shadow-md hover:shadow-xl hover:border-[#D4A574] hover:-translate-y-1 transition-all"
+              className="group flex items-center gap-3 p-4 rounded-xl bg-white border-2 border-[#EED9C4] shadow-md hover:shadow-xl hover:border-[#D4A574] hover:-translate-y-1 transition-all"
             >
-              <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center text-green-600 group-hover:bg-green-200 transition">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600 group-hover:bg-green-200 transition">
                 <svg
-                  className="w-7 h-7"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -487,18 +505,18 @@ export default function HelpCentrePage() {
                 </svg>
               </div>
               <div className="text-left flex-1">
-                <h3 className="text-base font-bold text-[#5C4033] mb-1">Call Us</h3>
-                <p className="text-sm text-[#5C4033]/70">Mon-Fri, 9am-6pm EST</p>
+                <h3 className="text-sm font-bold text-[#5C4033] mb-0.5">Call Us</h3>
+                <p className="text-xs text-[#5C4033]/70">Mon-Fri, 9am-6pm EST</p>
               </div>
             </a>
 
             <button
               onClick={() => setShowChatbot(true)}
-              className="group flex items-center gap-4 p-6 rounded-2xl bg-white border-2 border-[#EED9C4] shadow-md hover:shadow-xl hover:border-[#D4A574] hover:-translate-y-1 transition-all"
+              className="group flex items-center gap-3 p-4 rounded-xl bg-white border-2 border-[#EED9C4] shadow-md hover:shadow-xl hover:border-[#D4A574] hover:-translate-y-1 transition-all"
             >
-              <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-[#D4A574] flex items-center justify-center text-[#5C4033] group-hover:bg-[#C4956A] transition">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#D4A574] flex items-center justify-center text-[#5C4033] group-hover:bg-[#C4956A] transition">
                 <svg
-                  className="w-7 h-7"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -512,8 +530,8 @@ export default function HelpCentrePage() {
                 </svg>
               </div>
               <div className="text-left flex-1">
-                <h3 className="text-base font-bold text-[#5C4033] mb-1">AI Chat Assistant</h3>
-                <p className="text-sm text-[#5C4033]/70">Instant responses available</p>
+                <h3 className="text-sm font-bold text-[#5C4033] mb-0.5">AI Chat Assistant</h3>
+                <p className="text-xs text-[#5C4033]/70">Instant responses available</p>
               </div>
             </button>
           </div>
