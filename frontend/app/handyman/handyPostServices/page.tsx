@@ -88,7 +88,7 @@ export default function CreateService() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!apiUrl) throw new Error("API URL not set");
 
-      const res = await fetch(`${apiUrl}/api/handyman/services`, {
+      const res = await fetch(`${apiUrl}/api/handymen/services`, {
         method: "POST",
         body: formData,
         credentials: "include",
@@ -298,11 +298,16 @@ export default function CreateService() {
                     {s.images && s.images.length > 0 ? (
                       <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100 border">
                         <Image
-                          src={`${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}`}
-                          alt={s.title}
-                          fill
-                          className="object-cover"
-                        />
+  src={
+    s.images[0].startsWith("http")
+      ? s.images[0] // already a full URL
+      : `${process.env.NEXT_PUBLIC_API_URL}${s.images[0]}` // relative → add domain
+  }
+  alt={s.title}
+  fill
+  className="object-cover"
+/>
+
                       </div>
                     ) : (
                       <div className="w-32 h-32 rounded-lg bg-gray-100 flex items-center justify-center border text-gray-400">
