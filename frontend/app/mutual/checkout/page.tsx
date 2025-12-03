@@ -25,7 +25,7 @@ import Link from "next/link";
 
 // ==================================================================
 // ⚙️ CONFIGURATION
-// ====================================================================
+// ================================================================
 const PUBLIC_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "";
 const EXPRESS_BASE_URL = "http://localhost:7000";
