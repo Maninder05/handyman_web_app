@@ -26,7 +26,6 @@ router.get("/", authenticateToken, async (req, res) => {
   }
 });
 
-// Mark notification as read
 router.post("/mark-read/:id", authenticateToken, async (req, res) => {
   try {
     const notification = await Notification.findOneAndUpdate(
