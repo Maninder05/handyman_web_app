@@ -96,6 +96,7 @@ const uploadServiceImage = multer({ storage: serviceStorage });
 
 // Get logged-in handyman profile (auto-create if not exists)
 router.get("/", authSession, getMyProfile);
+router.get("/me", authSession, getMyProfile);
 
 // Create handyman profile manually
 router.post("/", authSession, createProfile);

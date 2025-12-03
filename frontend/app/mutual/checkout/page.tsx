@@ -158,33 +158,6 @@ const AccountSection = ({ user }: { user: { name: string; email: string } | null
     </div>
   );
 };
-const AccountSection = () => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-    <h2 className="text-xl font-semibold text-gray-900 mb-4">
-      Account Information
-    </h2>
-    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-      <div className="flex items-center space-x-3">
-        <img
-          src="/images/profile-default.svg" 
-          alt={`${MOCK_USER.name}'s profile`}
-          className="w-8 h-8 rounded-full object-cover border border-gray-300 p-1 bg-white" 
-        />
-        <span className="font-medium text-gray-800">{MOCK_USER.name}</span>
-      </div>
-      <p className="text-sm text-gray-600 ml-11"> 
-        {MOCK_USER.email}
-      </p>
-    </div>
-    <p className="text-xs text-gray-500 mt-3">
-      This purchase will be linked to your account.{" "}
-      <Link href="/" className="text-blue-600 hover:underline">
-        Not you? Log out
-      </Link>
-      .
-    </p>
-  </div>
-);
 
 // ====================================================================
 // 💳 STRIPE CARD FORM
@@ -353,25 +326,16 @@ const PayPalBlock = ({ selectedPriceId, details }: any) => {
       throw new Error("You must be logged in to complete this purchase. Please log in and try again.");
     }
 
-    const res = await fetch(PAYPAL_API_ENDPOINT, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        orderId: order.id,
-        planName: details.plan.name,
-      }),
-    });
     try {
       const res = await fetch(PAYPAL_API_ENDPOINT, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           orderId: order.id,
           planName: details.plan.name,
-          handymanId: MOCK_USER.id,
         }),
       });
 
@@ -401,6 +365,7 @@ const PayPalBlock = ({ selectedPriceId, details }: any) => {
           style={{ layout: "vertical", color: "gold" }}
           createOrder={(data, actions) =>
             actions.order.create({
+              intent: "CAPTURE",
               purchase_units: [
                 {
                   amount: { value: details.total.toFixed(2), currency_code: "CAD" },
@@ -410,7 +375,7 @@ const PayPalBlock = ({ selectedPriceId, details }: any) => {
             })
           }
           onApprove={handleApprove}
-          onError={(err) => setError(err.message)}
+          onError={(err: any) => setError(err?.message || "Payment error occurred")}
         />
       )}
     </div>
@@ -486,12 +451,9 @@ const PaymentMethods = ({ selectedPriceId, details, userEmail }: { selectedPrice
 
       {method === "card" && (
         <div className="mt-6">
-          <Elements stripe={stripePromise}>
-            <StripeCardForm selectedPriceId={selectedPriceId} details={details} userEmail={userEmail} />
-          </Elements>
           {stripePromise ? (
             <Elements stripe={stripePromise}>
-              <StripeCardForm selectedPriceId={selectedPriceId} details={details} />
+              <StripeCardForm selectedPriceId={selectedPriceId} details={details} userEmail={userEmail} />
             </Elements>
           ) : (
             <p className="text-red-600 text-sm">Stripe is not configured.</p>
@@ -636,15 +598,6 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center py-12 px-4">
-      <main className="max-w-6xl w-full grid md:grid-cols-5 gap-10">
-        <div className="md:col-span-3">
-          <OrderSummary details={details} />
-        </div>
-        <div className="md:col-span-2 space-y-8">
-          <AccountSection user={user} />
-          <PaymentMethods selectedPriceId={selectedPriceId} details={details} userEmail={user.email} />
-
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
 
@@ -660,8 +613,8 @@ export default function CheckoutPage() {
 
           {/* RIGHT COLUMN: SCROLLABLE */}
           <div className="w-full md:w-[65%] h-[calc(100vh-8rem)] overflow-y-auto pr-2 space-y-8 scrollbar-hide">
-            <AccountSection />
-            <PaymentMethods selectedPriceId={selectedPriceId} details={details} />
+            <AccountSection user={user} />
+            <PaymentMethods selectedPriceId={selectedPriceId} details={details} userEmail={user.email} />
           </div>
         </div>
       </main>
