@@ -291,7 +291,7 @@ export default function ClientBookingsPage() {
     }
   };
 
-  /* -------------------- Render -------------------- */
+  /* Render */
 
   return (
     <main className="min-h-screen w-full bg-[#F5F5F0] text-gray-900 flex flex-col">
@@ -322,7 +322,7 @@ export default function ClientBookingsPage() {
 
       {/* Main area */}
       <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-8 grid grid-cols-12 gap-6">
-        {/* Left: Filters & Summary (col 3) */}
+        {/* Left: Filters & Summary  */}
         <aside className="col-span-12 lg:col-span-3 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <h3 className="font-semibold text-lg text-[#1a1a1a]">Filters</h3>
 
