@@ -250,7 +250,6 @@ export const deleteAccount = async (req, res) => {
 
     const deletePromises = [
       ClientProfile.deleteOne({ userId: id })
-      // The rest of your deletes stay as they were
     ];
 
     await Promise.all(deletePromises);
