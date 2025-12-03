@@ -1,20 +1,93 @@
-// app/mutual/membership/page.tsx (Perfect Centered Toggle + Readable Header)
-
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import Header from "../../components/handyHeader";
 
+const EXPRESS_BASE_URL = "http://localhost:7000";
+
+type Billing = "monthly" | "yearly";
+
 export default function MembershipPage() {
-  const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
+  const [billing, setBilling] = useState<Billing>("monthly");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const handleLogout = () => router.push("/");
 
-  type Billing = "monthly" | "yearly";
+  // Verify user is authenticated and is a handyman
+  useEffect(() => {
+    const verifyAccess = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("You must be logged in to view membership plans.");
+          setTimeout(() => router.push("/signup?mode=login"), 2000);
+          return;
+        }
+
+        // Fetch handyman profile to verify user type
+        console.log("Fetching handyman profile...");
+        const res = await fetch(`${EXPRESS_BASE_URL}/api/handymen/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log("Response status:", res.status, res.statusText);
+
+        if (!res.ok) {
+          let errorData;
+          try {
+            errorData = await res.json();
+          } catch (e) {
+            // If response is not JSON, create a default error object
+            errorData = { message: `Server error (${res.status}): ${res.statusText}` };
+          }
+          
+          if (res.status === 401) {
+            localStorage.removeItem("token");
+            setError("Your session has expired. Please log in again.");
+            setTimeout(() => router.push("/signup?mode=login"), 2000);
+            return;
+          }
+          if (res.status === 403) {
+            setError(errorData.message || "Only handymen can access this page.");
+            setTimeout(() => router.push("/"), 2000);
+            return;
+          }
+          throw new Error(errorData.message || errorData.error || `Failed to verify access (${res.status})`);
+        }
+
+        const profileData = await res.json();
+        console.log("Profile data received:", profileData);
+        
+        // Verify user is a handyman (additional check)
+        if (profileData.userType !== "handyman") {
+          setError(`Only handymen can purchase memberships. Your account type is: ${profileData.userType || 'unknown'}`);
+          setTimeout(() => router.push("/"), 2000);
+          return;
+        }
+        
+        console.log("Access verified successfully");
+      } catch (err: any) {
+        console.error("Error verifying access:", err);
+        // More specific error handling
+        if (err.message) {
+          setError(err.message);
+        } else if (err.response?.data?.message) {
+          setError(err.response.data.message);
+        } else if (typeof err === 'string') {
+          setError(err);
+        } else {
+          setError("Failed to verify access. Please try logging in again.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    verifyAccess();
+  }, [router]);
 
   const PRICE_MAP = {
     "Basic_monthly": process.env.NEXT_PUBLIC_PRICE_BASIC_MONTHLY || "placeholder",
@@ -56,48 +129,55 @@ export default function MembershipPage() {
     router.push(`/mutual/checkout?planName=${planName}&billing=${cycle}&priceId=${priceId}`);
   };
 
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-gray-400" />
+          <p className="mt-4 text-gray-600">Loading membership plans...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center p-8 bg-gray-50 rounded-lg shadow-md max-w-md">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Link href="/" className="text-blue-600 underline">
+            Return to home
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-white">
-      <header className="w-full flex items-center justify-between px-16 py-4 bg-black shadow-md">
-        <h1 className="text-2xl font-semibold text-white">Buy Membership</h1>
-        <button
-          onClick={() => router.push("/handyman/handyDashboard")}
-          className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
-        >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B8A565] text-white flex items-center justify-center font-semibold">
-            H
-          </div>
-        </button>
-      </header>
-
+      <Header pageTitle="Buy Membership" onLogout={handleLogout} />
+      
       <section className="mx-auto max-w-[1100px] px-6 py-10">
         {/* Centered Header & Toggle */}
         <div className="text-center mt-8 md:mt-10 mb-10">
           <h2 className="text-3xl font-bold tracking-tight text-black">Pricing</h2>
           <p className="mt-2 text-black">
             Choose the plan that fits your work style. <br />
-            Whether you’re just starting out or managing multiple jobs, we’ve got you covered.
+            Whether you're just starting out or managing multiple jobs, we've got you covered.
           </p>
 
-          {/* ✅ Responsive Animated Toggle */}
+          {/* Billing Toggle */}
           <div className="mt-8 flex justify-center">
             <div
               role="tablist"
               aria-label="Billing period"
-              className="
-                relative flex items-center justify-between
-                w-[180px] sm:w-[200px] md:w-[220px]
-                rounded-full bg-gray-800 border border-gray-700
-                p-[4px] shadow-md overflow-hidden"
+              className="relative flex items-center justify-between w-[180px] sm:w-[200px] md:w-[220px] rounded-full bg-gray-800 border border-gray-700 p-[4px] shadow-md overflow-hidden"
             >
               <div className="flex w-full relative">
-                <motion.div
-                  layout
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  className="absolute top-[4px] bottom-[4px] w-1/2 rounded-full bg-yellow-400"
-                  animate={{
-                    x: billing === "monthly" ? 0 : "100%",
-                  }}
+                <div
+                  className={`absolute top-[4px] bottom-[4px] w-1/2 rounded-full bg-yellow-400 transition-transform duration-300 ${
+                    billing === "monthly" ? "left-[4px]" : "left-[50%]"
+                  }`}
                 />
 
                 <button
@@ -155,7 +235,7 @@ export default function MembershipPage() {
                 <ul className="mt-6 space-y-3 text-sm text-white">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 mt-0.5" aria-hidden />
+                      <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0" aria-hidden />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -164,7 +244,7 @@ export default function MembershipPage() {
                 <div className="mt-auto pt-8">
                   <button
                     onClick={() => handleCheckout(plan.name, billing)}
-                    className="block w-full rounded-xl bg-gray-300 text-gray-900 px-4 py-3 text-center font-medium hover:bg-gray-400"
+                    className="block w-full rounded-xl bg-gray-300 text-gray-900 px-4 py-3 text-center font-medium hover:bg-gray-400 transition"
                   >
                     Choose {plan.name}
                   </button>
@@ -180,13 +260,11 @@ export default function MembershipPage() {
         </div>
       </section>
 
-      <footer className="mx-auto max-w-[1100px] px-6">
+      <footer className="mx-auto max-w-[1100px] px-6 pb-10">
         <p className="mt-10 text-xs text-gray-400 text-center">
           Prices are in CAD. Taxes may apply. <br /> All rights reserved.
         </p>
       </footer>
-
-      <div className="h-24" />
     </main>
   );
 }
