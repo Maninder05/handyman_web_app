@@ -4,7 +4,7 @@ import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Get all notifications for a user
+
 router.get("/", authenticateToken, async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user._id })
