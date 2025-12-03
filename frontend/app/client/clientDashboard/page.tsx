@@ -94,7 +94,7 @@ export default function ClientDashboard() {
 
     applyThemeSettings();
   }, []);
-  // ------------------------- END THEME CODE -------------------------
+
 
   const fetchProfile = async () => {
     setLoading(true);
