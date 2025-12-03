@@ -290,7 +290,7 @@ export default function CreateService() {
             ) : (
               <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-6">
                 {services.map((s) => {
-                  // SAFELY FIX IMAGE URL → THIS IS THE ONLY FIX
+                  console.log("SERVICE IMAGE:", s.images);
                   const raw = s.images?.[0] || "";
                   const finalImg =
                     raw.startsWith("http")
