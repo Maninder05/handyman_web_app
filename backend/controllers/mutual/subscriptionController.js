@@ -66,7 +66,7 @@ export const createInlineSubscription = async (req, res) => {
     }
 
     try {
-        // ✅ FIX 2: Explicitly cast the string ID to an ObjectId
+        // FIX 2: Explicitly cast the string ID to an ObjectId
         const objectId = new mongoose.Types.ObjectId(handymanId);
         const handyman = await User.findById(objectId);
         
