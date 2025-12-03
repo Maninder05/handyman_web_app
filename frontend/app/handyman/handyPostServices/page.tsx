@@ -162,7 +162,6 @@ export default function CreateService() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-10">
-            {/* Left */}
             <div className="space-y-6">
               <div>
                 <label className="block mb-2 font-semibold text-[#1a1a1a]">Title</label>
