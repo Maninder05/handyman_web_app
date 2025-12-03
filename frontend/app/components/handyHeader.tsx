@@ -5,6 +5,15 @@ import { useState } from "react";
 import {
   Menu,
   X,
+  Bell,
+  Settings,
+  Briefcase,
+  Wrench,
+  Crown,
+  HelpCircle,
+} from "lucide-react";
+import { FiUser } from "react-icons/fi";
+import NotificationBell from "./NotificationBell";
   HelpCircle,
   Settings,
   Briefcase,
@@ -22,7 +31,11 @@ interface HeaderProps {
   onLogout: () => void;
 }
 
-export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProps) {
+export default function HandyHeader({
+  pageTitle,
+  profile,
+  onLogout,
+}: HeaderProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
@@ -50,6 +63,9 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
         </h1>
 
         <div className="flex items-center gap-4 relative">
+          <Link
+            href="/mutual/notifications"
+            className="relative p-2 rounded-full hover:bg-[#2a2a2a] transition flex items-center justify-center"
 
            {/* NOTIFICATIONS */}
            <Link
@@ -60,11 +76,17 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
 
             {profile?.notificationsCount && profile.notificationsCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                {profile.notificationsCount > 9
+                  ? "9+"
+                  : profile.notificationsCount}
                 {profile.notificationsCount > 9 ? "9+" : profile.notificationsCount}
               </span>
             )}
           </Link>
 
+          <button
+            onClick={toggleProfile}
+            className="p-2 rounded-full hover:bg-[#2a2a2a] transition flex items-center justify-center"
           {/* PROFILE BUTTON header*/}
           <button
             onClick={toggleProfile}
@@ -89,6 +111,7 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
                 <li>
                   <Link
                     href="/handyman/handyProfile"
+                    className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
                     className="block px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#2c2c2c] transition font-medium"
                     onClick={closeMenus}
                   >
@@ -99,6 +122,7 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
                 <li>
                   <Link
                     href="/mutual/settings"
+                    className="block px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
                     className="block px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#2c2c2c] transition font-medium"
                     onClick={closeMenus}
                   >
@@ -112,6 +136,7 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
                       closeMenus();
                       onLogout();
                     }}
+                    className="w-full text-left px-5 py-3 text-[#C41E3A] hover:bg-red-50 transition font-medium"
                     className="w-full text-left px-5 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition font-medium"
                   >
                     Logout
@@ -122,6 +147,9 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
             </div>
           )}
 
+          <button
+            onClick={toggleMenu}
+            className="p-2 rounded-md bg-[#D4A574] text-white hover:bg-[#B8A565] transition flex items-center justify-center"
           {/* MENU BUTTON */}
           <button
             onClick={toggleMenu}
@@ -139,6 +167,10 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
                 <li>
                   <Link
                     href="/handyman/handyFindJobs"
+                    className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                    onClick={closeMenus}
+                  >
+                    <Briefcase size={20} className="text-[#D4A574]" /> Find Jobs
                     className="flex items-center text-black dark:text-gray-200 gap-3 px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#2c2c2c] transition font-medium"
                     onClick={closeMenus}
                   >
@@ -150,6 +182,10 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
                 <li>
                   <Link
                     href="/handyman/handyPostServices"
+                    className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                    onClick={closeMenus}
+                  >
+                    <Wrench size={20} className="text-[#D4A574]" /> My Services
                     className="flex items-center text-black dark:text-gray-200 gap-3 px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#2c2c2c] transition font-medium"
                     onClick={closeMenus}
                   >
@@ -161,6 +197,11 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
                 <li>
                   <Link
                     href="/mutual/membership"
+                    className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                    onClick={closeMenus}
+                  >
+                    <Crown size={20} className="text-[#D4A574]" /> Membership
+                    Plan
                     className="flex items-center text-black dark:text-gray-200 gap-3 px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#2c2c2c] transition font-medium"
                     onClick={closeMenus}
                   >
@@ -172,6 +213,11 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
                 <li>
                   <Link
                     href="/mutual/support"
+                    className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                    onClick={closeMenus}
+                  >
+                    <HelpCircle size={20} className="text-[#D4A574]" /> Help &
+                    Support
                     className="flex items-center text-black dark:text-gray-200 gap-3 px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#2c2c2c] transition font-medium"
                     onClick={closeMenus}
                   >
@@ -183,6 +229,10 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
                 <li>
                   <Link
                     href="/mutual/settings"
+                    className="flex items-center text-black gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium"
+                    onClick={closeMenus}
+                  >
+                    <Settings size={20} className="text-[#D4A574]" /> Settings
                     className="flex items-center text-black dark:text-gray-200 gap-3 px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#2c2c2c] transition font-medium"
                     onClick={closeMenus}
                   >

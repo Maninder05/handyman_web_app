@@ -13,7 +13,7 @@ import {
   Settings
 } from "lucide-react";
 import { FiUser } from "react-icons/fi";
-
+import NotificationBell from "./NotificationBell";
 interface HeaderProps {
   pageTitle: string;
   profile?: {
