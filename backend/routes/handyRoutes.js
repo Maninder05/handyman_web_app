@@ -20,7 +20,6 @@ const router = express.Router();
 
 /*  MULTER CONFIGURATION  */
 
-// Profile Picture Storage
 const profileStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     const dir = "./uploads/profiles";
