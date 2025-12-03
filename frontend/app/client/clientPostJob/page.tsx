@@ -539,7 +539,7 @@ export default function ClientPostJob() {
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border bg-white text-gray-700 border-gray-200"
                 >
                   <Upload size={16} />
-                  <span className="text-sm">Choose files</span>
+                  <span className="text-sm">Choosse files</span>
                 </button>
 
                 <div className="text-sm text-gray-400">{(form.attachments || []).length} / 5 attached</div>
