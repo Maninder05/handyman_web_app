@@ -274,7 +274,7 @@ export default function ClientBookingsPage() {
     }
   };
 
-  /* -------------------- UI Pieces -------------------- */
+  /* UI Pieces*/
 
   const StatusPill: React.FC<{ status: BookingStatus }> = ({ status }) => {
     const s = STATUS_LABEL[status];
