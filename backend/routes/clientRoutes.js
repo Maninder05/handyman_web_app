@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import {getMyProfile, createProfile, updateProfile, uploadProfilePic, saveHandyman, removeSavedHandyman,deleteAccount } from "../controllers/client/clientDashboardController.js";
 import authSession from "../middleware/authSession.js";
+import PostService from "../models/handyman/PostService.js";
 
 const router = express.Router();
 
@@ -30,6 +31,27 @@ const upload = multer({
       cb(null, true);
     }
   },
+});
+
+// CLIENT — Search for handymen by category
+router.get("/find-handyman", async (req, res) => {
+  try {
+    const { category } = req.query;
+
+    if (!category) {
+      return res.status(400).json({ message: "Category is required" });
+    }
+
+    const services = await PostService.find({
+      category: { $regex: category, $options: "i" },
+      isActive: true
+    }).populate("handymanId", "name location rating experience");
+
+    res.status(200).json(services);
+  } catch (err) {
+    console.error("Search error:", err);
+    res.status(500).json({ message: "Server error while searching" });
+  }
 });
 
 /* ---------------------- ROUTES ---------------------- */

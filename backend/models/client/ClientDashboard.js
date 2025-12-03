@@ -44,8 +44,8 @@ const ClientSchema = new mongoose.Schema(
     // User type 
     userType: { 
       type: String, 
-      enum: ['handyman', 'customer', 'admin'], 
-      default: 'customer',
+      enum: ['handyman', 'client', 'admin'], 
+      default: 'client',
       required: true
     },
     

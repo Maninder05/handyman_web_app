@@ -33,6 +33,8 @@ router.post(
     body("userType")
       .notEmpty().withMessage("User type is required")
       .isIn(["customer", "handyman", "admin"]).withMessage("User type must be customer, handyman, or admin"),
+      .isIn(["client", "handyman"]).withMessage("User type must be customer or handyman"),
+
   ],
   validate,
   signup
@@ -72,7 +74,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         await user.save();
 
         const token = jwt.sign({ id: user._id, sessionToken }, JWT_SECRET, { expiresIn: "15m" });
-        const type = user.userType; // "customer" or "handyman"
+        const type = user.userType; // "client" or "handyman"
         // redirect to frontend with token (frontend will capture it from query params)
         return res.redirect(`${CLIENT_URL}/signup?token=${token}&userType=${type}&mode=login`);
       } catch (err) {
@@ -103,7 +105,7 @@ if (process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET) {
         await user.save();
 
         const token = jwt.sign({ id: user._id, sessionToken }, JWT_SECRET, { expiresIn: "15m" });
-        const type = user.userType; // "customer" or "handyman"
+        const type = user.userType; // "client" or "handyman"
         // redirect to frontend with token (frontend will capture it from query params)
         return res.redirect(`${CLIENT_URL}/signup?token=${token}&userType=${type}&mode=login`);
       } catch (err) {

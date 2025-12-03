@@ -3,15 +3,16 @@
 import { stripe } from '../../services/stripeService.js';
 import User from '../../models/auth/User.js'; // Assuming this is the correct path to your User model
 
-// =========================================================================
 // 1. EXISTING FUNCTION: createCheckoutSession (For redirect flow)
-// =========================================================================
+
 export const createCheckoutSession = async (req, res) => {
     const { priceId } = req.body;
     const handymanId = req.user.id;
     
     try {
-        const handyman = await User.findById(handymanId);
+        // ✅ FIX 1: Explicitly cast the string ID to an ObjectId
+        const objectId = new mongoose.Types.ObjectId(handymanId);
+        const handyman = await User.findById(objectId);
 
         if (!handyman) {
             console.error(`User not found for ID: ${handymanId}`);
@@ -48,10 +49,7 @@ export const createCheckoutSession = async (req, res) => {
     }
 };
 
-
-// =========================================================================
 // 2. NEW FUNCTION: createInlineSubscription (For Stripe Elements flow)
-// =========================================================================
 /**
  * Creates a Stripe Subscription directly using PaymentMethod ID 
  * received from the Stripe Elements form (inline payment).
@@ -68,7 +66,9 @@ export const createInlineSubscription = async (req, res) => {
     }
 
     try {
-        const handyman = await User.findById(handymanId);
+        // ✅ FIX 2: Explicitly cast the string ID to an ObjectId
+        const objectId = new mongoose.Types.ObjectId(handymanId);
+        const handyman = await User.findById(objectId);
         
         if (!handyman) {
              return res.status(404).json({ error: 'Authenticated user record not found.' });
@@ -95,15 +95,15 @@ export const createInlineSubscription = async (req, res) => {
         } else {
              // Case 2: EXISTING Customer 
              
-             // 🚨 FIX APPLIED: Explicitly ATTACH the payment method first
+             //  FIX APPLIED: Explicitly ATTACH the payment method first
              await stripe.paymentMethods.attach(
-                paymentMethodId,
-                { customer: customerId }
+                 paymentMethodId,
+                 { customer: customerId }
              );
 
              // Then, update the customer's settings to use the attached payment method
              await stripe.customers.update(customerId, {
-                invoice_settings: { default_payment_method: paymentMethodId },
+                 invoice_settings: { default_payment_method: paymentMethodId },
              });
         }
         
@@ -134,12 +134,13 @@ export const createInlineSubscription = async (req, res) => {
         });
     }
 };
+
+
+// =========================================================================
+// 3. NEW FUNCTION: confirmPayPalSubscription (For PayPal Orders flow)
+// =========================================================================
 export const confirmPayPalSubscription = async (req, res) => {
     
-    // Note: This function only confirms the order ID was received. 
-    // In production, you MUST use the PayPal API here to verify the order status 
-    // before granting access.
-
     const { orderId, planName } = req.body;
     const handymanId = req.user.id; 
 
@@ -148,6 +149,7 @@ export const confirmPayPalSubscription = async (req, res) => {
     }
 
     try {
+
         // ✅ Verify user exists and is a handyman
         const handyman = await User.findById(handymanId);
         if (!handyman) {
@@ -157,12 +159,21 @@ export const confirmPayPalSubscription = async (req, res) => {
             return res.status(403).json({ error: 'Only handymen can purchase memberships.' });
         }
 
+
+        // ✅ FIX 3: Explicitly cast the string ID to an ObjectId
+        const objectId = new mongoose.Types.ObjectId(handymanId);
+        const handyman = await User.findById(objectId);
+        
+        if (!handyman) {
+             return res.status(404).json({ error: 'Authenticated user record not found.' });
+        }
+        
         console.log(`Received PayPal Order ID ${orderId} for user ${handymanId} on ${planName} plan.`);
 
         // 🚨 Placeholder: Update user status in MongoDB here.
         // const handyman = await User.findById(handymanId);
         // if (handyman) {
-        //     await User.updateOne({ _id: handymanId }, { subscriptionStatus: 'active', paymentMethod: 'PayPal', subscriptionPlan: planName });
+        //    await User.updateOne({ _id: handymanId }, { subscriptionStatus: 'active', paymentMethod: 'PayPal', subscriptionPlan: planName });
         // }
         
         return res.status(200).json({ 
