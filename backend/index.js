@@ -81,7 +81,7 @@ io.on('connection', (socket) => {
 // MongoDB + Server
 mongoose.connect(process.env.MONGO_URL)
   .then(() => {
-    console.log('✅ Connected to MongoDB successfully!');
+    console.log(' Connected to MongoDB successfully!');
     server.listen(PORT, () => {
       console.log(` Server is running on port ${PORT}`);
     });
