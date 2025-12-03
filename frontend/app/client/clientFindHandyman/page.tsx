@@ -252,7 +252,6 @@ React.useEffect(() => {
         </section>
       )}
 
-      {/* ================= STEP 2: RESULTS WITH FILTER PANEL ================= */}
       {step === "results" && (
         <section className="px-6 py-12 max-w-[1400px] mx-auto w-full">
           <h2 className="text-3xl font-bold mb-10 text-[#D4A574] text-center">
