@@ -108,7 +108,11 @@ export const createConversation = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating conversation:', error);
-    res.status(500).json({ error: 'Failed to create conversation' });
+    res.status(500).json({ 
+      error: 'Failed to create conversation',
+      details: error.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
@@ -224,14 +228,18 @@ export const getUserConversations = async (req, res) => {
     res.status(200).json({ conversations });
   } catch (error) {
     console.error('Error fetching conversations:', error);
-    res.status(500).json({ error: 'Failed to fetch conversations' });
+    res.status(500).json({ 
+      error: 'Failed to fetch conversations',
+      details: error.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
 // Get a specific conversation
 export const getConversation = async (req, res) => {
   try {
-    const { id: userId, userType } = req.user;
+    const { id: userId } = req.user;
     const { conversationId } = req.params;
 
     const conversation = await SupportConversation.findById(conversationId);
@@ -239,8 +247,14 @@ export const getConversation = async (req, res) => {
       return res.status(404).json({ error: 'Conversation not found' });
     }
 
+    // Fetch user from database to check userType for admin verification
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     // Verify access
-    if (conversation.userId.toString() !== userId.toString() && userType !== 'admin') {
+    if (conversation.userId.toString() !== userId.toString() && user.userType !== 'admin') {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
@@ -262,9 +276,15 @@ export const getConversation = async (req, res) => {
 // Get all conversations for admin/agents
 export const getAllConversations = async (req, res) => {
   try {
-    const { userType } = req.user;
+    const { id: userId } = req.user;
     
-    if (userType !== 'admin') {
+    // Fetch user from database to check userType
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    if (user.userType !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
@@ -283,18 +303,28 @@ export const getAllConversations = async (req, res) => {
     res.status(200).json({ conversations });
   } catch (error) {
     console.error('Error fetching conversations:', error);
-    res.status(500).json({ error: 'Failed to fetch conversations' });
+    res.status(500).json({ 
+      error: 'Failed to fetch conversations',
+      details: error.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
 // Update conversation status (for agents)
 export const updateConversationStatus = async (req, res) => {
   try {
-    const { userType } = req.user;
+    const { id: userId } = req.user;
     const { conversationId } = req.params;
     const { status, assignedTo } = req.body;
 
-    if (userType !== 'admin') {
+    // Fetch user from database to check userType
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.userType !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
     }
 

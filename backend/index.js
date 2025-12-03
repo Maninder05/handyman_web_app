@@ -7,7 +7,6 @@ import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import http from 'http';
-import { Server } from 'socket.io';
 
 // Passport config
 import './config/passport.js';
@@ -17,6 +16,10 @@ import authRoutes from './routes/authRoutes.js';
 import clientRoutes from './routes/clientRoutes.js';
 import handymanRoutes from './routes/handyRoutes.js';
 import settingsRoutes from './routes/mutualRoutes.js';
+import supportRoutes from './routes/supportRoutes.js';
+import subscriptionRoutes from './routes/subscriptionRoutes.js';
+import JobDeclineRoutes from './routes/JobDeclineRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 dotenv.config();
 
@@ -25,18 +28,6 @@ const PORT = process.env.PORT || 7000;
 
 // HTTP + Socket server
 const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
-});
-
-//  Increase request limit 
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Core middleware
 app.use(cors({
@@ -60,23 +51,14 @@ app.use('/api/auth', authRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/handymen', handymanRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/jobs', JobDeclineRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/support', supportRoutes);
 
-// Socket.io
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-  socket.on('joinRoom', (userId) => {
-    socket.join(userId);
-  });
-
-  socket.on('sendNotification', ({ receiverId, notification }) => {
-    io.to(receiverId).emit('receiveNotification', notification);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
-});
+// Initialize Socket.io (after routes are set up)
+import { initializeSocket } from './socket.js';
+initializeSocket(server);
 
 // MongoDB + Server
 mongoose.connect(process.env.MONGO_URL)
