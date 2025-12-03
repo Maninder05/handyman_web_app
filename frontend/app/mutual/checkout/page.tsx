@@ -37,7 +37,7 @@ const stripePromise = PUBLIC_KEY ? loadStripe(PUBLIC_KEY) : null;
 
 // ================================================================
 // 💡 PLAN DATA
-// ==================================================================
+// ================================================================
 const PLANS = [
   { name: "Basic", monthly: 10, yearly: 96 },
   { name: "Seasonal", monthly: 12, yearly: 108 },
