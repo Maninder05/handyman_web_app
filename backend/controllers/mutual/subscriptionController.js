@@ -18,6 +18,11 @@ export const createCheckoutSession = async (req, res) => {
             console.error(`User not found for ID: ${handymanId}`);
             return res.status(404).json({error: 'Authenticated user record not found.'});
         }
+
+        // ✅ Verify user is a handyman
+        if (handyman.userType !== 'handyman') {
+            return res.status(403).json({ error: 'Only handymen can purchase memberships.' });
+        }
         
         let customerId = handyman.stripeCustomerId;
 
@@ -67,6 +72,11 @@ export const createInlineSubscription = async (req, res) => {
         
         if (!handyman) {
              return res.status(404).json({ error: 'Authenticated user record not found.' });
+        }
+
+        // ✅ Verify user is a handyman
+        if (handyman.userType !== 'handyman') {
+            return res.status(403).json({ error: 'Only handymen can purchase memberships.' });
         }
         
         let customerId = handyman.stripeCustomerId;
@@ -139,6 +149,17 @@ export const confirmPayPalSubscription = async (req, res) => {
     }
 
     try {
+
+        // ✅ Verify user exists and is a handyman
+        const handyman = await User.findById(handymanId);
+        if (!handyman) {
+            return res.status(404).json({ error: 'Authenticated user record not found.' });
+        }
+        if (handyman.userType !== 'handyman') {
+            return res.status(403).json({ error: 'Only handymen can purchase memberships.' });
+        }
+
+
         // ✅ FIX 3: Explicitly cast the string ID to an ObjectId
         const objectId = new mongoose.Types.ObjectId(handymanId);
         const handyman = await User.findById(objectId);

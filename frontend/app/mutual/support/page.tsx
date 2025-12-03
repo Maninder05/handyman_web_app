@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Header from "../../components/handyHeader";
+import AIChatbot from "../../components/AIChatbot";
+import ContactAgentChat from "../../components/ContactAgentChat";
 
 export default function HelpCentrePage() {
   const router = useRouter();
@@ -29,6 +31,9 @@ export default function HelpCentrePage() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [showChatbot, setShowChatbot] = useState(false);
+  const [showAgentChat, setShowAgentChat] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>(undefined);
 
   // Fetch user type on mount
   useEffect(() => {
@@ -436,7 +441,7 @@ export default function HelpCentrePage() {
 
         {/* CONTACT OPTIONS */}
         <section className="mt-12 mb-16">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <button
               onClick={() => setShowContactForm(true)}
               className="group flex items-center gap-4 p-6 rounded-2xl bg-white border-2 border-[#EED9C4] shadow-md hover:shadow-xl hover:border-[#D4A574] hover:-translate-y-1 transition-all"
@@ -488,7 +493,7 @@ export default function HelpCentrePage() {
             </a>
 
             <button
-              onClick={() => showToastNotification("Live chat feature coming soon!", "success")}
+              onClick={() => setShowChatbot(true)}
               className="group flex items-center gap-4 p-6 rounded-2xl bg-white border-2 border-[#EED9C4] shadow-md hover:shadow-xl hover:border-[#D4A574] hover:-translate-y-1 transition-all"
             >
               <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-[#D4A574] flex items-center justify-center text-[#5C4033] group-hover:bg-[#C4956A] transition">
@@ -507,8 +512,8 @@ export default function HelpCentrePage() {
                 </svg>
               </div>
               <div className="text-left flex-1">
-                <h3 className="text-base font-bold text-[#5C4033] mb-1">Live Chat</h3>
-                <p className="text-sm text-[#5C4033]/70">Average response: 2 min</p>
+                <h3 className="text-base font-bold text-[#5C4033] mb-1">AI Chat Assistant</h3>
+                <p className="text-sm text-[#5C4033]/70">Instant responses available</p>
               </div>
             </button>
           </div>
@@ -915,6 +920,27 @@ export default function HelpCentrePage() {
           </div>
         </div>
       )}
+
+      {/* AI Chatbot */}
+      <AIChatbot 
+        isOpen={showChatbot} 
+        onClose={() => setShowChatbot(false)}
+        userType={userType}
+        onTransferToAgent={() => setShowAgentChat(true)}
+      />
+
+      {/* Contact Agent Chat */}
+      <ContactAgentChat
+        isOpen={showAgentChat}
+        onClose={() => setShowAgentChat(false)}
+        userType={userType || undefined}
+        userId={userId}
+        onChatEnded={() => {
+          setShowAgentChat(false);
+          setShowChatbot(true);
+          showToastNotification("Chat ended. You can start a new conversation anytime!", "success");
+        }}
+      />
     </div>
   );
 }

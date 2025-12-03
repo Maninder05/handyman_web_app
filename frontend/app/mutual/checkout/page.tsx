@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -36,7 +36,7 @@ const PAYPAL_API_ENDPOINT = `${EXPRESS_BASE_URL}/api/subscriptions/subscribe-pay
 const stripePromise = PUBLIC_KEY ? loadStripe(PUBLIC_KEY) : null;
 
 // ====================================================================
-// 💡 PLAN DATA & MOCK USER
+// 💡 PLAN DATA
 // ====================================================================
 const PLANS = [
   { name: "Basic", monthly: 10, yearly: 96 },
@@ -44,12 +44,6 @@ const PLANS = [
   { name: "Pro", monthly: 15, yearly: 144 },
 ];
 const TAX_RATE = { gst: 0.05, pst: 0 };
-
-const MOCK_USER = {
-  id: "mock_user_123",
-  name: "Alex Johnson",
-  email: "alex.johnson@example.com",
-};
 
 const getPlanData = (planName: string, billing: "monthly" | "yearly") => {
   const plan = PLANS.find((p) => p.name === planName);
@@ -132,6 +126,38 @@ const OrderSummary = ({ details }: { details: ReturnType<typeof getPlanData> }) 
 // ====================================================================
 // 👤 ACCOUNT INFO
 // ====================================================================
+
+const AccountSection = ({ user }: { user: { name: string; email: string } | null }) => {
+  if (!user) {
+    return (
+      <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200">
+        <div className="flex items-center justify-center">
+          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200">
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">Account</h2>
+      <div className="bg-green-50 p-4 rounded-xl border border-green-200">
+        <div className="flex items-center space-x-3">
+          <CheckCircle2 className="w-5 h-5 text-green-600" />
+          <span className="font-medium text-gray-800">{user.name || "Handyman"}</span>
+        </div>
+        <p className="text-sm text-gray-600 ml-8">{user.email}</p>
+      </div>
+      <p className="text-sm text-gray-500 mt-3">
+        This purchase will be linked to your account.{" "}
+        <Link href="/" className="text-blue-600 hover:underline">
+          Not you? Log out
+        </Link>
+        .
+      </p>
+    </div>
+  );
+};
 const AccountSection = () => (
   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
     <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -163,7 +189,7 @@ const AccountSection = () => (
 // ====================================================================
 // 💳 STRIPE CARD FORM
 // ====================================================================
-const StripeCardForm = ({ selectedPriceId, details }: any) => {
+const StripeCardForm = ({ selectedPriceId, details, userEmail }: { selectedPriceId: string; details: any; userEmail: string }) => {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -201,21 +227,28 @@ const StripeCardForm = ({ selectedPriceId, details }: any) => {
         card: cardNumber,
         billing_details: {
           name,
-          email: MOCK_USER.email,
+          email: userEmail,
           address: { postal_code: postalCode },
         },
       });
 
       if (pmError) throw new Error(pmError.message || "Card error");
 
+      // Get authentication token from localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("You must be logged in to complete this purchase. Please log in and try again.");
+      }
+
       const res = await fetch(CARD_API_ENDPOINT, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           priceId: selectedPriceId,
           paymentMethodId: paymentMethod.id,
-          handymanId: MOCK_USER.id,
-          email: MOCK_USER.email,
         }),
       });
 
@@ -314,6 +347,23 @@ const PayPalBlock = ({ selectedPriceId, details }: any) => {
     const order = await actions.order.capture();
     setLoading(true);
 
+    // Get authentication token from localStorage
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("You must be logged in to complete this purchase. Please log in and try again.");
+    }
+
+    const res = await fetch(PAYPAL_API_ENDPOINT, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        orderId: order.id,
+        planName: details.plan.name,
+      }),
+    });
     try {
       const res = await fetch(PAYPAL_API_ENDPOINT, {
         method: "POST",
@@ -370,7 +420,7 @@ const PayPalBlock = ({ selectedPriceId, details }: any) => {
 // ====================================================================
 // 💳 PAYMENT METHODS
 // ====================================================================
-const PaymentMethods = ({ selectedPriceId, details }: any) => {
+const PaymentMethods = ({ selectedPriceId, details, userEmail }: { selectedPriceId: string; details: any; userEmail: string }) => {
   const [method, setMethod] = useState<"card" | "paypal" | null>(null);
   const activeStyle = "border-2 border-black shadow-lg transition duration-150";
   const inactiveStyle = "border border-gray-200 hover:border-gray-400/50 transition duration-150";
@@ -436,6 +486,9 @@ const PaymentMethods = ({ selectedPriceId, details }: any) => {
 
       {method === "card" && (
         <div className="mt-6">
+          <Elements stripe={stripePromise}>
+            <StripeCardForm selectedPriceId={selectedPriceId} details={details} userEmail={userEmail} />
+          </Elements>
           {stripePromise ? (
             <Elements stripe={stripePromise}>
               <StripeCardForm selectedPriceId={selectedPriceId} details={details} />
@@ -477,12 +530,72 @@ const Footer = () => (
 // ====================================================================
 export default function CheckoutPage() {
   const sp = useSearchParams();
+  const router = useRouter();
   const planName = sp.get("planName") || "";
   const billing = (sp.get("billing") as "monthly" | "yearly") || "monthly";
   const selectedPriceId = sp.get("priceId") || "";
   const details = getPlanData(planName, billing);
 
-  if (!details)
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("You must be logged in to access this page.");
+          setTimeout(() => router.push("/signup?mode=login"), 2000);
+          return;
+        }
+
+        // Fetch handyman profile
+        const res = await fetch(`${EXPRESS_BASE_URL}/api/handymen/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ message: "Unknown error" }));
+          if (res.status === 401) {
+            localStorage.removeItem("token");
+            setError("Your session has expired. Please log in again.");
+            setTimeout(() => router.push("/signup?mode=login"), 2000);
+            return;
+          }
+          if (res.status === 403) {
+            setError(errorData.message || "Only handymen can access this page.");
+            setTimeout(() => router.push("/"), 2000);
+            return;
+          }
+          throw new Error(errorData.message || `Failed to fetch user profile (${res.status})`);
+        }
+
+        const profileData = await res.json();
+        
+        // Verify user is a handyman (additional check)
+        if (profileData.userType !== "handyman") {
+          setError("Only handymen can purchase memberships.");
+          setTimeout(() => router.push("/"), 2000);
+          return;
+        }
+
+        setUser({
+          name: profileData.name || profileData.username || "Handyman",
+          email: profileData.email,
+        });
+      } catch (err: any) {
+        console.error("Error fetching user profile:", err);
+        setError(err.message || "Failed to load user data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [router]);
+
+  if (!details) {
     return (
       <div className="p-10 text-center text-red-600">
         Invalid plan. Return to{" "}
@@ -492,8 +605,46 @@ export default function CheckoutPage() {
         .
       </div>
     );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-gray-400" />
+          <p className="mt-4 text-gray-600">Loading checkout...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-md">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Link href="/mutual/membership" className="text-blue-600 underline">
+            Return to membership page
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
+    <div className="min-h-screen bg-gray-50 flex justify-center py-12 px-4">
+      <main className="max-w-6xl w-full grid md:grid-cols-5 gap-10">
+        <div className="md:col-span-3">
+          <OrderSummary details={details} />
+        </div>
+        <div className="md:col-span-2 space-y-8">
+          <AccountSection user={user} />
+          <PaymentMethods selectedPriceId={selectedPriceId} details={details} userEmail={user.email} />
+
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
 

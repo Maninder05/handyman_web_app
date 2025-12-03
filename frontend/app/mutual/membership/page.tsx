@@ -2,14 +2,73 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import Header from "../../components/handyHeader";
 
+const EXPRESS_BASE_URL = "http://localhost:7000";
+
 export default function MembershipPage() {
+    const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
+    const handleLogout = () => router.push("/");
+
+    // Verify user is authenticated and is a handyman
+    useEffect(() => {
+        const verifyAccess = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    setError("You must be logged in to view membership plans.");
+                    setTimeout(() => router.push("/signup?mode=login"), 2000);
+                    return;
+                }
+
+                // Fetch handyman profile to verify user type
+                const res = await fetch(`${EXPRESS_BASE_URL}/api/handymen/me`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({ message: "Unknown error" }));
+                    if (res.status === 401) {
+                        localStorage.removeItem("token");
+                        setError("Your session has expired. Please log in again.");
+                        setTimeout(() => router.push("/signup?mode=login"), 2000);
+                        return;
+                    }
+                    if (res.status === 403) {
+                        setError(errorData.message || "Only handymen can access this page.");
+                        setTimeout(() => router.push("/"), 2000);
+                        return;
+                    }
+                    throw new Error(errorData.message || `Failed to verify access (${res.status})`);
+                }
+
+                const profileData = await res.json();
+                
+                // Verify user is a handyman (additional check)
+                if (profileData.userType !== "handyman") {
+                    setError("Only handymen can purchase memberships.");
+                    setTimeout(() => router.push("/"), 2000);
+                    return;
+                }
+            } catch (err: any) {
+                console.error("Error verifying access:", err);
+                setError(err.message || "Failed to verify access");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        verifyAccess();
+    }, [router]);
+
+    type Billing = "monthly" | "yearly";
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const router = useRouter();
   const handleLogout = () => router.push("/");
@@ -70,6 +129,35 @@ export default function MembershipPage() {
         </button>
       </header>
 
+    if (loading) {
+        return (
+            <main className="min-h-screen bg-white flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-gray-400" />
+                    <p className="mt-4 text-gray-600">Loading membership plans...</p>
+                </div>
+            </main>
+        );
+    }
+
+    if (error) {
+        return (
+            <main className="min-h-screen bg-white flex items-center justify-center">
+                <div className="text-center p-8 bg-gray-50 rounded-lg shadow-md max-w-md">
+                    <p className="text-red-600 mb-4">{error}</p>
+                    <Link href="/" className="text-blue-600 underline">
+                        Return to home
+                    </Link>
+                </div>
+            </main>
+        );
+    }
+
+    return (
+        <main className="min-h-screen bg-white">
+            {/* Header */}
+            <div>
+                <Header pageTitle="Buy Membership" onLogout={handleLogout} />
       <section className="mx-auto max-w-[1100px] px-6 py-10">
         {/* Centered Header & Toggle */}
         <div className="text-center mt-8 md:mt-10 mb-10">
@@ -125,6 +213,35 @@ export default function MembershipPage() {
             </div>
           </div>
         </div>
+
+            <section className="mx-auto max-w-[1100px] px-6 py-10">
+                {/* Pricing Header and Toggle (content remains unchanged) */}
+                <div className="text-center mb-10">
+                    <h2 className="text-3xl font-bold tracking-tight text-black">Pricing</h2>
+                    <p className="mt-2 text-black">
+                        Choose the plan that fits your work style. <br />
+                        Whether you're just starting out or managing multiple jobs, we've got you covered.
+                    </p>
+
+                    {/* Toggle */}
+                    <div className="mt-6 flex justify-center">
+                        <div
+                            role="tablist"
+                            aria-label="Billing period"
+                            className="inline-flex items-center rounded-fullbg-[#D4A574]  border border-gray-700 p-1 shadow-sm"
+                        >
+                            <button
+                                role="tab"
+                                aria-selected={billing === "monthly"}
+                                onClick={() => setBilling("monthly")}
+                                className={`px-4 py-2 rounded-full text-sm transition ${
+                                    billing === "monthly"
+                                        ? "bg-gray-900 border border-gray-700bg-gray-300 shadow-sm font-medium"
+                                        : "text-black bg-gray-600"
+                                }`}
+                            >
+                                Monthly
+                            </button>
 
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
