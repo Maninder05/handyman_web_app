@@ -136,7 +136,7 @@ export const createInlineSubscription = async (req, res) => {
 };
 
 
-// =========================================================================
+// =========================================================
 // 3. NEW FUNCTION: confirmPayPalSubscription (For PayPal Orders flow)
 // =========================================================================
 export const confirmPayPalSubscription = async (req, res) => {
