@@ -233,7 +233,6 @@ export default function CreateService() {
               </div>
             </div>
 
-            {/* Right */}
             <div className="space-y-6">
               <div>
                 <label className="block mb-2 font-semibold text-[#1a1a1a]">Image</label>
