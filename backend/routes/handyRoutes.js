@@ -18,9 +18,8 @@ import PostService from '../models/handyman/PostService.js';
 
 const router = express.Router();
 
-/* ---------------------- MULTER CONFIGURATION ---------------------- */
+/*  MULTER CONFIGURATION  */
 
-// Profile Picture Storage
 const profileStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     const dir = "./uploads/profiles";
@@ -66,7 +65,7 @@ const uploadProfile = multer({ storage: profileStorage });
 const uploadCert = multer({ storage: certificationStorage });
 const uploadServiceImage = multer({ storage: serviceStorage });
 
-/* ---------------------- SECURITY: Prevent Client From Using Handyman Routes ---------------------- */
+/*  Prevent Client From Using Handyman Routes */
 const ensureHandyman = (req, res, next) => {
   if (req.user?.userType !== "handyman") {
     return res.status(403).json({ message: "Access denied: Handyman account required" });
@@ -74,7 +73,7 @@ const ensureHandyman = (req, res, next) => {
   next();
 };
 
-/* ---------------------- PROFILE ROUTES ---------------------- */
+/*  PROFILE ROUTES */
 
 
 router.get("/", authSession, ensureHandyman, getMyProfile);
@@ -106,13 +105,13 @@ router.delete("/certification/:certificationId", authSession, ensureHandyman, de
 
 router.delete("/", authSession, ensureHandyman, deleteAccount);
 
-/* ---------------------- PUBLIC ROUTES ---------------------- */
+/*  PUBLIC ROUTES*/
 
 router.get("/all", getAllHandymen);
 
 router.put("/verify/:handymanId", authSession, verifyHandyman);
 
-/* ---------------------- SERVICE ROUTES ---------------------- */
+/*  SERVICE ROUTES */
 
 router.post(
   "/services",
