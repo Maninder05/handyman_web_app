@@ -73,7 +73,7 @@ const ensureHandyman = (req, res, next) => {
   next();
 };
 
-/* ---------------------- PROFILE ROUTES ---------------------- */
+/*  PROFILE ROUTES */
 
 
 router.get("/", authSession, ensureHandyman, getMyProfile);
