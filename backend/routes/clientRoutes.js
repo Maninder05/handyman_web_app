@@ -70,7 +70,7 @@ router.get("/find-handyman", async (req, res) => {
   }
 });
 
-/* ---------------------- ROUTES ---------------------- */
+/* ROUTES  */
 
 router.get("/", authSession, ensureClient, getMyProfile);
 
