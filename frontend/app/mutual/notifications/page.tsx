@@ -1,159 +1,132 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import socket from "../../lib/socket";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { ArrowLeft, Bell, MessageSquare, CheckCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 dayjs.extend(relativeTime);
 
-interface Notification {
-  _id: string;
-  title: string;
-  body: string;
-  createdAt: string;
-  read: boolean;
-}
-
-interface Props {
-  user?: { _id: string };
-}
-
-export default function NotificationBell({ user }: Props) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unread, setUnread] = useState<number>(0);
-  const [open, setOpen] = useState<boolean>(false);
+export default function NotificationsPage() {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    if (!user) return;
-
-    // setup socket connection
-    socket.auth = { token: localStorage.getItem("token") };
-    socket.connect();
-    socket.emit("setup", { userId: user._id });
-
-    socket.on("notification", ({ notification }: { notification: Notification }) => {
-      setNotifications((prev) => [notification, ...prev]);
-      setUnread((u) => u + 1);
-    });
-
     fetchNotifications();
-
-    return () => {
-      socket.off("notification");
-      socket.disconnect();
-    };
-  }, [user]);
+  }, []);
 
   const fetchNotifications = async () => {
     try {
+      const token = localStorage.getItem("token");
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/notifications`,
+        `${
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"
+        }/api/notifications`,
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setNotifications(data.notifications);
-      setUnread(data.unreadCount || 0);
+      setNotifications(data.notifications || []);
     } catch (err) {
       console.error("Error fetching notifications:", err);
-    }
-  };
-
-  const markRead = async (id: string) => {
-    try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/notifications/mark-read/${id}`,
-        {},
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-      );
-      setNotifications((prev) =>
-        prev.map((n) => (n._id === id ? { ...n, read: true } : n))
-      );
-      setUnread((prev) => Math.max(0, prev - 1));
-    } catch (err) {
-      console.error("Error marking notification read:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const markAllRead = async () => {
     try {
+      const token = localStorage.getItem("token");
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/notifications/mark-all-read`,
+        `${
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"
+        }/api/notifications/mark-all-read`,
         {},
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      setUnread(0);
+      fetchNotifications();
     } catch (err) {
-      console.error("Error marking all notifications read:", err);
+      console.error("Error marking all read:", err);
     }
   };
 
   return (
-    <div className="relative">
-      {/* Notification Bell Button */}
-      <button
-        onClick={() => {
-          setOpen(!open);
-          if (!open) setUnread(0);
-        }}
-        className="relative"
-      >
-        <svg
-          className="w-6 h-6 text-gray-800 dark:text-white"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z" />
-        </svg>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={() => router.back()}
+            className="p-2 hover:bg-gray-200 rounded-full"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h1 className="text-2xl font-bold text-gray-800">Notifications</h1>
+        </div>
 
-        {/* Unread Badge */}
-        {notifications.some((n) => !n.read) && (
-          <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-600 rounded-full"></span>
-        )}
-      </button>
-
-      {/* Dropdown Panel */}
-      {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-white border rounded-lg shadow-lg z-50">
-          <div className="flex justify-between items-center p-2 border-b">
-            <strong>Notifications</strong>
-            <button onClick={markAllRead} className="text-xs text-blue-600">
-              Mark all read
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-4 border-b flex justify-between items-center">
+            <h2 className="font-semibold">All Notifications</h2>
+            <button
+              onClick={markAllRead}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              Mark all as read
             </button>
           </div>
 
-          <div style={{ maxHeight: "360px", overflowY: "auto" }}>
-            {notifications.length === 0 ? (
-              <div className="p-4 text-sm text-gray-600">No notifications</div>
-            ) : (
-              notifications.map((n) => (
+          {loading ? (
+            <div className="p-8 text-center">Loading...</div>
+          ) : notifications.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              <Bell size={48} className="mx-auto text-gray-300 mb-4" />
+              <p>No notifications yet</p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {notifications.map((notification: any) => (
                 <div
-                  key={n._id}
-                  className={`p-3 border-b cursor-pointer ${
-                    n.read ? "bg-gray-50" : "bg-white"
+                  key={notification._id}
+                  className={`p-4 hover:bg-gray-50 cursor-pointer ${
+                    !notification.read ? "bg-blue-50" : ""
                   }`}
-                  onClick={() => markRead(n._id)}
+                  onClick={() => {
+                    if (notification.type === "message") {
+                      router.push(`/mutual/chat/${notification.relatedId}`);
+                    }
+                  }}
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="text-sm font-medium">{n.title}</div>
-                      <div className="text-xs text-gray-600">{n.body}</div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      {notification.type === "message" ? (
+                        <MessageSquare className="text-blue-600" size={20} />
+                      ) : (
+                        <Bell className="text-gray-600" size={20} />
+                      )}
                     </div>
-                    <div className="text-xs text-gray-400">
-                      {dayjs(n.createdAt).fromNow()}
+                    <div className="flex-1">
+                      <div className="flex justify-between">
+                        <h3 className="font-medium">{notification.title}</h3>
+                        <span className="text-xs text-gray-400">
+                          {dayjs(notification.createdAt).fromNow()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {notification.body}
+                      </p>
                     </div>
+                    {!notification.read && (
+                      <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+                    )}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
