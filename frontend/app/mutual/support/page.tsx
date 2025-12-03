@@ -10,7 +10,7 @@ export default function HelpCentrePage() {
   const handleLogout = () => router.push("/");
   
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-hite text-black">
       {/* HEADER */}
 
       <div>
