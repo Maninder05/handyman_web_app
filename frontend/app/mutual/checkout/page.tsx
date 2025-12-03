@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-// ====================================================================
+// ==================================================================
 // ⚙️ CONFIGURATION
 // ====================================================================
 const PUBLIC_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
