@@ -1,10 +1,15 @@
 import { io } from "socket.io-client";
 
-// Connect to your backend server
-const socket = io("http://localhost:7000", {
-  transports: ["websocket"],
-  reconnectionAttempts: 5,
-  reconnectionDelay: 1000,
-});
+let socket;
 
-export default socket;
+const getSocket = () => {
+  if (!socket) {
+    socket = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000", {
+      autoConnect: false,
+      transports: ["websocket", "polling"],
+    });
+  }
+  return socket;
+};
+
+export default getSocket();
