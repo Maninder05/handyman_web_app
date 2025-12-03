@@ -126,7 +126,6 @@ React.useEffect(() => {
 
   return (
     <main className="bg-[#F5F5F0] min-h-screen text-[#1a1a1a] flex flex-col">
-      {/* ================= HEADER ================= */}
       <header className="bg-[#1a1a1a] shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <h1 className="text-2xl font-bold text-white tracking-wide">Browse Services</h1>
