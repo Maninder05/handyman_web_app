@@ -295,7 +295,6 @@ export default function CreateService() {
                     key={s._id}
                     className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all p-4 flex gap-4"
                   >
-                    {/* IMAGE FIXED */}
                     {s.images && s.images.length > 0 ? (
                       <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100 border">
                         <Image
