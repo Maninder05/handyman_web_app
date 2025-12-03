@@ -18,7 +18,7 @@ import PostService from '../models/handyman/PostService.js';
 
 const router = express.Router();
 
-/* ---------------------- MULTER CONFIGURATION ---------------------- */
+/*  MULTER CONFIGURATION  */
 
 // Profile Picture Storage
 const profileStorage = multer.diskStorage({
