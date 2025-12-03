@@ -150,7 +150,7 @@ export const confirmPayPalSubscription = async (req, res) => {
 
     try {
 
-        // ✅ Verify user exists and is a handyman
+        //  Verify user exists and is a handyman
         const handyman = await User.findById(handymanId);
         if (!handyman) {
             return res.status(404).json({ error: 'Authenticated user record not found.' });
