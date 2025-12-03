@@ -294,7 +294,6 @@ React.useEffect(() => {
               )}
             </div>
 
-            {/* RIGHT SIDE: FILTERS */}
             <aside className="w-full lg:w-[320px] bg-white border border-gray-200 shadow-lg rounded-xl p-6 h-fit sticky top-24 self-start">
               <h3 className="text-xl font-semibold mb-6 text-[#D4A574]">Filters</h3>
 
