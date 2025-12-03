@@ -259,7 +259,6 @@ React.useEffect(() => {
           </h2>
 
           <div className="flex flex-col lg:flex-row gap-10">
-            {/* LEFT SIDE: HANDYMEN RESULTS */}
             <div className="flex-1">
               {filteredHandymen.length === 0 ? (
                 <p className="text-center text-gray-500 mt-10">
