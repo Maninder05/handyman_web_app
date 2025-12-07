@@ -46,7 +46,7 @@ const SupportConversationSchema = new mongoose.Schema({
   },
   userType: {
     type: String,
-    enum: ['customer', 'handyman'],
+    enum: ['customer', 'handyman', 'client'],
     required: true
   },
   subject: {

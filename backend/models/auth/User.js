@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String }, // optional for OAuth users
     userType: { type: String, enum: ["customer", "handyman", "admin", "client"], required: true }, // customer/client, handyman, or admin
+    displayName: { type: String, trim: true }, // Display name for admins (shown to customers/handymen in support chat)
 
     stripeCustomerId: { type: String, unique: true, sparse: true },
     authProvider: { type: String, default: "local" }, // local, google, facebook

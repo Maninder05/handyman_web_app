@@ -133,8 +133,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const res = await fetch("http://localhost:7000/api/settings", {
-        headers: { Authorization: `Bearer ${token}` },
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000';
+      const res = await fetch(`${apiUrl}/api/settings`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (!res.ok) return;

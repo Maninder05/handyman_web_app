@@ -2,6 +2,7 @@
 
 import { stripe } from '../../services/stripeService.js';
 import User from '../../models/auth/User.js'; // Assuming this is the correct path to your User model
+import mongoose from 'mongoose';
 
 // 1. EXISTING FUNCTION: createCheckoutSession (For redirect flow)
 
@@ -157,15 +158,6 @@ export const confirmPayPalSubscription = async (req, res) => {
         }
         if (handyman.userType !== 'handyman') {
             return res.status(403).json({ error: 'Only handymen can purchase memberships.' });
-        }
-
-
-        //  FIX 3: Explicitly cast the string ID to an ObjectId
-        const objectId = new mongoose.Types.ObjectId(handymanId);
-        const handyman = await User.findById(objectId);
-        
-        if (!handyman) {
-             return res.status(404).json({ error: 'Authenticated user record not found.' });
         }
         
         console.log(`Received PayPal Order ID ${orderId} for user ${handymanId} on ${planName} plan.`);

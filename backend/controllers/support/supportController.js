@@ -13,20 +13,33 @@ export const createConversation = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     const userType = user.userType;
+    
+    // Validate userType - only handyman, customer, or client can create conversations
+    if (userType === 'admin') {
+      return res.status(403).json({ error: 'Admins cannot create support conversations. Use the admin support chat interface instead.' });
+    }
+    
+    // Normalize userType to match schema enum
+    let normalizedUserType = userType;
+    if (userType === 'client') {
+      normalizedUserType = 'customer';
+    } else if (userType !== 'handyman' && userType !== 'customer') {
+      return res.status(400).json({ error: `Invalid user type: ${userType}. Only handyman, customer, or client can create support conversations.` });
+    }
 
     // Get user profile info
-    let userName = email.split('@')[0];
-    if (userType === 'handyman') {
+    let userName = user.username || email.split('@')[0];
+    if (normalizedUserType === 'handyman') {
       const HandyProfile = (await import('../../models/handyman/HandyDashboard.js')).default;
       const profile = await HandyProfile.findOne({ userId });
       if (profile) userName = profile.name || userName;
-    } else if (userType === 'customer') {
+    } else if (normalizedUserType === 'customer') {
       const ClientProfile = (await import('../../models/client/ClientDashboard.js')).default;
       const profile = await ClientProfile.findOne({ userId });
       if (profile) userName = profile.name || profile.firstName || userName;
     }
 
-    console.log(`Creating conversation - User ID: ${userId}, UserType from DB: ${userType}`);
+    console.log(`Creating conversation - User ID: ${userId}, UserType from DB: ${userType}, Normalized: ${normalizedUserType}`);
 
     // Check if user has an ACTIVE conversation (exclude resolved/closed)
     const existingConversation = await SupportConversation.findOne({
@@ -42,12 +55,12 @@ export const createConversation = async (req, res) => {
           userId,
           userName,
           userEmail: email,
-          userType: userType === 'handyman' ? 'handyman' : 'customer',
+          userType: normalizedUserType,
           subject: subject || 'General Inquiry',
           messages: initialMessage ? [{
             senderId: userId,
             senderName: userName,
-            senderType: userType === 'handyman' ? 'handyman' : 'customer',
+            senderType: normalizedUserType === 'handyman' ? 'handyman' : 'customer',
             message: initialMessage
           }] : []
         });
@@ -64,7 +77,7 @@ export const createConversation = async (req, res) => {
       existingConversation.messages.push({
         senderId: userId,
         senderName: userName,
-        senderType: userType === 'handyman' ? 'handyman' : 'customer',
+        senderType: normalizedUserType === 'handyman' ? 'handyman' : 'customer',
         message: initialMessage || 'User reopened conversation'
       });
       
@@ -87,12 +100,12 @@ export const createConversation = async (req, res) => {
       userId,
       userName,
       userEmail: email,
-      userType: userType === 'handyman' ? 'handyman' : 'customer',
+      userType: normalizedUserType,
       subject: subject || 'General Inquiry',
       messages: initialMessage ? [{
         senderId: userId,
         senderName: userName,
-        senderType: userType === 'handyman' ? 'handyman' : 'customer',
+        senderType: normalizedUserType === 'handyman' ? 'handyman' : 'customer',
         message: initialMessage
       }] : []
     });
@@ -108,6 +121,21 @@ export const createConversation = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating conversation:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error name:', error.name);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors || {})
+        .map((err) => err?.message || String(err))
+        .join(', ');
+      return res.status(400).json({ 
+        error: 'Validation error',
+        details: validationErrors || error.message || 'Invalid data provided'
+      });
+    }
+    
+    // Handle other errors
     res.status(500).json({ 
       error: 'Failed to create conversation',
       details: error.message || 'Unknown error',
@@ -119,7 +147,7 @@ export const createConversation = async (req, res) => {
 // Send a message in a conversation
 export const sendMessage = async (req, res) => {
   try {
-    const { id: userId, email, userType } = req.user;
+    const { id: userId, email } = req.user;
     const { conversationId } = req.params;
     const { message } = req.body;
 
@@ -132,33 +160,49 @@ export const sendMessage = async (req, res) => {
       return res.status(404).json({ error: 'Conversation not found' });
     }
 
-    // Verify user owns this conversation or is an agent
-    if (conversation.userId.toString() !== userId.toString() && userType !== 'admin') {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-
-    // Get sender name and type - check userType from database to be sure
+    // Fetch user from database to verify userType for admin check and get accurate user info
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    let senderName = email.split('@')[0];
+    console.log(`[DEBUG] sendMessage - User ID: ${userId}, Email: ${email}, DB UserType: ${user.userType}, DB Username: ${user.username}`);
+
+    // Check if conversation is closed or resolved
+    if (conversation.status === 'closed') {
+      return res.status(400).json({ error: 'Cannot send messages to a closed conversation. Please create a new conversation.' });
+    }
+
+    // Verify user owns this conversation or is an agent
+    if (conversation.userId.toString() !== userId.toString() && user.userType !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    let senderName = user.username || email.split('@')[0];
     let senderType;
 
     // Determine senderType based on actual user.userType from database
+    // IMPORTANT: Check userType explicitly, don't default to admin
     if (user.userType === 'admin') {
-      senderName = user?.username || 'Support Agent';
+      // Use displayName if available, otherwise fallback to username or 'Support Agent'
+      senderName = user.displayName || user.username || 'Support Agent';
       senderType = 'agent';
       
-      // Auto-assign if not assigned
-      if (!conversation.assignedTo) {
-        conversation.assignedTo = userId;
+      console.log(`[DEBUG] Admin detected - setting senderType to 'agent', senderName: ${senderName}`);
+      
+      // Don't auto-assign - admin must explicitly click "Assign to me" button
+      // Update conversation status if admin is already assigned
+      if (conversation.assignedTo && conversation.assignedTo.toString() === userId.toString()) {
+        // Admin is already assigned - update assignedAgentName in case displayName changed
         conversation.assignedAgentName = senderName;
-        conversation.status = conversation.status === 'open' ? 'assigned' : conversation.status;
+        if (conversation.status === 'open') {
+          conversation.status = 'assigned';
+        }
       }
     } else if (user.userType === 'handyman') {
       senderType = 'handyman';
+      console.log(`[DEBUG] Handyman detected - setting senderType to 'handyman'`);
+      
       // Get handyman name if available
       try {
         const HandyProfile = (await import('../../models/handyman/HandyDashboard.js')).default;
@@ -173,9 +217,11 @@ export const sendMessage = async (req, res) => {
       } else if (conversation.status === 'assigned' || conversation.status === 'in_progress') {
         conversation.status = 'in_progress';
       }
-    } else {
-      // customer
+    } else if (user.userType === 'customer' || user.userType === 'client') {
+      // customer or client
       senderType = 'customer';
+      console.log(`[DEBUG] Customer/Client detected - setting senderType to 'customer'`);
+      
       // Get customer name if available
       try {
         const ClientProfile = (await import('../../models/client/ClientDashboard.js')).default;
@@ -190,21 +236,41 @@ export const sendMessage = async (req, res) => {
       } else if (conversation.status === 'assigned' || conversation.status === 'in_progress') {
         conversation.status = 'in_progress';
       }
+    } else {
+      // Fallback - should not happen, but log it
+      console.error(`[ERROR] Unknown userType: ${user.userType}, defaulting to customer`);
+      senderType = 'customer';
     }
 
-    console.log(`Sending message - User ID: ${userId}, UserType from DB: ${user.userType}, SenderType: ${senderType}, SenderName: ${senderName}`);
+    console.log(`[DEBUG] Final - User ID: ${userId}, UserType: ${user.userType}, SenderType: ${senderType}, SenderName: ${senderName}`);
 
-    // Add message
-    conversation.messages.push({
+    // Add message with explicit senderType
+    const newMessage = {
       senderId: userId,
       senderName,
-      senderType,
+      senderType, // Ensure this is set correctly
       message: message.trim(),
-      read: userType === 'admin' // Auto-read if sent by admin
-    });
+      read: user.userType === 'admin' // Auto-read if sent by admin
+    };
+    
+    console.log(`[DEBUG] Adding message to conversation - senderType: ${newMessage.senderType}, senderName: ${newMessage.senderName}`);
 
+    conversation.messages.push(newMessage);
     conversation.lastMessageAt = new Date();
+    
+    // Update assignedAgentName with current displayName from User model if assigned
+    if (conversation.assignedTo) {
+      const assignedUser = await User.findById(conversation.assignedTo);
+      if (assignedUser) {
+        conversation.assignedAgentName = assignedUser.displayName || assignedUser.username || 'Support Agent';
+      }
+    }
+    
     await conversation.save();
+
+    // Verify the saved message
+    const savedMessage = conversation.messages[conversation.messages.length - 1];
+    console.log(`[DEBUG] Saved message - senderType: ${savedMessage.senderType}, senderName: ${savedMessage.senderName}, senderId: ${savedMessage.senderId}`);
 
     res.status(200).json({
       message: 'Message sent successfully',
@@ -212,7 +278,11 @@ export const sendMessage = async (req, res) => {
     });
   } catch (error) {
     console.error('Error sending message:', error);
-    res.status(500).json({ error: 'Failed to send message' });
+    res.status(500).json({ 
+      error: 'Failed to send message',
+      details: error.message || 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
@@ -224,6 +294,18 @@ export const getUserConversations = async (req, res) => {
     const conversations = await SupportConversation.find({ userId })
       .sort({ lastMessageAt: -1 })
       .limit(50);
+
+    // Update assignedAgentName with current displayName from User model
+    for (const conv of conversations) {
+      if (conv.assignedTo) {
+        const assignedUser = await User.findById(conv.assignedTo);
+        if (assignedUser) {
+          conv.assignedAgentName = assignedUser.displayName || assignedUser.username || 'Support Agent';
+          // Optionally save the updated name to the conversation
+          await conv.save();
+        }
+      }
+    }
 
     res.status(200).json({ conversations });
   } catch (error) {
@@ -256,6 +338,14 @@ export const getConversation = async (req, res) => {
     // Verify access
     if (conversation.userId.toString() !== userId.toString() && user.userType !== 'admin') {
       return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Update assignedAgentName with current displayName from User model if assigned
+    if (conversation.assignedTo) {
+      const assignedUser = await User.findById(conversation.assignedTo);
+      if (assignedUser) {
+        conversation.assignedAgentName = assignedUser.displayName || assignedUser.username || 'Support Agent';
+      }
     }
 
     // Mark messages as read for this user
@@ -297,6 +387,18 @@ export const getAllConversations = async (req, res) => {
     const conversations = await SupportConversation.find(filter)
       .sort({ lastMessageAt: -1 })
       .limit(100);
+
+    // Update assignedAgentName with current displayName from User model for all conversations
+    for (const conv of conversations) {
+      if (conv.assignedTo) {
+        const assignedUser = await User.findById(conv.assignedTo);
+        if (assignedUser) {
+          conv.assignedAgentName = assignedUser.displayName || assignedUser.username || 'Support Agent';
+          // Optionally save the updated name to the conversation
+          await conv.save();
+        }
+      }
+    }
 
     console.log(`Admin fetched ${conversations.length} conversations`);
 
@@ -343,7 +445,8 @@ export const updateConversationStatus = async (req, res) => {
     if (assignedTo) {
       const agent = await User.findById(assignedTo);
       conversation.assignedTo = assignedTo;
-      conversation.assignedAgentName = agent?.username || 'Support Agent';
+      // Use displayName if available, otherwise fallback to username or 'Support Agent'
+      conversation.assignedAgentName = agent?.displayName || agent?.username || 'Support Agent';
       if (conversation.status === 'open') {
         conversation.status = 'assigned';
       }
