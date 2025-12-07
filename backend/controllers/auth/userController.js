@@ -119,3 +119,91 @@ export const logout = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Get current user profile
+export const getCurrentUser = async (req, res) => {
+  try {
+    const { id } = req.user;
+    if (!id) return res.status(401).json({ message: "Unauthorized" });
+
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      userType: user.userType,
+      displayName: user.displayName || null
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error: " + err.message });
+  }
+};
+
+// Update display name (for admins)
+export const updateDisplayName = async (req, res) => {
+  try {
+    const { id } = req.user;
+    const { displayName } = req.body;
+
+    console.log('[updateDisplayName] Request received - User ID:', id, 'Display Name:', displayName);
+
+    if (!id) {
+      console.log('[updateDisplayName] No user ID found');
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      console.log('[updateDisplayName] User not found:', id);
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Only admins can set display names
+    if (user.userType !== 'admin') {
+      console.log('[updateDisplayName] User is not admin:', user.userType);
+      return res.status(403).json({ message: "Only admins can set display names" });
+    }
+
+    user.displayName = displayName?.trim() || null;
+    await user.save();
+
+    console.log('[updateDisplayName] Display name updated successfully:', user.displayName);
+
+    // Update all conversations where this admin is assigned
+    try {
+      const SupportConversation = (await import('../../models/mutual/SupportConversation.js')).default;
+      const { getIO } = await import('../../socket.js');
+      
+      const conversations = await SupportConversation.find({ assignedTo: id });
+      for (const conv of conversations) {
+        conv.assignedAgentName = user.displayName || user.username || 'Support Agent';
+        await conv.save();
+        
+        // Emit socket event to notify clients of the update
+        const io = getIO();
+        io.to(`support_${conv._id}`).emit("conversation_updated", {
+          conversationId: conv._id,
+          conversation: conv
+        });
+      }
+      
+      console.log(`[updateDisplayName] Updated ${conversations.length} conversations with new display name`);
+    } catch (err) {
+      console.error('[updateDisplayName] Error updating conversations:', err);
+      // Don't fail the request if conversation update fails
+    }
+
+    res.json({
+      message: "Display name updated successfully",
+      displayName: user.displayName || null
+    });
+  } catch (err) {
+    console.error('[updateDisplayName] Error:', err);
+    res.status(500).json({ 
+      message: "Server error: " + (err.message || "Unknown error"),
+      error: err.message || "Unknown error"
+    });
+  }
+};

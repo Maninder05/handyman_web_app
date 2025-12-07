@@ -1,7 +1,8 @@
 import express from "express";
-import { signup, login, logout } from "../controllers/auth/userController.js";
+import { signup, login, logout, getCurrentUser, updateDisplayName } from "../controllers/auth/userController.js";
 import { body } from "express-validator";
 import validate from "../middleware/validate.js";
+import authSession from "../middleware/authSession.js";
 import passport from "passport";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -52,6 +53,12 @@ router.post(
 
 // Logout
 router.post("/logout", logout);
+
+// Get current user profile (protected)
+router.get("/me", authSession, getCurrentUser);
+
+// Update display name (admin only, protected)
+router.patch("/update-display-name", authSession, updateDisplayName);
 
 // ----------------- OAuth routes (Google + Facebook) -----------------
 // Only setup Google OAuth routes if credentials are provided

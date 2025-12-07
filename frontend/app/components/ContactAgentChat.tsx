@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, X, Minimize2, Maximize2, User, Loader2, Headphones, Clock, CheckCircle } from "lucide-react";
 import socket from "../lib/socket";
+import Toast from "./Toast";
+import { useToast } from "../hooks/useToast";
 
 interface Message {
   _id: string;
@@ -33,7 +35,7 @@ interface ContactAgentChatProps {
   onChatEnded?: () => void;
 }
 
-const EXPRESS_BASE_URL = "http://localhost:7000";
+const EXPRESS_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
 
 export default function ContactAgentChat({ isOpen, onClose, userType, userId: propUserId, onChatEnded }: ContactAgentChatProps) {
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -46,6 +48,7 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { showToast, toastState, hideToast } = useToast();
 
   // Extract userId from token if not provided
   const getUserId = (): string | null => {
@@ -66,6 +69,17 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
 
   useEffect(() => {
     if (isOpen && userId) {
+      // Debug: Verify which user is logged in
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          console.log('[CLIENT] ContactAgentChat opened - User ID:', payload.id, 'Expected userId prop:', userId, 'Match:', payload.id === userId);
+        } catch (e) {
+          console.error('[CLIENT] Could not decode token:', e);
+        }
+      }
+      
       // Ensure socket is connected
       if (!socket.connected) {
         socket.connect();
@@ -82,6 +96,32 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
       }
     };
   }, [isOpen, userId]);
+
+  // Listen for conversation updates (e.g., when agent is assigned or profile name changes)
+  useEffect(() => {
+    if (conversation?._id) {
+      const handleConversationUpdate = (data: any) => {
+        if (data.conversationId === conversation._id) {
+          // Update conversation when status or assignment changes
+          fetch(`${EXPRESS_BASE_URL}/api/support/conversations/${conversation._id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.conversation) {
+                setConversation(data.conversation);
+              }
+            })
+            .catch(err => console.error("Error fetching updated conversation:", err));
+        }
+      };
+
+      socket.on("conversation_updated", handleConversationUpdate);
+      return () => {
+        socket.off("conversation_updated", handleConversationUpdate);
+      };
+    }
+  }, [conversation?._id, conversation?.assignedAgentName]);
 
   // Setup socket listeners when conversation is loaded
   useEffect(() => {
@@ -170,9 +210,10 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
       }
     });
 
-    socket.on("conversation_updated", (data: { conversation: Conversation }) => {
+    socket.on("conversation_updated", (data: { conversation: Conversation; conversationId?: string }) => {
+      const convId = data.conversationId || data.conversation?._id;
       setConversation(prev => {
-        if (prev?._id === data.conversation._id) {
+        if (prev?._id === convId || prev?._id === data.conversation?._id) {
           // If chat was closed, trigger the callback
           if (data.conversation.status === "closed" && prev?.status !== "closed") {
             setTimeout(() => {
@@ -181,6 +222,7 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
               }
             }, 3000); // Give user 3 seconds to read the message
           }
+          // Always update with the latest conversation data (including updated assignedAgentName)
           return data.conversation;
         }
         return prev;
@@ -266,12 +308,38 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
         setConversation(data.conversation);
         socket.emit("join_support_room", { conversationId: data.conversation._id });
       } else {
-        const errorData = await res.json().catch(() => ({ error: "Unknown error" }));
-        console.error("Failed to create conversation:", errorData);
-        alert(`Failed to create conversation: ${errorData.error || "Unknown error"}`);
+        let errorText = "";
+        let errorData: any = {};
+        try {
+          errorText = await res.text();
+          console.error("Error response text:", errorText, "Status:", res.status);
+          
+          // Try to parse as JSON if there's content
+          if (errorText && errorText.trim().length > 0) {
+            try {
+              errorData = JSON.parse(errorText);
+            } catch (parseError) {
+              // If not JSON, use the text as the error message
+              errorData = { error: errorText };
+            }
+          } else {
+            // Empty response
+            errorData = { error: `Server error (${res.status}): ${res.statusText || "Unknown error"}` };
+          }
+          
+          console.error("Failed to create conversation - Full error:", errorData);
+          
+          const errorMessage = errorData.error || errorData.details || errorData.message || 
+                               `Server error (${res.status}): ${res.statusText || "Unknown error"}`;
+          showToast(`Failed to create conversation: ${errorMessage}`, "error");
+        } catch (parseError) {
+          console.error("Failed to parse error response:", parseError, "Response text:", errorText);
+          showToast(`Failed to create conversation: ${errorText || `Server error (${res.status}): ${res.statusText}`}`, "error");
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating conversation:", error);
+      showToast(`Error creating conversation: ${error.message || "Network error. Please check your connection and try again."}`, "error");
     }
   };
 
@@ -308,6 +376,12 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
 
   const handleSendMessage = async () => {
     if (!input.trim() || isSending || !conversation) return;
+    
+    // Check if conversation is closed or resolved
+    if (conversation.status === 'closed' || conversation.status === 'resolved') {
+      showToast("This conversation has been closed. Please create a new conversation to continue.", "warning");
+      return;
+    }
 
     const messageText = input.trim();
     setInput("");
@@ -326,6 +400,14 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
       const token = localStorage.getItem("token");
       if (!token) {
         throw new Error("Not authenticated");
+      }
+
+      // Debug: Log token info to verify correct user
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('[CLIENT] Sending message - User ID from token:', payload.id, 'UserType from token:', payload.userType || 'N/A');
+      } catch (e) {
+        console.error('[CLIENT] Could not decode token:', e);
       }
 
       // Optimistically add message
@@ -357,15 +439,31 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
       });
 
       if (!res.ok) {
-        throw new Error("Failed to send message");
+        let errorText = "";
+        let errorData: any = {};
+        try {
+          errorText = await res.text();
+          console.error("Error response text:", errorText, "Status:", res.status);
+          errorData = JSON.parse(errorText);
+          console.error("Parsed error data:", errorData);
+        } catch (parseError) {
+          console.error("Failed to parse error response:", parseError, "Response text:", errorText);
+          errorData = { error: errorText || `Server error (${res.status}): ${res.statusText}` };
+        }
+        const errorMessage = errorData.error || errorData.details || errorData.message || `Failed to send message (${res.status})`;
+        console.error("Throwing error:", errorMessage);
+        throw new Error(errorMessage);
       }
 
       const data = await res.json();
       setConversation(data.conversation);
       
       // Socket event is now emitted by the backend, no need to emit from frontend
-    } catch (error) {
-      console.error("Error sending message:", error);
+    } catch (error: any) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("Error sending message - Full error object:", error);
+      console.error("Error message:", errorMessage);
+      console.error("Error stack:", error.stack);
       // Remove optimistic message on error
       setConversation(prev => {
         if (!prev) return null;
@@ -374,7 +472,14 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
           messages: prev.messages.filter(m => !m._id.startsWith("temp-"))
         };
       });
-      alert("Failed to send message. Please try again.");
+      
+      // Show user-friendly error message
+      if (errorMessage.includes("closed conversation")) {
+        showToast("This conversation has been closed. Please create a new conversation to continue.", "warning");
+        // Optionally redirect back to AI chatbot or support page
+      } else {
+        showToast(`Failed to send message: ${errorMessage || "Unknown error. Please check the console for details."}`, "error");
+      }
     } finally {
       setIsSending(false);
     }
@@ -387,26 +492,18 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      open: { text: "Waiting for agent", color: "bg-yellow-100 text-yellow-700" },
-      assigned: { text: "Agent assigned", color: "bg-blue-100 text-blue-700" },
-      in_progress: { text: "In progress", color: "bg-purple-100 text-purple-700" },
-      resolved: { text: "Resolved", color: "bg-green-100 text-green-700" },
-      closed: { text: "Closed", color: "bg-gray-100 text-gray-700" }
-    };
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.open;
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${config.color}`}>
-        {config.text}
-      </span>
-    );
-  };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-0 right-0 z-50 flex flex-col">
+    <>
+      <Toast
+        message={toastState.message}
+        type={toastState.type}
+        isVisible={toastState.isVisible}
+        onClose={hideToast}
+      />
+      <div className="fixed bottom-0 right-0 z-50 flex flex-col">
       {isMinimized ? (
         <button
           onClick={() => setIsMinimized(false)}
@@ -426,7 +523,7 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
               <div>
                 <h3 className="font-bold text-[#5C4033] text-lg">Contact Agent</h3>
                 <p className="text-xs text-[#5C4033]/80">
-                  {loadingConversation ? "Loading..." : conversation?.assignedAgentName || "Waiting for agent"}
+                  {loadingConversation ? "Loading..." : "Live support chat"}
                 </p>
               </div>
             </div>
@@ -449,16 +546,10 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
           </div>
 
           {/* Status Banner */}
-          {conversation && (
+          {conversation && (conversation.status === "closed" || conversation.status === "resolved") && (
             <div className={`px-4 py-2 border-b border-[#EED9C4] flex items-center justify-between ${
-              conversation.status === "closed" ? "bg-red-50" : conversation.status === "resolved" ? "bg-green-50" : "bg-[#FFF8F2]"
+              conversation.status === "closed" ? "bg-red-50" : "bg-green-50"
             }`}>
-              {getStatusBadge(conversation.status)}
-              {conversation.assignedAgentName && conversation.status !== "closed" && (
-                <span className="text-xs text-[#5C4033]/70">
-                  Agent: {conversation.assignedAgentName}
-                </span>
-              )}
               {conversation.status === "closed" && (
                 <span className="text-xs text-red-600 font-semibold animate-pulse">
                   Chat Ended by Support Agent
@@ -493,49 +584,74 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
                 </div>
               </div>
             ) : (
-              conversation.messages.map((message) => {
-                const isUser = message.senderType === (userType === "handyman" ? "handyman" : "customer");
-                const isAgent = message.senderType === "agent" || message.senderType === "admin";
-
-                return (
-                  <div
-                    key={message._id}
-                    className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}
-                  >
-                    {!isUser && (
-                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                        isAgent ? "bg-blue-500" : "bg-gray-400"
-                      }`}>
-                        <User className="w-5 h-5 text-white" />
-                      </div>
-                    )}
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                        isUser
-                          ? "bg-[#D4A574] text-[#5C4033] rounded-br-sm"
-                          : isAgent
-                          ? "bg-blue-50 text-[#5C4033] border border-blue-200 rounded-bl-sm"
-                          : "bg-white text-[#5C4033] border border-[#EED9C4] rounded-bl-sm"
-                      }`}
-                    >
-                      {!isUser && (
-                        <p className="text-xs font-semibold mb-1 opacity-70">
-                          {message.senderName}
+              <>
+                {/* Show connection status as a system message in chat */}
+                {conversation.status !== "closed" && conversation.status !== "resolved" && (
+                  <div className="text-center py-2">
+                    {conversation.assignedAgentName && (conversation.status === "assigned" || conversation.status === "in_progress") ? (
+                      // Agent is assigned - show "connected with"
+                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-full">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <p className="text-sm font-semibold text-blue-900">
+                          You are now connected with <span className="text-blue-700">{conversation.assignedAgentName}</span>
                         </p>
-                      )}
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.message}</p>
-                      <span className="text-xs opacity-60 mt-1 block">
-                        {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </div>
-                    {isUser && (
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#5C4033] flex items-center justify-center">
-                        <User className="w-5 h-5 text-white" />
+                      </div>
+                    ) : (
+                      // Waiting for agent - show "connecting"
+                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-full">
+                        <Loader2 className="w-3 h-3 text-yellow-600 animate-spin" />
+                        <p className="text-sm font-semibold text-yellow-900">
+                          Connecting you to an agent...
+                        </p>
                       </div>
                     )}
                   </div>
-                );
-              })
+                )}
+                
+                {conversation.messages.map((message) => {
+                  const isUser = message.senderType === (userType === "handyman" ? "handyman" : "customer");
+                  const isAgent = message.senderType === "agent" || message.senderType === "admin";
+
+                  return (
+                    <div
+                      key={message._id}
+                      className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}
+                    >
+                      {!isUser && (
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                          isAgent ? "bg-blue-500" : "bg-gray-400"
+                        }`}>
+                          <User className="w-5 h-5 text-white" />
+                        </div>
+                      )}
+                      <div
+                        className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                          isUser
+                            ? "bg-[#D4A574] text-[#5C4033] rounded-br-sm"
+                            : isAgent
+                            ? "bg-blue-50 text-[#5C4033] border border-blue-200 rounded-bl-sm"
+                            : "bg-white text-[#5C4033] border border-[#EED9C4] rounded-bl-sm"
+                        }`}
+                      >
+                        {!isUser && (
+                          <p className="text-xs font-semibold mb-1 opacity-70">
+                            {message.senderName}
+                          </p>
+                        )}
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.message}</p>
+                        <span className="text-xs opacity-60 mt-1 block">
+                          {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      {isUser && (
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#5C4033] flex items-center justify-center">
+                          <User className="w-5 h-5 text-white" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
             )}
             {isTyping && (
               <div className="flex gap-3 justify-start">
@@ -624,6 +740,7 @@ export default function ContactAgentChat({ isOpen, onClose, userType, userId: pr
         </div>
       )}
     </div>
+    </>
   );
 }
 

@@ -1,10 +1,50 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MessageSquare, Users, Activity, Shield, ArrowRight } from "lucide-react";
+import { MessageSquare, Users, Activity, Shield, ArrowRight, Loader2, User } from "lucide-react";
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const verifyAdminAccess = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/admin/login");
+        return;
+      }
+
+      try {
+        // Check if user is admin by trying to access admin endpoint
+        const res = await fetch("http://localhost:7000/api/support/admin/conversations", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.status === 403 || res.status === 401) {
+          localStorage.removeItem("token");
+          router.push("/admin/login");
+        } else {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        router.push("/admin/login");
+      }
+    };
+
+    verifyAdminAccess();
+  }, [router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#F8F8F8] via-white to-[#FFF8F2] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#D4A574]" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F8F8] via-white to-[#FFF8F2]">
       {/* Header */}
@@ -12,10 +52,11 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#5C4033]">Admin Dashboard</h1>
           <Link
-            href="/"
-            className="text-sm text-gray-600 hover:text-[#5C4033] transition"
+            href="/admin/profile"
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#5C4033] transition"
           >
-            Back to Home
+            <User className="w-4 h-4" />
+            Profile
           </Link>
         </div>
       </header>
