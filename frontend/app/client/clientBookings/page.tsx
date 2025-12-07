@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Bell, MessageCircle, X, Calendar, User, Check, Loader2 } from "lucide-react";
 
-/* -------------------- Types -------------------- */
+/* Types */
 type BookingStatus = "pending" | "accepted" | "in-progress" | "completed" | "cancelled" | "declined";
 
 type Booking = {
@@ -32,7 +32,7 @@ type Booking = {
   progress?: number; // 0 - 100
 };
 
-/* -------------------- Helpers & Mock Data -------------------- */
+/*  Helpers & Mock Data  */
 
 const STATUS_LABEL: Record<BookingStatus, { label: string; style: string }> = {
   pending: { label: "Pending", style: "bg-yellow-100 text-yellow-800" },
@@ -135,7 +135,7 @@ const MOCK_BOOKINGS: Booking[] = [
   // add more mocked bookings if needed
 ];
 
-/* -------------------- Component -------------------- */
+/*  Component  */
 
 export default function ClientBookingsPage() {
   const router = useRouter();
@@ -184,7 +184,7 @@ export default function ClientBookingsPage() {
     fetchBookings();
   }, []);
 
-  /* -------------------- Derived Lists -------------------- */
+  /* Derived Lists */
 
   const filtered = useMemo(() => {
     if (!bookings) return [];
@@ -225,7 +225,7 @@ export default function ClientBookingsPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentItems = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  /* -------------------- Actions -------------------- */
+  /* Actions  */
 
   const openChat = (handymanId: string) => {
     // navigate to chat page; placeholder route
@@ -274,7 +274,7 @@ export default function ClientBookingsPage() {
     }
   };
 
-  /* -------------------- UI Pieces -------------------- */
+  /* UI Pieces*/
 
   const StatusPill: React.FC<{ status: BookingStatus }> = ({ status }) => {
     const s = STATUS_LABEL[status];
@@ -291,7 +291,7 @@ export default function ClientBookingsPage() {
     }
   };
 
-  /* -------------------- Render -------------------- */
+  /* Render */
 
   return (
     <main className="min-h-screen w-full bg-[#F5F5F0] text-gray-900 flex flex-col">
@@ -322,7 +322,7 @@ export default function ClientBookingsPage() {
 
       {/* Main area */}
       <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-8 grid grid-cols-12 gap-6">
-        {/* Left: Filters & Summary (col 3) */}
+        {/* Left: Filters & Summary  */}
         <aside className="col-span-12 lg:col-span-3 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <h3 className="font-semibold text-lg text-[#1a1a1a]">Filters</h3>
 

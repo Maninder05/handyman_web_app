@@ -107,7 +107,7 @@ export const updateNotifications = async (req, res) => {
   }
 };
 
-// Change password
+// Change passwords
 export const changePassword = async (req, res) => {
   try {
     const { id, email } = req.user;

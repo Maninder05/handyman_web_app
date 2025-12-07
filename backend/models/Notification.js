@@ -16,7 +16,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["message", "booking", "payment", "review", "other"],
+    enum: ["message", "booking", "payment", "review", "system", "other"],
     default: "other",
   },
   relatedId: {
@@ -25,11 +25,21 @@ const notificationSchema = new mongoose.Schema({
   },
   relatedModel: {
     type: String,
-    enum: ["Message", "Booking", "User"],
+    enum: ["Message", "Booking", "User", "Chat"],
+  },
+  senderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
+  senderName: {
+    type: String,
   },
   read: {
     type: Boolean,
     default: false,
+  },
+  link: {
+    type: String,
   },
   createdAt: {
     type: Date,

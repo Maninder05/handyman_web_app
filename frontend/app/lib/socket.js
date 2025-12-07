@@ -1,31 +1,23 @@
 import { io } from "socket.io-client";
 
-// Connect to your backend server
+// Use env variable or fallback for local dev
 const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
-const socket = io(SOCKET_URL, {
-  transports: ["websocket"],
-  reconnectionAttempts: 10,
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000,
-  timeout: 20000,
-  autoConnect: true,
-});
 
-// Ensure socket connects
-if (!socket.connected) {
-  socket.connect();
-}
+let socket;
 
-socket.on("connect", () => {
-  console.log("Socket connected:", socket.id);
-});
+// Lazily create a single socket instance
+const getSocket = () => {
+  if (!socket) {
+    socket = io(SOCKET_URL, {
+      transports: ["websocket", "polling"],
+      autoConnect: true,                 // keep your autoConnect behavior
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+    });
+  }
+  return socket;
+};
 
-socket.on("disconnect", () => {
-  console.log("Socket disconnected");
-});
-
-socket.on("reconnect", (attemptNumber) => {
-  console.log("Socket reconnected after", attemptNumber, "attempts");
-});
-
-export default socket;
+export default getSocket();
