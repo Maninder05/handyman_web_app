@@ -12,7 +12,7 @@ import {
   Settings,
 } from "lucide-react";
 import { FiUser } from "react-icons/fi";
-import NotificationBell from "./NotificationBell";
+import NotificationBell from "./notificationBell";
 import { useRouter } from "next/navigation";
 
 interface HeaderProps {
