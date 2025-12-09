@@ -95,7 +95,7 @@ export default function Signup() {
     try {
       const res = await axios.post(
         `${API_BASE}/api/auth/login`,
-        { email: loginEmail, password: loginPassword },
+        { email: loginEmail.trim(), password: loginPassword },
         { withCredentials: true }
       );
 
@@ -111,7 +111,9 @@ export default function Signup() {
         router.push("/handyman/handyDashboard");
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || "Login failed");
+      const errorMessage = err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || "Login failed";
+      alert(errorMessage);
+      console.error("Login error:", err.response?.data);
     }
   };
 

@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import Header from "../../components/handyHeader";
+import Toast from "../../components/Toast";
+import { useToast } from "../../hooks/useToast";
 
-const EXPRESS_BASE_URL = "http://localhost:7000";
+const EXPRESS_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
 
 type Billing = "monthly" | "yearly";
 
@@ -14,7 +16,13 @@ export default function MembershipPage() {
   const [billing, setBilling] = useState<Billing>("monthly");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [currentBilling, setCurrentBilling] = useState<Billing | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<{ name: string; billing: Billing } | null>(null);
+  const [isChangingPlan, setIsChangingPlan] = useState(false);
   const router = useRouter();
+  const { showToast, toastState, hideToast } = useToast();
   const handleLogout = () => router.push("/");
 
   // Verify user is authenticated and is a handyman
@@ -68,6 +76,18 @@ export default function MembershipPage() {
           return;
         }
         
+        // Get current plan if exists and has active subscription
+        if (profileData.planType && profileData.subscriptionStatus) {
+          // Only set current plan if there's an active subscription
+          const validStatuses = ['active', 'trialing', 'incomplete'];
+          if (validStatuses.includes(profileData.subscriptionStatus)) {
+            setCurrentPlan(profileData.planType);
+            // Try to get billing cycle from subscription (we'll need to add this to the profile response)
+            // For now, default to monthly
+            setCurrentBilling("monthly");
+          }
+        }
+        
         console.log("Access verified successfully");
       } catch (err: any) {
         console.error("Error verifying access:", err);
@@ -92,41 +112,116 @@ export default function MembershipPage() {
   const PRICE_MAP = {
     "Basic_monthly": process.env.NEXT_PUBLIC_PRICE_BASIC_MONTHLY || "placeholder",
     "Basic_yearly": process.env.NEXT_PUBLIC_PRICE_BASIC_YEARLY || "placeholder",
-    "Seasonal_monthly": process.env.NEXT_PUBLIC_PRICE_SEASONAL_MONTHLY || "placeholder",
-    "Seasonal_yearly": process.env.NEXT_PUBLIC_PRICE_SEASONAL_YEARLY || "placeholder",
-    "Pro_monthly": process.env.NEXT_PUBLIC_PRICE_PRO_MONTHLY || "placeholder",
-    "Pro_yearly": process.env.NEXT_PUBLIC_PRICE_PRO_YEARLY || "placeholder",
+    "Standard_monthly": process.env.NEXT_PUBLIC_PRICE_STANDARD_MONTHLY || "placeholder",
+    "Standard_yearly": process.env.NEXT_PUBLIC_PRICE_STANDARD_YEARLY || "placeholder",
+    "Premium_monthly": process.env.NEXT_PUBLIC_PRICE_PREMIUM_MONTHLY || "placeholder",
+    "Premium_yearly": process.env.NEXT_PUBLIC_PRICE_PREMIUM_YEARLY || "placeholder",
   };
 
   const PLANS = [
     {
       name: "Basic",
       tagline: "Great for individuals starting out.",
-      monthly: 10,
-      yearly: 96,
-      features: ["Create a profile", "Browse & request jobs", "In-app messaging", "Email support"],
+      monthly: 7,
+      yearly: 70,
+      features: ["Create a profile", "Browse & request jobs", "In-app messaging", "Email support", "7 jobs per month"],
     },
     {
-      name: "Seasonal",
+      name: "Standard",
       tagline: "For weekend warriors & seasonal pros.",
-      monthly: 12,
-      yearly: 108,
+      monthly: 10,
+      yearly: 100,
       badge: "Popular",
-      features: ["Everything in Basic", "5 featured listings / mo", "Priority placement in search", "Standard support"],
+      features: ["Everything in Basic", "15 jobs per month", "Priority placement in search", "Standard support"],
     },
     {
-      name: "Pro",
+      name: "Premium",
       tagline: "For full-time contractors who want more.",
-      monthly: 15,
-      yearly: 144,
-      features: ["Everything in Seasonal", "Unlimited featured listings", "Verified badge", "Priority support"],
+      monthly: 20,
+      yearly: 200,
+      features: ["Everything in Standard", "30 jobs per month", "Verified badge", "Priority support"],
     },
   ];
 
   const handleCheckout = (planName: string, cycle: Billing) => {
-    const priceKey = `${planName}_${cycle}` as keyof typeof PRICE_MAP;
-    const priceId = PRICE_MAP[priceKey];
-    router.push(`/mutual/checkout?planName=${planName}&billing=${cycle}&priceId=${priceId}`);
+    // If this is the current plan, don't do anything
+    if (currentPlan && currentPlan.toLowerCase() === planName.toLowerCase() && currentBilling === cycle) {
+      return;
+    }
+    
+    // If user has a current plan, show confirmation modal instead of going to checkout
+    if (currentPlan) {
+      setSelectedPlan({ name: planName, billing: cycle });
+      setShowConfirmModal(true);
+    } else {
+      // New subscription - go to checkout
+      const priceKey = `${planName}_${cycle}` as keyof typeof PRICE_MAP;
+      const priceId = PRICE_MAP[priceKey];
+      router.push(`/mutual/checkout?planName=${planName}&billing=${cycle}&priceId=${priceId}`);
+    }
+  };
+
+  const handleConfirmPlanChange = async () => {
+    if (!selectedPlan) return;
+    
+    setIsChangingPlan(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("You must be logged in to change your plan.");
+        setIsChangingPlan(false);
+        return;
+      }
+
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || EXPRESS_BASE_URL;
+      const url = `${API_BASE}/api/subscriptions/change-plan`;
+      console.log('🔵 Changing plan - URL:', url);
+      console.log('🔵 Request body:', { planName: selectedPlan.name, billing: selectedPlan.billing });
+      
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          planName: selectedPlan.name,
+          billing: selectedPlan.billing
+        }),
+      });
+
+      // Check if response is JSON
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await res.text();
+        console.error("Non-JSON response:", text.substring(0, 200));
+        throw new Error(`Server returned ${res.status}: ${res.statusText}. Please check the backend logs.`);
+      }
+
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Failed to change plan");
+      }
+
+      // Success - close modal
+      setShowConfirmModal(false);
+      setCurrentPlan(selectedPlan.name);
+      setCurrentBilling(selectedPlan.billing);
+      setSelectedPlan(null);
+      
+      // Show success toast
+      showToast("Plan changed successfully! Your new plan is now active.", "success");
+      
+      // Redirect to dashboard after a short delay
+      setTimeout(() => {
+        router.push("/handyman/handyDashboard");
+      }, 1500);
+    } catch (err: any) {
+      console.error("Error changing plan:", err);
+      setError(err.message || "Failed to change plan. Please try again.");
+      setIsChangingPlan(false);
+    }
   };
 
   if (loading) {
@@ -155,7 +250,7 @@ export default function MembershipPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <Header pageTitle="Buy Membership" onLogout={handleLogout} />
+      <Header pageTitle="Buy Membership" />
       
       <section className="mx-auto max-w-[1100px] px-6 py-10">
         {/* Centered Header & Toggle */}
@@ -242,12 +337,27 @@ export default function MembershipPage() {
                 </ul>
 
                 <div className="mt-auto pt-8">
-                  <button
-                    onClick={() => handleCheckout(plan.name, billing)}
-                    className="block w-full rounded-xl bg-gray-300 text-gray-900 px-4 py-3 text-center font-medium hover:bg-gray-400 transition"
-                  >
-                    Choose {plan.name}
-                  </button>
+                  {currentPlan && currentPlan.toLowerCase() === plan.name.toLowerCase() && currentBilling === billing ? (
+                    <>
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <CheckCircle2 className="h-5 w-5 text-green-400" />
+                        <span className="text-green-400 font-semibold text-sm">Current Plan</span>
+                      </div>
+                      <button
+                        disabled
+                        className="block w-full rounded-xl bg-gray-500 text-gray-300 px-4 py-3 text-center font-medium cursor-not-allowed opacity-60"
+                      >
+                        Current Plan
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => handleCheckout(plan.name, billing)}
+                      className="block w-full rounded-xl bg-gray-300 text-gray-900 px-4 py-3 text-center font-medium hover:bg-gray-400 transition"
+                    >
+                      {currentPlan ? `Switch to ${plan.name}` : `Choose ${plan.name}`}
+                    </button>
+                  )}
                   <p className="mt-3 text-center text-xs text-white">
                     {billing === "yearly"
                       ? "Billed annually. Cancel anytime."
@@ -265,6 +375,83 @@ export default function MembershipPage() {
           Prices are in CAD. Taxes may apply. <br /> All rights reserved.
         </p>
       </footer>
+
+      {/* Plan Change Confirmation Modal */}
+      {showConfirmModal && selectedPlan && currentPlan && (
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Confirm Streaming Plan</h2>
+            
+            {/* Current Plan */}
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Current plan</p>
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <p className="text-lg font-semibold text-gray-900">
+                  {currentPlan} {currentBilling === "monthly" ? "$" + (PLANS.find(p => p.name === currentPlan)?.monthly || 0) + "/month" : "$" + (PLANS.find(p => p.name === currentPlan)?.yearly || 0) + "/year"} (pre-tax)
+                </p>
+              </div>
+            </div>
+
+            {/* New Plan */}
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-gray-700 mb-2">New plan</p>
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <p className="text-lg font-semibold text-gray-900">
+                  {selectedPlan.name} {selectedPlan.billing === "monthly" ? "$" + (PLANS.find(p => p.name === selectedPlan.name)?.monthly || 0) + "/month" : "$" + (PLANS.find(p => p.name === selectedPlan.name)?.yearly || 0) + "/year"} (pre-tax)
+                </p>
+              </div>
+            </div>
+
+            {/* Plan Start Info */}
+            <div className="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="text-sm text-gray-700">
+                Your new plan starts now. You'll pay ${selectedPlan.billing === "monthly" ? (PLANS.find(p => p.name === selectedPlan.name)?.monthly || 0) : (PLANS.find(p => p.name === selectedPlan.name)?.yearly || 0)}/{selectedPlan.billing === "monthly" ? "month" : "year"} starting {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.
+              </p>
+            </div>
+
+            {/* Agreement Text */}
+            <p className="text-xs text-gray-600 mb-6">
+              You agree that your membership will continue and that we will charge the updated fee until you cancel. You may cancel at any time to avoid future charges. To cancel, go to your account settings.
+            </p>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  setSelectedPlan(null);
+                }}
+                disabled={isChangingPlan}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmPlanChange}
+                disabled={isChangingPlan}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isChangingPlan ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Changing...
+                  </>
+                ) : (
+                  "Confirm Change"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      <Toast
+        message={toastState.message}
+        type={toastState.type}
+        isVisible={toastState.isVisible}
+        onClose={hideToast}
+      />
     </main>
   );
 }

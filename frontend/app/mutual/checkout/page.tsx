@@ -39,9 +39,9 @@ const stripePromise = PUBLIC_KEY ? loadStripe(PUBLIC_KEY) : null;
 // 💡 PLAN DATA
 // ================================================================
 const PLANS = [
-  { name: "Basic", monthly: 10, yearly: 96 },
-  { name: "Seasonal", monthly: 12, yearly: 108 },
-  { name: "Pro", monthly: 15, yearly: 144 },
+  { name: "Basic", monthly: 7, yearly: 70 },
+  { name: "Standard", monthly: 10, yearly: 100 },
+  { name: "Premium", monthly: 20, yearly: 200 },
 ];
 const TAX_RATE = { gst: 0.05, pst: 0 };
 
@@ -162,7 +162,7 @@ const AccountSection = ({ user }: { user: { name: string; email: string } | null
 // ====================================================================
 // 💳 STRIPE CARD FORM
 // ====================================================================
-const StripeCardForm = ({ selectedPriceId, details, userEmail }: { selectedPriceId: string; details: any; userEmail: string }) => {
+const StripeCardForm = ({ selectedPriceId, details, userEmail, billing }: { selectedPriceId: string; details: any; userEmail: string; billing: "monthly" | "yearly" }) => {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -199,7 +199,6 @@ const StripeCardForm = ({ selectedPriceId, details, userEmail }: { selectedPrice
         type: "card",
         card: cardNumber,
         billing_details: {
-          name,
           email: userEmail,
           address: { postal_code: postalCode },
         },
@@ -207,11 +206,37 @@ const StripeCardForm = ({ selectedPriceId, details, userEmail }: { selectedPrice
 
       if (pmError) throw new Error(pmError.message || "Card error");
 
+      if (!paymentMethod || !paymentMethod.id) {
+        throw new Error("Failed to create payment method. Please try again.");
+      }
+
       // Get authentication token from localStorage
       const token = localStorage.getItem("token");
       if (!token) {
         throw new Error("You must be logged in to complete this purchase. Please log in and try again.");
       }
+
+      if (!details?.plan?.name) {
+        throw new Error("Invalid plan details. Please return to the membership page and try again.");
+      }
+
+      const requestBody: {
+        planName: string;
+        billing: "monthly" | "yearly";
+        paymentMethodId: string;
+        priceId?: string;
+      } = {
+        planName: details.plan.name,
+        billing: billing,
+        paymentMethodId: paymentMethod.id,
+      };
+      
+      // Only include priceId if it's not placeholder
+      if (selectedPriceId && selectedPriceId !== 'placeholder') {
+        requestBody.priceId = selectedPriceId;
+      }
+
+      console.log('Sending subscription request:', requestBody);
 
       const res = await fetch(CARD_API_ENDPOINT, {
         method: "POST",
@@ -219,15 +244,17 @@ const StripeCardForm = ({ selectedPriceId, details, userEmail }: { selectedPrice
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({
-          priceId: selectedPriceId,
-          paymentMethodId: paymentMethod.id,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Server error");
 
+      console.log('✅ Subscription created successfully:', data);
+      
+      // Wait a moment for the subscription record to be created
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       router.push(`/mutual/success?plan=${details?.plan.name}&method=Card`);
     } catch (err: any) {
       setError(err.message);
@@ -385,7 +412,7 @@ const PayPalBlock = ({ selectedPriceId, details }: any) => {
 // ====================================================================
 // 💳 PAYMENT METHODS
 // ====================================================================
-const PaymentMethods = ({ selectedPriceId, details, userEmail }: { selectedPriceId: string; details: any; userEmail: string }) => {
+const PaymentMethods = ({ selectedPriceId, details, userEmail, billing }: { selectedPriceId: string; details: any; userEmail: string; billing: "monthly" | "yearly" }) => {
   const [method, setMethod] = useState<"card" | "paypal" | null>(null);
   const activeStyle = "border-2 border-black shadow-lg transition duration-150";
   const inactiveStyle = "border border-gray-200 hover:border-gray-400/50 transition duration-150";
@@ -453,7 +480,7 @@ const PaymentMethods = ({ selectedPriceId, details, userEmail }: { selectedPrice
         <div className="mt-6">
           {stripePromise ? (
             <Elements stripe={stripePromise}>
-              <StripeCardForm selectedPriceId={selectedPriceId} details={details} userEmail={userEmail} />
+              <StripeCardForm selectedPriceId={selectedPriceId} details={details} userEmail={userEmail} billing={billing} />
             </Elements>
           ) : (
             <p className="text-red-600 text-sm">Stripe is not configured.</p>
@@ -614,7 +641,7 @@ export default function CheckoutPage() {
           {/* RIGHT COLUMN: SCROLLABLE */}
           <div className="w-full md:w-[65%] h-[calc(100vh-8rem)] overflow-y-auto pr-2 space-y-8 scrollbar-hide">
             <AccountSection user={user} />
-            <PaymentMethods selectedPriceId={selectedPriceId} details={details} userEmail={user.email} />
+            <PaymentMethods selectedPriceId={selectedPriceId} details={details} userEmail={user.email} billing={billing} />
           </div>
         </div>
       </main>

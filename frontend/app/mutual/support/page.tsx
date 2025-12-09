@@ -35,6 +35,7 @@ export default function HelpCentrePage() {
   const [showChatbot, setShowChatbot] = useState(false);
   const [showAgentChat, setShowAgentChat] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
 
   // Fetch user type and username on mount
   useEffect(() => {
@@ -56,13 +57,15 @@ export default function HelpCentrePage() {
           console.log("Could not decode username from token");
         }
 
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
+        
         // Try client first, then handyman
-        let profileRes = await fetch("http://localhost:7000/api/clients/me", {
+        let profileRes = await fetch(`${API_BASE}/api/clients/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
         if (!profileRes.ok) {
-          profileRes = await fetch("http://localhost:7000/api/handymen/me", {
+          profileRes = await fetch(`${API_BASE}/api/handymen/me`, {
             headers: { Authorization: `Bearer ${token}` }
           });
         }
@@ -77,6 +80,14 @@ export default function HelpCentrePage() {
           // Get user's username - prioritize username from profile, fallback to name/firstName
           const name = profileData.username || profileData.name || profileData.firstName || "User";
           setUserName(name);
+          
+          // Get current plan if handyman has active subscription
+          if (detectedType === 'handyman' && profileData.planType && profileData.subscriptionStatus) {
+            const validStatuses = ['active', 'trialing', 'incomplete'];
+            if (validStatuses.includes(profileData.subscriptionStatus)) {
+              setCurrentPlan(profileData.planType);
+            }
+          }
         }
       } catch (error) {
         console.error("Error fetching user type:", error);
@@ -317,7 +328,7 @@ export default function HelpCentrePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F8F8] via-white to-[#FFF8F2]">
-      <Header pageTitle="Help Center" onLogout={handleLogout} />
+      <Header pageTitle="Help Center" />
 
       {/* Toast Notification */}
       {showToast && (
@@ -559,6 +570,21 @@ export default function HelpCentrePage() {
                 </span>
               </Link>
             ))}
+            
+            {/* Change Plan Button - Only show for handymen with a plan */}
+            {userType === 'handyman' && currentPlan && (
+              <Link
+                href="/mutual/membership"
+                className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-600 border-2 border-yellow-500 shadow-lg hover:shadow-xl hover:border-yellow-600 hover:-translate-y-1 transition-all"
+              >
+                <span className="text-4xl group-hover:scale-110 transition-transform">
+                  🔄
+                </span>
+                <span className="text-sm font-semibold text-white text-center">
+                  Change Your Existing Plan
+                </span>
+              </Link>
+            )}
           </div>
         </section>
 
