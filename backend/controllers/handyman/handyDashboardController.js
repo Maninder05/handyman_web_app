@@ -1,5 +1,7 @@
 import HandyProfile from "../../models/handyman/HandyDashboard.js";
 import User from "../../models/auth/User.js";
+import HandymanSubscription from "../../models/mutual/HandymanSubscriptionModel.js";
+import mongoose from "mongoose";
 //import Orders from "../../models/handyman/Orders.js";
 //import PostService from "../../models/handyman/PostService.js";
 //import FindJob from "../../models/handyman/FindJob.js";
@@ -42,9 +44,8 @@ export const getMyProfile = async (req, res) => {
     // Try to find existing handyman
     let profile = await HandyProfile.findOne({ userId: id });
 
-    // FIX: DO NOT AUTO-CREATE
+    // Auto-create profile if it doesn't exist (needed for new accounts)
     if (!profile) {
-      return res.status(404).json({ message: "Handyman profile not found" });
       profile = await HandyProfile.create({
         userId: id,
         email,
@@ -59,6 +60,48 @@ export const getMyProfile = async (req, res) => {
     // Ensure userType is set (in case profile doesn't have it)
     if (!profileObj.userType) {
       profileObj.userType = user.userType || 'handyman';
+    }
+
+    // Fetch subscription info if it exists
+    try {
+      // Convert id to ObjectId if needed
+      const handymanObjectId = mongoose.Types.ObjectId.isValid(id) 
+        ? new mongoose.Types.ObjectId(id) 
+        : id;
+      
+      console.log(`🔵 Looking up subscription for handyman: ${id} (ObjectId: ${handymanObjectId})`);
+      
+      const subscription = await HandymanSubscription.findOne({ handyman: handymanObjectId });
+      console.log(`Subscription lookup for handyman ${id}:`, subscription ? {
+        planType: subscription.planType,
+        status: subscription.status,
+        handyman: subscription.handyman,
+        _id: subscription._id
+      } : 'No subscription found');
+      
+      if (subscription) {
+        // Accept active, trialing, or incomplete subscriptions (new subscriptions might be incomplete initially)
+        const validStatuses = ['active', 'trialing', 'incomplete'];
+        if (validStatuses.includes(subscription.status)) {
+          // Capitalize first letter of planType (basic -> Basic, standard -> Standard, premium -> Premium)
+          const planType = subscription.planType.charAt(0).toUpperCase() + subscription.planType.slice(1);
+          profileObj.planType = planType;
+          profileObj.subscriptionStatus = subscription.status;
+          profileObj.subscriptionEndDate = subscription.endDate;
+          console.log(`Setting planType to: ${planType} (status: ${subscription.status})`);
+        } else {
+          // Subscription exists but is not active - don't set planType
+          console.log(`Subscription found but status is '${subscription.status}', no plan assigned`);
+          // Don't set planType - user has no active plan
+        }
+      } else {
+        // No subscription found - user has no plan
+        console.log('No subscription found - user has no active plan');
+        // Don't set planType - user has no active plan
+      }
+    } catch (subError) {
+      console.error("Error fetching subscription:", subError);
+      // Don't set planType if subscription fetch fails - user has no active plan
     }
 
     res.status(200).json(profileObj);
