@@ -495,11 +495,21 @@ export default function SettingsPage() {
                     <div className="relative">
                       <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 border-4 border-[#D4A574]">
                         {imagePreview || accountData.profileImage ? (
-                          <img
-                            src={imagePreview || `http://localhost:7000${accountData.profileImage}`}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                          />
+                     // NEW (should work)
+<img
+  src={
+    imagePreview || 
+    (accountData.profileImage?.startsWith('http') 
+      ? accountData.profileImage 
+      : `http://localhost:7000/uploads/profiles/${accountData.profileImage.split('/').pop()}`)
+  }
+  alt="Profile"
+  className="w-full h-full object-cover"
+  onError={(e) => {
+    console.error('Image load failed. Path:', accountData.profileImage);
+    e.currentTarget.style.display = 'none';
+  }}
+/>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <User size={48} className="text-gray-400" />

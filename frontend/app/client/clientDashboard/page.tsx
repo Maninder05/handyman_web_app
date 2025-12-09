@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Briefcase, Users, Calendar, HelpCircle, Upload, Camera } from "lucide-react";
 import { FiUser, FiDollarSign, FiShoppingBag } from "react-icons/fi";
@@ -112,6 +111,7 @@ export default function ClientDashboard() {
 
       if (res.ok) {
         const data = await res.json();
+        console.log("Profile data received:", data);
         setProfile(data);
       } else if (res.status === 401) {
         localStorage.removeItem("token");
@@ -167,9 +167,10 @@ export default function ClientDashboard() {
 
       if (res.ok) {
         const data = await res.json();
+        console.log("Upload response:", data);
         setProfile(prev => prev ? { 
           ...prev, 
-          profileImage: data.profilePic || data.imageUrl
+          profileImage: data.profilePic || data.profileImage || data.imageUrl
         } : null);
         setShowUploadModal(false);
         setSelectedFile(null);
@@ -231,12 +232,21 @@ export default function ClientDashboard() {
             <div className="flex flex-col items-center text-center mb-8">
               <div className="relative mb-4">
                 {profile?.profileImage ? (
-                  <Image
-                    src={profile.profileImage}
+                  <img
+                    src={`http://localhost:7000${profile.profileImage}`}
                     alt="Profile"
-                    width={120}
-                    height={120}
-                    className="rounded-full border-4 border-white shadow-lg object-cover"
+                    className="w-28 h-28 rounded-full border-4 border-white shadow-lg object-cover"
+                    onError={(e) => {
+                      console.error('Failed to load profile image:', profile.profileImage);
+                      e.currentTarget.style.display = 'none';
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        const fallback = document.createElement('div');
+                        fallback.className = 'w-28 h-28 rounded-full border-4 border-white bg-white/20 flex items-center justify-center';
+                        fallback.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
+                        parent.appendChild(fallback);
+                      }
+                    }}
                   />
                 ) : (
                   <div className="w-28 h-28 rounded-full border-4 border-white bg-white/20 flex items-center justify-center">
@@ -393,15 +403,11 @@ export default function ClientDashboard() {
             
             <div className="mb-6">
               {previewUrl ? (
-                <div className="relative w-40 h-40 mx-auto mb-4">
-                  <Image
-                    src={previewUrl}
-                    alt="Preview"
-                    width={160}
-                    height={160}
-                    className="rounded-full object-cover border-4 border-[#D4A574]"
-                  />
-                </div>
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="w-40 h-40 mx-auto rounded-full object-cover border-4 border-[#D4A574]"
+                />
               ) : (
                 <div className="w-40 h-40 mx-auto mb-4 rounded-full border-4 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
                   <Upload size={48} className="text-gray-400" />
