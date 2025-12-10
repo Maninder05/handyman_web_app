@@ -20,6 +20,7 @@ import supportRoutes from './routes/supportRoutes.js';
 import subscriptionRoutes from './routes/subscriptionRoutes.js';
 import JobDeclineRoutes from './routes/JobDeclineRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
 
 dotenv.config();
 
@@ -35,6 +36,8 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
 
@@ -55,6 +58,7 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/jobs', JobDeclineRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Initialize Socket.io (after routes are set up)
 import { initializeSocket } from './socket.js';
@@ -63,11 +67,11 @@ initializeSocket(server);
 // MongoDB + Server
 mongoose.connect(process.env.MONGO_URL)
   .then(() => {
-    console.log(' Connected to MongoDB successfully!');
+    console.log('Connected to MongoDB successfully!');
     server.listen(PORT, () => {
       console.log(` Server is running on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error(' Database connection error:', err);
+    console.error('Database connection error:', err);
   });

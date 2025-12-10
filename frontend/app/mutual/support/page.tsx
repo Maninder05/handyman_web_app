@@ -328,7 +328,12 @@ export default function HelpCentrePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F8F8] via-white to-[#FFF8F2]">
-      <Header pageTitle="Help Center" />
+      {/* <Header pageTitle="Help Center" /> */}
+      <Header 
+        pageTitle="Help Centre"
+        onLogout={() => console.log("logout clicked")} // or your real logout function
+      />
+
 
       {/* Toast Notification */}
       {showToast && (

@@ -1,13 +1,12 @@
 "use client";
-
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-
+ 
+import { createContext, useContext, useState, useEffect } from "react";
+ 
+// Allowed types
+type Theme = "light" | "dark" | "auto";
+type Language = "en" | "es" | "fr" | "de";
+ 
+// Interface for notification settings
 interface NotificationSettings {
   emailNotifications: boolean;
   smsNotifications: boolean;
@@ -15,207 +14,142 @@ interface NotificationSettings {
   jobAlerts: boolean;
   messageAlerts: boolean;
 }
-
-interface SettingsContextType {
-  theme: "light" | "dark" | "auto";
-  language: "en" | "es" | "fr" | "de";
+ 
+interface UserSettings {
+  theme: Theme;
+  language: Language;
   timezone: string;
   notifications: NotificationSettings;
-  setTheme: (theme: "light" | "dark" | "auto") => void;
-  setLanguage: (lang: "en" | "es" | "fr" | "de") => void;
-  setTimezone: (tz: string) => void;
-  updateNotifications: (n: NotificationSettings) => void;
-  refreshSettings: () => Promise<void>;
-  isLoading: boolean;
 }
-
-const SettingsContext = createContext<SettingsContextType | undefined>(
-  undefined
-);
-
-export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<"light" | "dark" | "auto">("light");
-  const [language, setLanguageState] = useState<"en" | "es" | "fr" | "de">("en");
-  const [timezone, setTimezoneState] = useState("UTC");
+ 
+interface SettingsContextType {
+  settings: UserSettings | null;
+  theme: Theme;
+  language: Language;
+  isLoading: boolean;
+  refreshSettings: () => Promise<void>;
+  updateTheme: (t: Theme) => Promise<void>;
+  updateLanguage: (l: Language) => Promise<void>;
+  updateNotifications: (data: NotificationSettings) => Promise<void>;
+}
+ 
+const SettingsContext = createContext<SettingsContextType | null>(null);
+ 
+export function SettingsProvider({ children }: { children: React.ReactNode }) {
+  const [settings, setSettings] = useState<UserSettings | null>(null);
+  const [theme, setTheme] = useState<Theme>("light");
+  const [language, setLanguage] = useState<Language>("en");
   const [isLoading, setIsLoading] = useState(true);
-
-  const [notifications, setNotifications] = useState<NotificationSettings>({
-    emailNotifications: true,
-    smsNotifications: false,
-    pushNotifications: true,
-    jobAlerts: true,
-    messageAlerts: true,
-  });
-
-  //----------------------------------------
-  // 🔥 Apply theme to <html>
-  //----------------------------------------
-  const applyTheme = (selectedTheme: "light" | "dark" | "auto") => {
-    if (typeof window === "undefined") return;
-
+ 
+  // Fetch settings on load
+  const refreshSettings = async () => {
+    try {
+      const res = await fetch("/api/settings", { cache: "no-store" });
+      if (!res.ok) return;
+ 
+      const data = await res.json();
+      setSettings(data);
+      setTheme(data.theme);
+      setLanguage(data.language);
+      applyTheme(data.theme);
+    } catch (err) {
+      console.log("Error loading settings");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+ 
+  // Apply theme to DOM
+  const applyTheme = (t: Theme) => {
     const html = document.documentElement;
-
     html.classList.remove("light", "dark");
-
-    if (selectedTheme === "light") {
-      html.classList.add("light");
-    } else if (selectedTheme === "dark") {
-      html.classList.add("dark");
-    } else if (selectedTheme === "auto") {
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-
+ 
+    if (t === "light") html.classList.add("light");
+    else if (t === "dark") html.classList.add("dark");
+    else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       html.classList.add(prefersDark ? "dark" : "light");
     }
   };
-
-  //----------------------------------------
-  // 🔥 Load settings on mount
-  //----------------------------------------
+ 
   useEffect(() => {
-    const load = async () => {
-      const localTheme = localStorage.getItem("theme") as
-        | "light"
-        | "dark"
-        | "auto"
-        | null;
-
-      const localLanguage = localStorage.getItem("language") as
-        | "en"
-        | "es"
-        | "fr"
-        | "de"
-        | null;
-
-      const localTimezone = localStorage.getItem("timezone");
-
-      if (localTheme) setThemeState(localTheme);
-      if (localLanguage) setLanguageState(localLanguage);
-      if (localTimezone) setTimezoneState(localTimezone);
-
-      applyTheme(localTheme ?? "light");
-
-      await refreshSettings();
-
-      setIsLoading(false);
-    };
-
-    load();
+    refreshSettings();
   }, []);
-
-  //----------------------------------------
-  // 🔥 Re-apply theme if changed
-  //----------------------------------------
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
-
-  //----------------------------------------
-  // 🌀 AUTO MODE → Listen for OS dark mode
-  //----------------------------------------
-  useEffect(() => {
-    if (theme !== "auto") return;
-
-    const listener = () => applyTheme("auto");
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    media.addEventListener("change", listener);
-
-    return () => media.removeEventListener("change", listener);
-  }, [theme]);
-
-  //----------------------------------------
-  // 🔥 Fetch from backend
-  //----------------------------------------
-  const refreshSettings = async () => {
+ 
+  // Update theme
+  const updateTheme = async (t: Theme) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000';
-      const res = await fetch(`${apiUrl}/api/settings`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await fetch("/api/settings/display", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme: t }),
       });
-
+ 
       if (!res.ok) return;
-
-      const data = await res.json();
-
-      if (data.theme) {
-        setThemeState(data.theme);
-        localStorage.setItem("theme", data.theme);
-        applyTheme(data.theme);
-      }
-
-      if (data.language) {
-        setLanguageState(data.language);
-        localStorage.setItem("language", data.language);
-      }
-
-      if (data.timezone) {
-        setTimezoneState(data.timezone);
-        localStorage.setItem("timezone", data.timezone);
-      }
-
-      if (data.notifications) {
-        setNotifications(data.notifications);
-      }
+ 
+      setTheme(t);
+      applyTheme(t);
+      refreshSettings();
     } catch (err) {
-      console.error("Failed loading settings:", err);
+      console.log("Theme update failed");
     }
   };
-
-  //----------------------------------------
-  // 🔥 Update state + persist
-  //----------------------------------------
-  const setTheme = (t: "light" | "dark" | "auto") => {
-    setThemeState(t);
-    localStorage.setItem("theme", t);
-    applyTheme(t);
+ 
+  // Update language
+  const updateLanguage = async (l: Language) => {
+    try {
+      const res = await fetch("/api/settings/display", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language: l }),
+      });
+ 
+      if (!res.ok) return;
+ 
+      setLanguage(l);
+      refreshSettings();
+    } catch {
+      console.log("Language update failed");
+    }
   };
-
-  const setLanguage = (lang: "en" | "es" | "fr" | "de") => {
-    setLanguageState(lang);
-    localStorage.setItem("language", lang);
+ 
+  // Update notification settings
+  const updateNotifications = async (data: NotificationSettings) => {
+    try {
+      const res = await fetch("/api/settings/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+ 
+      if (!res.ok) return;
+ 
+      refreshSettings();
+    } catch {
+      console.log("Notifications update failed");
+    }
   };
-
-  const setTimezone = (tz: string) => {
-    setTimezoneState(tz);
-    localStorage.setItem("timezone", tz);
-  };
-
-  const updateNotifications = (n: NotificationSettings) => {
-    setNotifications(n);
-  };
-
-  //----------------------------------------
-  // RETURN PROVIDER
-  //----------------------------------------
+ 
   return (
     <SettingsContext.Provider
       value={{
+        settings,
         theme,
         language,
-        timezone,
-        notifications,
-        setTheme,
-        setLanguage,
-        setTimezone,
-        updateNotifications,
-        refreshSettings,
         isLoading,
+        refreshSettings,
+        updateTheme,
+        updateLanguage,
+        updateNotifications,
       }}
     >
       {children}
     </SettingsContext.Provider>
   );
 }
-
-export function useSettings() {
+ 
+export const useSettings = () => {
   const ctx = useContext(SettingsContext);
-  if (!ctx) {
-    throw new Error("useSettings must be used within <SettingsProvider>");
-  }
+  if (!ctx) throw new Error("useSettings must be inside SettingsProvider");
   return ctx;
-}
+};

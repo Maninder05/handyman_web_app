@@ -2,7 +2,6 @@
  
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Briefcase, HelpCircle, Crown, Wrench, Upload, Camera, Settings } from "lucide-react";
 import { FiUser, FiPlus, FiDollarSign, FiShoppingBag, FiStar } from "react-icons/fi";
@@ -73,9 +72,47 @@ export default function HandyDashboard() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
+<<<<<<< Updated upstream
  
   }, []);
  
+=======
+  }, []);
+ 
+  useEffect(() => {
+    const applyThemeSettings = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+ 
+        const res = await fetch("http://localhost:7000/api/settings", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+ 
+        if (res.ok) {
+          const settings = await res.json();
+ 
+          if (settings.theme === "dark") {
+            document.documentElement.classList.add("dark");
+          } else if (settings.theme === "light") {
+            document.documentElement.classList.remove("dark");
+          } else if (settings.theme === "auto") {
+            if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+              document.documentElement.classList.add("dark");
+            } else {
+              document.documentElement.classList.remove("dark");
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error applying theme:", err);
+      }
+    };
+ 
+    applyThemeSettings();
+  }, []);
+ 
+>>>>>>> Stashed changes
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -90,6 +127,10 @@ export default function HandyDashboard() {
  
       if (res.ok) {
         const data: Profile = await res.json();
+<<<<<<< Updated upstream
+=======
+        console.log("Profile data received:", data);
+>>>>>>> Stashed changes
         setProfile(data);
       } else if (res.status === 401) {
         localStorage.removeItem("token");
@@ -147,9 +188,16 @@ export default function HandyDashboard() {
  
       if (res.ok) {
         const data = await res.json();
+<<<<<<< Updated upstream
         setProfile(prev => prev ? {
           ...prev,
           profileImage: data.profilePic || data.imageUrl
+=======
+        console.log("Upload response:", data);
+        setProfile(prev => prev ? {
+          ...prev,
+          profileImage: data.profilePic || data.profileImage || data.imageUrl
+>>>>>>> Stashed changes
         } : null);
         setShowUploadModal(false);
         setSelectedFile(null);
@@ -185,7 +233,11 @@ export default function HandyDashboard() {
   }
  
   return (
+<<<<<<< Updated upstream
     <div className="min-h-screen bg-[#F5F5F0] text-gray-900 flex flex-col">
+=======
+    <div className="min-h-screen bg-[#F5F5F0] dark:bg-[#0a0a0a] text-gray-900 dark:text-white flex flex-col">
+>>>>>>> Stashed changes
       <Header
         pageTitle="Handyman Dashboard"
         onLogout={handleLogout}
@@ -201,12 +253,30 @@ export default function HandyDashboard() {
             <div className="flex flex-col items-center text-center mb-8">
               <div className="relative mb-4">
                 {profile?.profileImage ? (
+<<<<<<< Updated upstream
                   <Image
                     src={profile.profileImage}
                     alt="Profile"
                     width={112}
                     height={112}
                     className="rounded-full border-4 border-white shadow-lg object-cover"
+=======
+                  <img
+                    src={`http://localhost:7000${profile.profileImage}`}
+                    alt="Profile"
+                    className="w-28 h-28 rounded-full border-4 border-white shadow-lg object-cover"
+                    onError={(e) => {
+                      console.error('Failed to load profile image:', profile.profileImage);
+                      e.currentTarget.style.display = 'none';
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        const fallback = document.createElement('div');
+                        fallback.className = 'w-28 h-28 rounded-full border-4 border-white bg-white/20 flex items-center justify-center';
+                        fallback.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
+                        parent.appendChild(fallback);
+                      }
+                    }}
+>>>>>>> Stashed changes
                   />
                 ) : (
                   <div className="w-28 h-28 rounded-full border-4 border-white bg-white/20 flex items-center justify-center">
@@ -227,7 +297,11 @@ export default function HandyDashboard() {
                   <h2 className="text-2xl font-bold text-white">
                     {profile?.name || "Your Name"}
                   </h2>
+<<<<<<< Updated upstream
                  
+=======
+                  
+>>>>>>> Stashed changes
                   {profile?.planType === 'Premium' && (
                     <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-bold rounded-full flex items-center gap-1">
                       👑 PREMIUM
@@ -451,15 +525,11 @@ export default function HandyDashboard() {
            
             <div className="mb-6">
               {previewUrl ? (
-                <div className="relative w-40 h-40 mx-auto mb-4">
-                  <Image
-                    src={previewUrl}
-                    alt="Preview"
-                    width={160}
-                    height={160}
-                    className="rounded-full object-cover border-4 border-[#D4A574]"
-                  />
-                </div>
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="w-40 h-40 mx-auto rounded-full object-cover border-4 border-[#D4A574]"
+                />
               ) : (
                 <div className="w-40 h-40 mx-auto mb-4 rounded-full border-4 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
                   <Upload size={48} className="text-gray-400" />
