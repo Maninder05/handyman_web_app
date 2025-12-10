@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import { Menu, X, Bell, Briefcase, Users, Calendar, HelpCircle, Settings } from "lucide-react";
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 import {
@@ -29,7 +32,11 @@ interface HeaderProps {
   };
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   onLogout: () => void; //logout
+=======
+  onLogout: () => void;
+>>>>>>> Stashed changes
 =======
   onLogout: () => void;
 >>>>>>> Stashed changes
@@ -62,6 +69,7 @@ export default function ClientHeader({ pageTitle, profile, onLogout }: HeaderPro
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         <h1 className="text-2xl font-bold text-white tracking-wide">{pageTitle}</h1>
  
         <div className="flex items-center gap-4 relative">
@@ -71,6 +79,8 @@ export default function ClientHeader({ pageTitle, profile, onLogout }: HeaderPro
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
                 {profile.notificationsCount > 9 ? '9+' : profile.notificationsCount}
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
  
@@ -91,6 +101,9 @@ export default function ClientHeader({ pageTitle, profile, onLogout }: HeaderPro
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
                 {profile.notificationsCount > 9 ? "9+" : profile.notificationsCount}
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -100,10 +113,13 @@ export default function ClientHeader({ pageTitle, profile, onLogout }: HeaderPro
  
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           <button onClick={toggleProfile} className="p-2 rounded-full hover:bg-[#2a2a2a] transition">
             {profile?.profileImage ? (
               <img src={profile.profileImage} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
           {/* PROFILE BUTTON */}
@@ -118,6 +134,9 @@ export default function ClientHeader({ pageTitle, profile, onLogout }: HeaderPro
                 className="w-8 h-8 rounded-full object-cover"
               />
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -128,6 +147,10 @@ export default function ClientHeader({ pageTitle, profile, onLogout }: HeaderPro
  
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+          {/* PROFILE DROPDOWN */}
+>>>>>>> Stashed changes
 =======
           {/* PROFILE DROPDOWN */}
 >>>>>>> Stashed changes
@@ -186,6 +209,7 @@ export default function ClientHeader({ pageTitle, profile, onLogout }: HeaderPro
  
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           <button onClick={toggleMenu} className="p-2 rounded-md bg-[#D4A574] text-white hover:bg-[#B8A565] transition">
             {showMenu ? <X size={26} /> : <Menu size={26} />}
           </button>
@@ -206,6 +230,18 @@ export default function ClientHeader({ pageTitle, profile, onLogout }: HeaderPro
  
           {/* SIDE MENU (RESTORED GOOD LOOKING UI) */}
           {showMenu && (
+=======
+          {/* MENU BUTTON */}
+          <button
+            onClick={toggleMenu}
+            className="p-2 rounded-md bg-[#D4A574] text-white hover:bg-[#b6935a] transition"
+          >
+            {showMenu ? <X size={26} /> : <Menu size={26} />}
+          </button>
+ 
+          {/* SIDE MENU (RESTORED GOOD LOOKING UI) */}
+          {showMenu && (
+>>>>>>> Stashed changes
 =======
           {/* MENU BUTTON */}
           <button
@@ -265,9 +301,12 @@ export default function ClientHeader({ pageTitle, profile, onLogout }: HeaderPro
                 </li>
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 <li>
                   <Link href="/mutual/support" className="flex items-center gap-3 px-5 py-3 hover:bg-[#F5F5F0] transition font-medium" onClick={closeMenus}>
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
  
@@ -309,8 +348,13 @@ export default function ClientHeader({ pageTitle, profile, onLogout }: HeaderPro
 <<<<<<< Updated upstream
 }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
 }
+ 
+ 
+>>>>>>> Stashed changes
+=======
  
  
 >>>>>>> Stashed changes
