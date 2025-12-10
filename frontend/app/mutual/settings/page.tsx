@@ -1,25 +1,25 @@
 "use client";
-
+ 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  User, Lock, Sun, Moon, Monitor, Bell, Trash2, 
+import {
+  User, Lock, Sun, Moon, Monitor, Bell, Trash2,
   Camera, AlertCircle, CheckCircle, XCircle, ArrowLeft, LogOut
 } from "lucide-react";
-
+ 
 export default function SettingsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("account");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userType, setUserType] = useState<"client" | "handyman" | null>(null);
-  
+ 
   // Alert state
   const [alert, setAlert] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
-
+ 
   // Account data
   const [accountData, setAccountData] = useState({
     firstName: "",
@@ -30,21 +30,21 @@ export default function SettingsPage() {
     bio: "",
     profileImage: "",
   });
-
+ 
   // Password data
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-
+ 
   // Display settings
   const [displaySettings, setDisplaySettings] = useState({
     theme: "light",
     language: "en",
     timezone: "UTC",
   });
-
+ 
   // Notification settings
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -53,20 +53,20 @@ export default function SettingsPage() {
     jobAlerts: true,
     messageAlerts: true,
   });
-
+ 
   // Delete modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
-
+ 
   // Profile image upload
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-
+ 
   // Detect user type and fetch data
   useEffect(() => {
     fetchUserData();
   }, []);
-
+ 
   // Apply theme to DOM
   useEffect(() => {
     if (displaySettings.theme === "dark") {
@@ -81,22 +81,22 @@ export default function SettingsPage() {
       }
     }
   }, [displaySettings.theme]);
-
+ 
   const fetchUserData = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/signup?mode=login");
       return;
     }
-
+ 
     try {
       // Try handyman first
       let response = await fetch("http://localhost:7000/api/handymen", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
+ 
       let detectedType: "client" | "handyman" = "handyman";
-
+ 
       // If handyman fails, try client
       if (!response.ok) {
         response = await fetch("http://localhost:7000/api/clients", {
@@ -104,19 +104,19 @@ export default function SettingsPage() {
         });
         detectedType = "client";
       }
-
+ 
       if (!response.ok) {
         throw new Error("Failed to fetch profile");
       }
-
+ 
       const data = await response.json();
-      
+     
       // Store userType in localStorage for persistence
       localStorage.setItem("userType", detectedType);
       setUserType(detectedType);
-      
+     
       console.log(" User Type Detected:", detectedType);
-
+ 
       const nameParts = data.name ? data.name.split(" ") : ["", ""];
       setAccountData({
         firstName: nameParts[0] || "",
@@ -127,12 +127,12 @@ export default function SettingsPage() {
         bio: data.bio || "",
         profileImage: data.profileImage || data.profilePic || "",
       });
-
+ 
       // Fetch display settings
       const settingsRes = await fetch("http://localhost:7000/api/settings", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
+ 
       if (settingsRes.ok) {
         const settings = await settingsRes.json();
         setDisplaySettings({
@@ -149,82 +149,82 @@ export default function SettingsPage() {
       setLoading(false);
     }
   };
-
+ 
   const showAlert = (type: "success" | "error", message: string) => {
     setAlert({ type, message });
     setTimeout(() => setAlert(null), 5000);
   };
-
+ 
   const getDashboardPath = (): string => {
     // Check localStorage first for persistence
     const storedType = localStorage.getItem("userType") as "client" | "handyman" | null;
     const finalType = storedType || userType;
-    
+   
     console.log("🚀 Redirecting to:", finalType === "handyman" ? "/handyman/handyDashboard" : "/client/clientDashboard");
-    
-    return finalType === "handyman" 
-      ? "/handyman/handyDashboard" 
+   
+    return finalType === "handyman"
+      ? "/handyman/handyDashboard"
       : "/client/clientDashboard";
   };
-
+ 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
+ 
     if (file.size > 5 * 1024 * 1024) {
       showAlert("error", "Image must be less than 5MB");
       return;
     }
-
+ 
     setSelectedImage(file);
     setImagePreview(URL.createObjectURL(file));
   };
-
+ 
   const uploadProfileImage = async () => {
     if (!selectedImage) return;
-
+ 
     const token = localStorage.getItem("token");
     const formData = new FormData();
     formData.append("profileImage", selectedImage);
-
+ 
     setSaving(true);
-
+ 
     try {
       const storedType = localStorage.getItem("userType") as "client" | "handyman" | null;
       const finalType = storedType || userType;
-      
+     
       const endpoint = finalType === "handyman"
         ? "http://localhost:7000/api/handymen/upload-profile-pic"
         : "http://localhost:7000/api/clients/upload-profile-pic";
-
+ 
       console.log(" Uploading to:", endpoint);
-
+ 
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
-        
+       
         },
         body: formData,
       });
-
+ 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error(" Upload error:", errorData);
         throw new Error(errorData.message || "Failed to upload image");
       }
-
+ 
       const data = await response.json();
       console.log(" Upload success:", data);
-      
-      setAccountData({ 
-        ...accountData, 
-        profileImage: data.profilePic || data.profileImage || data.imageUrl 
+     
+      setAccountData({
+        ...accountData,
+        profileImage: data.profilePic || data.profileImage || data.imageUrl
       });
       setSelectedImage(null);
       setImagePreview(null);
       showAlert("success", "Profile picture updated!");
-      
+     
       setTimeout(() => {
         router.push(getDashboardPath());
       }, 1500);
@@ -236,25 +236,25 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
-
+ 
   const handleSaveAccount = async () => {
     setSaving(true);
     const token = localStorage.getItem("token");
-
+ 
     try {
       // If there's a selected image, upload it first
       if (selectedImage) {
         await uploadProfileImage();
         return;
       }
-
+ 
       const storedType = localStorage.getItem("userType") as "client" | "handyman" | null;
       const finalType = storedType || userType;
-
+ 
       const endpoint = finalType === "handyman"
         ? "http://localhost:7000/api/handymen"
         : "http://localhost:7000/api/clients";
-
+ 
       const response = await fetch(endpoint, {
         method: "PUT",
         headers: {
@@ -268,11 +268,11 @@ export default function SettingsPage() {
           bio: accountData.bio,
         }),
       });
-
+ 
       if (!response.ok) throw new Error("Failed to update account");
-
+ 
       showAlert("success", "Account updated successfully!");
-      
+     
       setTimeout(() => {
         router.push(getDashboardPath());
       }, 1500);
@@ -283,21 +283,21 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
-
+ 
   const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       showAlert("error", "Passwords do not match");
       return;
     }
-
+ 
     if (passwordData.newPassword.length < 8) {
       showAlert("error", "Password must be at least 8 characters");
       return;
     }
-
+ 
     setSaving(true);
     const token = localStorage.getItem("token");
-
+ 
     try {
       const response = await fetch("http://localhost:7000/api/settings/change-password", {
         method: "PUT",
@@ -310,12 +310,12 @@ export default function SettingsPage() {
           newPassword: passwordData.newPassword,
         }),
       });
-
+ 
       if (!response.ok) throw new Error("Failed to change password");
-
+ 
       showAlert("success", "Password changed successfully!");
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      
+     
       setTimeout(() => {
         router.push(getDashboardPath());
       }, 1500);
@@ -325,11 +325,11 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
-
+ 
   const handleSaveDisplay = async () => {
     setSaving(true);
     const token = localStorage.getItem("token");
-
+ 
     try {
       const response = await fetch("http://localhost:7000/api/settings/display", {
         method: "PUT",
@@ -339,11 +339,11 @@ export default function SettingsPage() {
         },
         body: JSON.stringify(displaySettings),
       });
-
+ 
       if (!response.ok) throw new Error("Failed to update display settings");
-
+ 
       showAlert("success", "Display settings updated!");
-      
+     
       setTimeout(() => {
         router.push(getDashboardPath());
       }, 1500);
@@ -353,11 +353,11 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
-
+ 
   const handleSaveNotifications = async () => {
     setSaving(true);
     const token = localStorage.getItem("token");
-
+ 
     try {
       const response = await fetch("http://localhost:7000/api/settings/notifications", {
         method: "PUT",
@@ -367,11 +367,11 @@ export default function SettingsPage() {
         },
         body: JSON.stringify({ notifications }),
       });
-
+ 
       if (!response.ok) throw new Error("Failed to update notifications");
-
+ 
       showAlert("success", "Notification settings updated!");
-      
+     
       setTimeout(() => {
         router.push(getDashboardPath());
       }, 1500);
@@ -381,30 +381,30 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
-
+ 
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== "DELETE") {
       showAlert("error", 'Please type "DELETE" to confirm');
       return;
     }
-
+ 
     const token = localStorage.getItem("token");
-
+ 
     try {
       const storedType = localStorage.getItem("userType") as "client" | "handyman" | null;
       const finalType = storedType || userType;
-
+ 
       const endpoint = finalType === "handyman"
         ? "http://localhost:7000/api/handymen"
         : "http://localhost:7000/api/clients";
-
+ 
       const response = await fetch(endpoint, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-
+ 
       if (!response.ok) throw new Error("Failed to delete account");
-
+ 
       localStorage.removeItem("token");
       localStorage.removeItem("userType");
       router.push("/signup");
@@ -412,13 +412,13 @@ export default function SettingsPage() {
       showAlert("error", "Failed to delete account");
     }
   };
-
+ 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userType");
     router.push("/signup?mode=login");
   };
-
+ 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F0] dark:bg-[#0a0a0a] flex items-center justify-center">
@@ -426,7 +426,7 @@ export default function SettingsPage() {
       </div>
     );
   }
-
+ 
   return (
     <div className="min-h-screen bg-[#F5F5F0] dark:bg-[#0a0a0a]">
       {/* Alert */}
@@ -438,7 +438,7 @@ export default function SettingsPage() {
           <span className="font-medium">{alert.message}</span>
         </div>
       )}
-
+ 
       {/* Header */}
       <header className="bg-[#1a1a1a] dark:bg-black shadow-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
@@ -451,7 +451,7 @@ export default function SettingsPage() {
             </button>
             <h1 className="text-2xl font-bold text-white">Settings</h1>
           </div>
-
+ 
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition"
@@ -461,7 +461,7 @@ export default function SettingsPage() {
           </button>
         </div>
       </header>
-
+ 
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
@@ -491,7 +491,7 @@ export default function SettingsPage() {
               </nav>
             </div>
           </div>
-
+ 
           {/* Main Content */}
           <div className="flex-1">
             <div className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-md p-6">
@@ -499,7 +499,7 @@ export default function SettingsPage() {
               {activeTab === "account" && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Account Management</h2>
-
+ 
                   {/* Profile Image */}
                   <div className="flex items-center gap-6">
                     <div className="relative">
@@ -536,7 +536,7 @@ export default function SettingsPage() {
                       </button>
                     )}
                   </div>
-
+ 
                   {/* Form Fields */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -550,7 +550,7 @@ export default function SettingsPage() {
                         className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white focus:border-[#D4A574] outline-none transition"
                       />
                     </div>
-
+ 
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Last Name
@@ -562,7 +562,7 @@ export default function SettingsPage() {
                         className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white focus:border-[#D4A574] outline-none transition"
                       />
                     </div>
-
+ 
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Email Address
@@ -574,7 +574,7 @@ export default function SettingsPage() {
                         className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-[#0a0a0a] text-gray-500 cursor-not-allowed"
                       />
                     </div>
-
+ 
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                         Phone Number
@@ -588,7 +588,7 @@ export default function SettingsPage() {
                       />
                     </div>
                   </div>
-
+ 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Address
@@ -601,7 +601,7 @@ export default function SettingsPage() {
                       className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white focus:border-[#D4A574] outline-none transition"
                     />
                   </div>
-
+ 
                   {(localStorage.getItem("userType") === "handyman" || userType === "handyman") && (
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -616,7 +616,7 @@ export default function SettingsPage() {
                       />
                     </div>
                   )}
-
+ 
                   <button
                     onClick={handleSaveAccount}
                     disabled={saving}
@@ -626,12 +626,12 @@ export default function SettingsPage() {
                   </button>
                 </div>
               )}
-
+ 
               {/* Password Tab */}
               {activeTab === "password" && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Change Password</h2>
-
+ 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Current Password
@@ -643,7 +643,7 @@ export default function SettingsPage() {
                       className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white focus:border-[#D4A574] outline-none transition"
                     />
                   </div>
-
+ 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       New Password (minimum 8 characters)
@@ -655,7 +655,7 @@ export default function SettingsPage() {
                       className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white focus:border-[#D4A574] outline-none transition"
                     />
                   </div>
-
+ 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Confirm New Password
@@ -667,7 +667,7 @@ export default function SettingsPage() {
                       className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white focus:border-[#D4A574] outline-none transition"
                     />
                   </div>
-
+ 
                   <button
                     onClick={handleChangePassword}
                     disabled={saving}
@@ -677,12 +677,12 @@ export default function SettingsPage() {
                   </button>
                 </div>
               )}
-
+ 
               {/* Display Tab */}
               {activeTab === "display" && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Display Settings</h2>
-
+ 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
                       Theme Preference
@@ -708,7 +708,7 @@ export default function SettingsPage() {
                       ))}
                     </div>
                   </div>
-
+ 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Language
@@ -724,7 +724,7 @@ export default function SettingsPage() {
                       <option value="de">Deutsch</option>
                     </select>
                   </div>
-
+ 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Timezone
@@ -741,7 +741,7 @@ export default function SettingsPage() {
                       <option value="PST">PST (Pacific)</option>
                     </select>
                   </div>
-
+ 
                   <button
                     onClick={handleSaveDisplay}
                     disabled={saving}
@@ -751,12 +751,12 @@ export default function SettingsPage() {
                   </button>
                 </div>
               )}
-
+ 
               {/* Notifications Tab */}
               {activeTab === "notifications" && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Notification Preferences</h2>
-
+ 
                   <div className="space-y-4">
                     {Object.entries(notifications).map(([key, value]) => (
                       <div key={key} className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-gray-700">
@@ -778,7 +778,7 @@ export default function SettingsPage() {
                       </div>
                     ))}
                   </div>
-
+ 
                   <button
                     onClick={handleSaveNotifications}
                     disabled={saving}
@@ -788,12 +788,12 @@ export default function SettingsPage() {
                   </button>
                 </div>
               )}
-
+ 
               {/* Delete Account Tab */}
               {activeTab === "delete" && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-red-600 mb-6">Delete Account</h2>
-
+ 
                   <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-6">
                     <div className="flex items-start gap-3 mb-4">
                       <AlertCircle className="text-red-600 flex-shrink-0 mt-1" size={24} />
@@ -811,7 +811,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-
+ 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Type `DELETE` to confirm account deletion
@@ -824,7 +824,7 @@ export default function SettingsPage() {
                       placeholder="Type DELETE here"
                     />
                   </div>
-
+ 
                   <button
                     onClick={() => setShowDeleteModal(true)}
                     disabled={deleteConfirmation !== "DELETE"}
@@ -839,7 +839,7 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-
+ 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

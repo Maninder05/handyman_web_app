@@ -1,10 +1,10 @@
 "use client";
-
+ 
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, Bell, Settings, Briefcase, Wrench, Crown, HelpCircle } from "lucide-react";
 import { FiUser } from "react-icons/fi";
-
+ 
 interface HeaderProps {
   pageTitle: string;
   profile?: {
@@ -13,31 +13,31 @@ interface HeaderProps {
   };
   onLogout: () => void;
 }
-
+ 
 export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-
+ 
   const toggleMenu = () => {
     setShowMenu(!showMenu);
     setShowProfileMenu(false);
   };
-
+ 
   const toggleProfile = () => {
     setShowProfileMenu(!showProfileMenu);
     setShowMenu(false);
   };
-
+ 
   const closeMenus = () => {
     setShowMenu(false);
     setShowProfileMenu(false);
   };
-
+ 
   return (
     <header className="bg-[#1a1a1a] shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         <h1 className="text-2xl font-bold text-white tracking-wide">{pageTitle}</h1>
-
+ 
         <div className="flex items-center gap-4 relative">
           <Link href="/mutual/notifications" className="relative p-2 rounded-full hover:bg-[#2a2a2a] transition flex items-center justify-center">
             <Bell size={22} className="text-white" />
@@ -47,7 +47,7 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
               </span>
             )}
           </Link>
-
+ 
           <button onClick={toggleProfile} className="p-2 rounded-full hover:bg-[#2a2a2a] transition flex items-center justify-center">
             {profile?.profileImage ? (
               <img src={profile.profileImage} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
@@ -55,7 +55,7 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
               <FiUser size={24} className="text-white" />
             )}
           </button>
-
+ 
           {showProfileMenu && (
             <div className="absolute right-14 top-14 bg-white border border-gray-200 rounded-lg shadow-xl w-52 z-50">
               <ul className="text-sm text-gray-800">
@@ -77,11 +77,11 @@ export default function HandyHeader({ pageTitle, profile, onLogout }: HeaderProp
               </ul>
             </div>
           )}
-
+ 
           <button onClick={toggleMenu} className="p-2 rounded-md bg-[#D4A574] text-white hover:bg-[#B8A565] transition flex items-center justify-center">
             {showMenu ? <X size={26} /> : <Menu size={26} />}
           </button>
-
+ 
           {showMenu && (
             <div className="absolute right-0 top-14 bg-white border border-gray-200 rounded-xl shadow-xl w-72 text-sm z-50 overflow-hidden">
               <ul className="divide-y divide-gray-100">
