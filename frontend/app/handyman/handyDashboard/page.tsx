@@ -73,12 +73,17 @@ export default function HandyDashboard() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
  
   }, []);
  
 =======
   }, []);
  
+=======
+  }, []);
+ 
+>>>>>>> Stashed changes
   useEffect(() => {
     const applyThemeSettings = async () => {
       try {
@@ -112,6 +117,9 @@ export default function HandyDashboard() {
     applyThemeSettings();
   }, []);
  
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   const fetchProfile = async () => {
     try {
@@ -128,6 +136,10 @@ export default function HandyDashboard() {
       if (res.ok) {
         const data: Profile = await res.json();
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+        console.log("Profile data received:", data);
+>>>>>>> Stashed changes
 =======
         console.log("Profile data received:", data);
 >>>>>>> Stashed changes
@@ -189,14 +201,20 @@ export default function HandyDashboard() {
       if (res.ok) {
         const data = await res.json();
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         setProfile(prev => prev ? {
           ...prev,
           profileImage: data.profilePic || data.imageUrl
 =======
+=======
+>>>>>>> Stashed changes
         console.log("Upload response:", data);
         setProfile(prev => prev ? {
           ...prev,
           profileImage: data.profilePic || data.profileImage || data.imageUrl
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         } : null);
         setShowUploadModal(false);
@@ -234,7 +252,11 @@ export default function HandyDashboard() {
  
   return (
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     <div className="min-h-screen bg-[#F5F5F0] text-gray-900 flex flex-col">
+=======
+    <div className="min-h-screen bg-[#F5F5F0] dark:bg-[#0a0a0a] text-gray-900 dark:text-white flex flex-col">
+>>>>>>> Stashed changes
 =======
     <div className="min-h-screen bg-[#F5F5F0] dark:bg-[#0a0a0a] text-gray-900 dark:text-white flex flex-col">
 >>>>>>> Stashed changes
@@ -254,6 +276,7 @@ export default function HandyDashboard() {
               <div className="relative mb-4">
                 {profile?.profileImage ? (
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                   <Image
                     src={profile.profileImage}
                     alt="Profile"
@@ -261,6 +284,8 @@ export default function HandyDashboard() {
                     height={112}
                     className="rounded-full border-4 border-white shadow-lg object-cover"
 =======
+=======
+>>>>>>> Stashed changes
                   <img
                     src={`http://localhost:7000${profile.profileImage}`}
                     alt="Profile"
@@ -276,6 +301,9 @@ export default function HandyDashboard() {
                         parent.appendChild(fallback);
                       }
                     }}
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                   />
                 ) : (
@@ -301,6 +329,9 @@ export default function HandyDashboard() {
                  
 =======
                   
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                   {profile?.planType === 'Premium' && (
                     <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-bold rounded-full flex items-center gap-1">
