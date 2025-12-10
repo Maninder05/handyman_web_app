@@ -7,33 +7,28 @@ import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import http from 'http';
-import { Server } from 'socket.io';
 
 // Passport config
 import './config/passport.js';
 
-// Routes - ONLY ONE IMPORT PER FILE!
+// Routes
 import authRoutes from './routes/authRoutes.js';
 import clientRoutes from './routes/clientRoutes.js';
 import handymanRoutes from './routes/handyRoutes.js';
 import settingsRoutes from './routes/mutualRoutes.js';
+import supportRoutes from './routes/supportRoutes.js';
+import subscriptionRoutes from './routes/subscriptionRoutes.js';
+import JobDeclineRoutes from './routes/JobDeclineRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
 
 dotenv.config();
 
-const app = express();  // ✅ CREATE APP FIRST!
+const app = express();
 const PORT = process.env.PORT || 7000;
 
-// HTTP server
+// HTTP + Socket server
 const server = http.createServer(app);
-
-// Socket.io
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
-});
 
 // Core middleware
 app.use(cors({
@@ -54,37 +49,29 @@ const __dirname = path.dirname(__filename);
 const uploadsPath = path.join(__dirname, "uploads");
 app.use("/uploads", express.static(uploadsPath));
 
-// API Routes - ✅ ALL ROUTES HERE AFTER APP IS CREATED!
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/handymen', handymanRoutes);
-app.use('/api/settings', settingsRoutes);  // ✅ ALREADY HERE, PERFECT!
+app.use('/api/settings', settingsRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/jobs', JobDeclineRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/orders', orderRoutes);
 
-// Socket.io Events
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+// Initialize Socket.io (after routes are set up)
+import { initializeSocket } from './socket.js';
+initializeSocket(server);
 
-  socket.on('joinRoom', (userId) => {
-    socket.join(userId);
-  });
-
-  socket.on('sendNotification', ({ receiverId, notification }) => {
-    io.to(receiverId).emit('receiveNotification', notification);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
-});
-
-// Connect to MongoDB and start server
+// MongoDB + Server
 mongoose.connect(process.env.MONGO_URL)
   .then(() => {
-    console.log('✅ Connected to MongoDB successfully!');
+    console.log('Connected to MongoDB successfully!');
     server.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(` Server is running on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error('❌ Database connection error:', err);
+    console.error('Database connection error:', err);
   });

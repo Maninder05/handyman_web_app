@@ -1,7 +1,7 @@
 import PostService from "../../models/handyman/PostService.js";
 import Order from "../../models/handyman/Orders.js";
- 
-// Get all services for logged-in handyman
+
+
 export const getMyServices = async (req, res) => {
   try {
     const handymanId = req.user.id;
@@ -12,8 +12,7 @@ export const getMyServices = async (req, res) => {
     res.status(500).json({ message: "Error fetching services" });
   }
 };
- 
-// Get all orders
+
 export const getMyOrders = async (req, res) => {
   try {
     const handymanId = req.user.id;
@@ -26,8 +25,7 @@ export const getMyOrders = async (req, res) => {
     res.status(500).json({ message: "Error fetching orders" });
   }
 };
- 
-// Update order status
+
 export const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -39,5 +37,3 @@ export const updateOrderStatus = async (req, res) => {
     res.status(500).json({ message: "Error updating order" });
   }
 };
- 
- 

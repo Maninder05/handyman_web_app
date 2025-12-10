@@ -98,7 +98,7 @@ export const updateOrderStatus = async (req, res) => {
 };
 
 /**
- * ❌ Delete an order (admin or client cancellation)
+ * Delete an order (admin or client cancellation)
  */
 export const deleteOrder = async (req, res) => {
   try {
