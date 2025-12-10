@@ -1,31 +1,29 @@
 "use client";
-
+ 
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Briefcase, HelpCircle, Crown, Wrench, Upload, Camera, Settings, X } from "lucide-react";
+import { Briefcase, HelpCircle, Crown, Wrench, Upload, Camera, Settings } from "lucide-react";
 import { FiUser, FiPlus, FiDollarSign, FiShoppingBag, FiStar } from "react-icons/fi";
 import Header from "../../components/handyHeader";
-import Toast from "../../components/Toast";
-import { useToast } from "../../hooks/useToast";
-
-type Service = { 
+ 
+type Service = {
   _id?: string;
-  title: string; 
+  title: string;
   description: string;
   price?: number;
 };
-
-type Order = { 
+ 
+type Order = {
   _id: string;
-  title: string; 
-  description: string; 
+  title: string;
+  description: string;
   status: string;
   clientName?: string;
   date?: string;
 };
-
+ 
 type Profile = {
   _id: string;
   name: string;
@@ -46,12 +44,11 @@ type Profile = {
   services: Service[];
   recentOrders: Order[];
   planType?: 'Basic' | 'Standard' | 'Premium';
-  subscriptionStatus?: string;
   verified?: boolean;
   notificationsCount: number;
   reviewsCount?: number;
 };
-
+ 
 export default function HandyDashboard() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -61,61 +58,24 @@ export default function HandyDashboard() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { showToast, toastState, hideToast } = useToast();
-
-
+ 
   useEffect(() => {
     fetchProfile();
-    
+   
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         fetchProfile();
       }
     };
-    
+   
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+   
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-
+ 
   }, []);
-
-  // ------------------------- ⭐ ADDED THEME-SYNC USEEFFECT ⭐ -------------------------
-  useEffect(() => {
-    const applyThemeSettings = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        const res = await fetch("http://localhost:7000/api/settings", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (res.ok) {
-          const settings = await res.json();
-
-          if (settings.theme === "dark") {
-            document.documentElement.classList.add("dark");
-          } else if (settings.theme === "light") {
-            document.documentElement.classList.remove("dark");
-          } else if (settings.theme === "auto") {
-            if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-              document.documentElement.classList.add("dark");
-            } else {
-              document.documentElement.classList.remove("dark");
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Error applying theme:", err);
-      }
-    };
-
-    applyThemeSettings();
-  }, []);
-  // ------------------------- END THEME CODE -------------------------
-
+ 
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -123,14 +83,13 @@ export default function HandyDashboard() {
         router.push("/signup?mode=login");
         return;
       }
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/handymen`, {
+ 
+      const res = await fetch("http://localhost:7000/api/handymen", {
         headers: { "Authorization": `Bearer ${token}` },
       });
-
+ 
       if (res.ok) {
         const data: Profile = await res.json();
-        console.log('🔵 Profile fetched:', { planType: data.planType, name: data.name });
         setProfile(data);
       } else if (res.status === 401) {
         localStorage.removeItem("token");
@@ -144,7 +103,7 @@ export default function HandyDashboard() {
       setLoading(false);
     }
   };
-
+ 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -152,14 +111,14 @@ export default function HandyDashboard() {
         alert('Please select an image file');
         return;
       }
-      
+     
       if (file.size > 5 * 1024 * 1024) {
         alert('File size must be less than 5MB');
         return;
       }
-
+ 
       setSelectedFile(file);
-      
+     
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewUrl(reader.result as string);
@@ -167,17 +126,17 @@ export default function HandyDashboard() {
       reader.readAsDataURL(file);
     }
   };
-
+ 
   const handleUploadImage = async () => {
     if (!selectedFile) return;
-
+ 
     setUploadingImage(true);
-    
+   
     try {
       const token = localStorage.getItem("token");
       const formData = new FormData();
       formData.append('profileImage', selectedFile);
-
+ 
       const res = await fetch("http://localhost:7000/api/handymen/upload-profile-pic", {
         method: 'POST',
         headers: {
@@ -185,17 +144,17 @@ export default function HandyDashboard() {
         },
         body: formData,
       });
-
+ 
       if (res.ok) {
         const data = await res.json();
-        setProfile(prev => prev ? { 
-          ...prev, 
+        setProfile(prev => prev ? {
+          ...prev,
           profileImage: data.profilePic || data.imageUrl
         } : null);
         setShowUploadModal(false);
         setSelectedFile(null);
         setPreviewUrl(null);
-        
+       
         fetchProfile();
       } else {
         const error = await res.json();
@@ -208,44 +167,12 @@ export default function HandyDashboard() {
       setUploadingImage(false);
     }
   };
-
+ 
   const handleLogout = () => {
     localStorage.removeItem("token");
     router.push("/");
   };
-
-  const handleDeclineJob = async (orderId: string) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        showToast("You must be logged in to decline jobs", "error");
-        return;
-      }
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
-      const res = await fetch(`${apiUrl}/api/orders/${orderId}`, {
-        method: "PATCH",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: "declined" }),
-      });
-
-      if (res.ok) {
-        showToast("Job declined successfully", "success");
-        // Refresh profile to update orders
-        fetchProfile();
-      } else {
-        const error = await res.json();
-        showToast(error.message || "Failed to decline job", "error");
-      }
-    } catch (err) {
-      console.error("Error declining job:", err);
-      showToast("Error declining job. Please try again.", "error");
-    }
-  };
-
+ 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center">
@@ -256,29 +183,27 @@ export default function HandyDashboard() {
       </div>
     );
   }
-
+ 
   return (
-    <>
-      <Toast
-        message={toastState.message}
-        type={toastState.type}
-        isVisible={toastState.isVisible}
-        onClose={hideToast}
+    <div className="min-h-screen bg-[#F5F5F0] text-gray-900 flex flex-col">
+      <Header
+        pageTitle="Handyman Dashboard"
+        onLogout={handleLogout}
+        profile={{
+          profileImage: profile?.profileImage,
+          notificationsCount: profile?.notificationsCount || 0
+        }}
       />
-      <div className="min-h-screen bg-[#F5F5F0] dark:bg-[#0a0a0a] text-gray-900 dark:text-white flex flex-col">
-      <Header 
-        pageTitle="Handyman Dashboard" 
-      />
-
+ 
       <main className="flex-1 overflow-y-auto pb-10">
         <section className="bg-gradient-to-br from-[#D4A574] to-[#B8A565] py-8">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col items-center text-center mb-8">
               <div className="relative mb-4">
                 {profile?.profileImage ? (
-                  <Image 
-                    src={profile.profileImage} 
-                    alt="Profile" 
+                  <Image
+                    src={profile.profileImage}
+                    alt="Profile"
                     width={112}
                     height={112}
                     className="rounded-full border-4 border-white shadow-lg object-cover"
@@ -288,7 +213,7 @@ export default function HandyDashboard() {
                     <FiUser size={48} className="text-white" />
                   </div>
                 )}
-                
+               
                 <button
                   onClick={() => setShowUploadModal(true)}
                   className="absolute bottom-0 right-0 bg-[#D4A574] p-2 rounded-full border-4 border-white shadow-lg hover:bg-[#B8A565] transition"
@@ -296,36 +221,36 @@ export default function HandyDashboard() {
                   <Camera size={20} className="text-white" />
                 </button>
               </div>
-
+ 
               <div>
                 <div className="flex items-center gap-2 justify-center mb-2 flex-wrap">
                   <h2 className="text-2xl font-bold text-white">
                     {profile?.name || "Your Name"}
                   </h2>
-                  
-                  {profile?.planType === 'Premium' && profile?.subscriptionStatus && (
+                 
+                  {profile?.planType === 'Premium' && (
                     <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-bold rounded-full flex items-center gap-1">
                       👑 PREMIUM
                     </span>
                   )}
-                  {profile?.planType === 'Standard' && profile?.subscriptionStatus && (
+                  {profile?.planType === 'Standard' && (
                     <span className="px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
                       ⭐ STANDARD
                     </span>
                   )}
-                  {profile?.planType === 'Basic' && profile?.subscriptionStatus && (
+                  {profile?.planType === 'Basic' && (
                     <span className="px-3 py-1 bg-gray-400 text-white text-xs font-bold rounded-full flex items-center gap-1">
                       🆓 BASIC
                     </span>
                   )}
-                  
+                 
                   {profile?.verified && (
                     <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
                       ✅ VERIFIED
                     </span>
                   )}
                 </div>
-                
+               
                 <p className="text-white/90 text-sm">
                   {profile?.email || "your.email@example.com"}
                 </p>
@@ -336,7 +261,7 @@ export default function HandyDashboard() {
                 )}
               </div>
             </div>
-
+ 
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center border border-white/30">
                 <p className="text-3xl font-bold text-white">{profile?.jobsDone || profile?.jobsDoneCount || 0}</p>
@@ -356,7 +281,7 @@ export default function HandyDashboard() {
             </div>
           </div>
         </section>
-
+ 
         <section className="max-w-7xl mx-auto px-6 py-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100 hover:shadow-lg transition">
@@ -371,7 +296,7 @@ export default function HandyDashboard() {
                 </div>
               </div>
             </div>
-
+ 
             <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100 hover:shadow-lg transition">
               <div className="flex items-center justify-between">
                 <div>
@@ -386,35 +311,35 @@ export default function HandyDashboard() {
             </div>
           </div>
         </section>
-
+ 
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <h3 className="text-xl font-bold text-[#1a1a1a] mb-6">Quick Actions</h3>
-
+ 
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <Link href="/handyman/handyFindJobs" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Briefcase size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Find Jobs</h4>
               <p className="text-gray-500 text-sm mt-1">Browse available jobs</p>
             </Link>
-
+ 
             <Link href="/handyman/handyPostServices" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Wrench size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">My Services</h4>
               <p className="text-gray-500 text-sm mt-1">Manage your services</p>
             </Link>
-
+ 
             <Link href="/mutual/membership" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Crown size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Membership</h4>
               <p className="text-gray-500 text-sm mt-1">View your plan</p>
             </Link>
-
+ 
             <Link href="/mutual/support" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <HelpCircle size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Help</h4>
               <p className="text-gray-500 text-sm mt-1">Get support</p>
             </Link>
-
+ 
             <Link href="/mutual/settings" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Settings size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
               <h4 className="font-bold text-[#1a1a1a]">Settings</h4>
@@ -422,7 +347,7 @@ export default function HandyDashboard() {
             </Link>
           </div>
         </section>
-
+ 
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-[#1a1a1a]">Recent Orders</h3>
@@ -430,7 +355,7 @@ export default function HandyDashboard() {
               View All Orders
             </Link>
           </div>
-
+ 
           {(!profile?.recentOrders || profile.recentOrders.length === 0) ? (
             <div className="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-200">
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -438,7 +363,7 @@ export default function HandyDashboard() {
               </div>
               <p className="text-gray-400 text-lg mb-2">No recent orders</p>
               <p className="text-gray-500 text-sm mb-4">Accept jobs to see them here</p>
-              <Link 
+              <Link
                 href="/handyman/handyFindJobs"
                 className="inline-block px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold shadow-lg hover:shadow-xl"
               >
@@ -465,33 +390,22 @@ export default function HandyDashboard() {
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-                        order.status === 'completed' ? 'bg-green-100 text-green-700' :
-                        order.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
-                        order.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                        order.status === 'declined' ? 'bg-red-100 text-red-700' :
-                        'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {order.status.replace('-', ' ').toUpperCase()}
-                      </span>
-                      {order.status === 'pending' && (
-                        <button
-                          onClick={() => handleDeclineJob(order._id)}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-medium transition"
-                        >
-                          <X size={14} />
-                          Decline
-                        </button>
-                      )}
-                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+                      order.status === 'completed' ? 'bg-green-100 text-green-700' :
+                      order.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
+                      order.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                      order.status === 'declined' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {order.status.replace('-', ' ').toUpperCase()}
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </section>
-
+ 
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-[#1a1a1a]">My Services</h3>
@@ -499,7 +413,7 @@ export default function HandyDashboard() {
               Manage Services
             </Link>
           </div>
-
+ 
           {(!profile?.services || profile.services.length === 0) ? (
             <div className="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-200">
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -507,7 +421,7 @@ export default function HandyDashboard() {
               </div>
               <p className="text-gray-400 text-lg mb-2">No services added</p>
               <p className="text-gray-500 text-sm mb-4">Add your services to attract clients</p>
-              <Link 
+              <Link
                 href="/handyman/handyPostServices"
                 className="inline-block px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold shadow-lg hover:shadow-xl"
               >
@@ -529,12 +443,12 @@ export default function HandyDashboard() {
           )}
         </section>
       </main>
-
+ 
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-[#1a1a1a] mb-4">Upload Profile Picture</h3>
-            
+           
             <div className="mb-6">
               {previewUrl ? (
                 <div className="relative w-40 h-40 mx-auto mb-4">
@@ -552,7 +466,7 @@ export default function HandyDashboard() {
                 </div>
               )}
             </div>
-
+ 
             <input
               ref={fileInputRef}
               type="file"
@@ -560,7 +474,7 @@ export default function HandyDashboard() {
               onChange={handleFileSelect}
               className="hidden"
             />
-
+ 
             <div className="flex gap-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
@@ -568,7 +482,7 @@ export default function HandyDashboard() {
               >
                 Choose Image
               </button>
-              
+             
               {selectedFile && (
                 <button
                   onClick={handleUploadImage}
@@ -578,7 +492,7 @@ export default function HandyDashboard() {
                   {uploadingImage ? 'Uploading...' : 'Upload'}
                 </button>
               )}
-              
+             
               <button
                 onClick={() => {
                   setShowUploadModal(false);
@@ -590,7 +504,7 @@ export default function HandyDashboard() {
                 Cancel
               </button>
             </div>
-
+ 
             <p className="text-xs text-gray-500 mt-4 text-center">
               Maximum file size: 5MB. Accepted formats: JPG, PNG, GIF
             </p>
@@ -598,6 +512,5 @@ export default function HandyDashboard() {
         </div>
       )}
     </div>
-    </>
   );
 }
