@@ -1,5 +1,5 @@
-// controllers/client/findHandymanController.js
-import HandymanService from "../../models/handyman/Service.js"; // adjust path
+
+import HandymanService from "../../models/handyman/Service.js"; 
 
 export const findHandyman = async (req, res) => {
   try {
@@ -9,10 +9,9 @@ export const findHandyman = async (req, res) => {
       return res.status(400).json({ message: "Category is required" });
     }
 
-    // Case-insensitive search using regex
     const handymen = await HandymanService.find({
       category: { $regex: new RegExp(`^${categoryQuery}$`, "i") },
-    }).populate("handymanId"); // populate if needed
+    }).populate("handymanId"); 
 
     res.json(handymen);
   } catch (err) {

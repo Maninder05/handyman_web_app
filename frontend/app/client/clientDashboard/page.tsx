@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -44,6 +45,7 @@ export default function ClientDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+
   useEffect(() => {
     fetchProfile();
     
@@ -58,8 +60,41 @@ export default function ClientDashboard() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const applyThemeSettings = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await fetch("http://localhost:7000/api/settings", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const settings = await res.json();
+
+          if (settings.theme === "dark") {
+            document.documentElement.classList.add("dark");
+          } else if (settings.theme === "light") {
+            document.documentElement.classList.remove("dark");
+          } else if (settings.theme === "auto") {
+            if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+              document.documentElement.classList.add("dark");
+            } else {
+              document.documentElement.classList.remove("dark");
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error applying theme:", err);
+      }
+    };
+
+    applyThemeSettings();
+  }, []);
+
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -180,7 +215,7 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] flex flex-col text-gray-900">
+    <div className="min-h-screen bg-[#F5F5F0] dark:bg-[#0a0a0a] flex flex-col text-gray-900 dark:text-white">
       <Header 
         pageTitle="Client Dashboard" 
         onLogout={handleLogout}

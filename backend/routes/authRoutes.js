@@ -1,7 +1,8 @@
 import express from "express";
-import { signup, login, logout } from "../controllers/auth/userController.js";
+import { signup, login, logout, getCurrentUser, updateDisplayName } from "../controllers/auth/userController.js";
 import { body } from "express-validator";
 import validate from "../middleware/validate.js";
+import authSession from "../middleware/authSession.js";
 import passport from "passport";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -32,7 +33,8 @@ router.post(
       .isLength({ min: 6 }).withMessage("Password must be at least 6 chars"),
     body("userType")
       .notEmpty().withMessage("User type is required")
-      .isIn(["client", "handyman"]).withMessage("User type must be customer or handyman"),
+      .isIn(["customer", "handyman", "admin"]).withMessage("User type must be customer, handyman, or admin"),
+
   ],
   validate,
   signup
@@ -51,6 +53,12 @@ router.post(
 
 // Logout
 router.post("/logout", logout);
+
+// Get current user profile (protected)
+router.get("/me", authSession, getCurrentUser);
+
+// Update display name (admin only, protected)
+router.patch("/update-display-name", authSession, updateDisplayName);
 
 // ----------------- OAuth routes (Google + Facebook) -----------------
 // Only setup Google OAuth routes if credentials are provided

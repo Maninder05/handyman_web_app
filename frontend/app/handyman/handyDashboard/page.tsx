@@ -4,9 +4,11 @@ import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Briefcase, HelpCircle, Crown, Wrench, Upload, Camera, Settings } from "lucide-react";
+import { Briefcase, HelpCircle, Crown, Wrench, Upload, Camera, Settings, X } from "lucide-react";
 import { FiUser, FiPlus, FiDollarSign, FiShoppingBag, FiStar } from "react-icons/fi";
 import Header from "../../components/handyHeader";
+import Toast from "../../components/Toast";
+import { useToast } from "../../hooks/useToast";
 
 type Service = { 
   _id?: string;
@@ -44,6 +46,7 @@ type Profile = {
   services: Service[];
   recentOrders: Order[];
   planType?: 'Basic' | 'Standard' | 'Premium';
+  subscriptionStatus?: string;
   verified?: boolean;
   notificationsCount: number;
   reviewsCount?: number;
@@ -58,6 +61,8 @@ export default function HandyDashboard() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { showToast, toastState, hideToast } = useToast();
+
 
   useEffect(() => {
     fetchProfile();
@@ -73,8 +78,43 @@ export default function HandyDashboard() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
+
+  // ------------------------- ⭐ ADDED THEME-SYNC USEEFFECT ⭐ -------------------------
+  useEffect(() => {
+    const applyThemeSettings = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await fetch("http://localhost:7000/api/settings", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const settings = await res.json();
+
+          if (settings.theme === "dark") {
+            document.documentElement.classList.add("dark");
+          } else if (settings.theme === "light") {
+            document.documentElement.classList.remove("dark");
+          } else if (settings.theme === "auto") {
+            if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+              document.documentElement.classList.add("dark");
+            } else {
+              document.documentElement.classList.remove("dark");
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error applying theme:", err);
+      }
+    };
+
+    applyThemeSettings();
+  }, []);
+  // ------------------------- END THEME CODE -------------------------
 
   const fetchProfile = async () => {
     try {
@@ -84,12 +124,13 @@ export default function HandyDashboard() {
         return;
       }
 
-      const res = await fetch("http://localhost:7000/api/handymen", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/handymen`, {
         headers: { "Authorization": `Bearer ${token}` },
       });
 
       if (res.ok) {
         const data: Profile = await res.json();
+        console.log('🔵 Profile fetched:', { planType: data.planType, name: data.name });
         setProfile(data);
       } else if (res.status === 401) {
         localStorage.removeItem("token");
@@ -173,6 +214,38 @@ export default function HandyDashboard() {
     router.push("/");
   };
 
+  const handleDeclineJob = async (orderId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        showToast("You must be logged in to decline jobs", "error");
+        return;
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
+      const res = await fetch(`${apiUrl}/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "declined" }),
+      });
+
+      if (res.ok) {
+        showToast("Job declined successfully", "success");
+        // Refresh profile to update orders
+        fetchProfile();
+      } else {
+        const error = await res.json();
+        showToast(error.message || "Failed to decline job", "error");
+      }
+    } catch (err) {
+      console.error("Error declining job:", err);
+      showToast("Error declining job. Please try again.", "error");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center">
@@ -185,14 +258,16 @@ export default function HandyDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] text-gray-900 flex flex-col">
+    <>
+      <Toast
+        message={toastState.message}
+        type={toastState.type}
+        isVisible={toastState.isVisible}
+        onClose={hideToast}
+      />
+      <div className="min-h-screen bg-[#F5F5F0] dark:bg-[#0a0a0a] text-gray-900 dark:text-white flex flex-col">
       <Header 
         pageTitle="Handyman Dashboard" 
-        onLogout={handleLogout}
-        profile={{
-          profileImage: profile?.profileImage,
-          notificationsCount: profile?.notificationsCount || 0
-        }}
       />
 
       <main className="flex-1 overflow-y-auto pb-10">
@@ -228,17 +303,17 @@ export default function HandyDashboard() {
                     {profile?.name || "Your Name"}
                   </h2>
                   
-                  {profile?.planType === 'Premium' && (
+                  {profile?.planType === 'Premium' && profile?.subscriptionStatus && (
                     <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-bold rounded-full flex items-center gap-1">
                       👑 PREMIUM
                     </span>
                   )}
-                  {profile?.planType === 'Standard' && (
+                  {profile?.planType === 'Standard' && profile?.subscriptionStatus && (
                     <span className="px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
                       ⭐ STANDARD
                     </span>
                   )}
-                  {profile?.planType === 'Basic' && (
+                  {profile?.planType === 'Basic' && profile?.subscriptionStatus && (
                     <span className="px-3 py-1 bg-gray-400 text-white text-xs font-bold rounded-full flex items-center gap-1">
                       🆓 BASIC
                     </span>
@@ -390,15 +465,26 @@ export default function HandyDashboard() {
                         )}
                       </div>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-                      order.status === 'completed' ? 'bg-green-100 text-green-700' :
-                      order.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
-                      order.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                      order.status === 'declined' ? 'bg-red-100 text-red-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {order.status.replace('-', ' ').toUpperCase()}
-                    </span>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+                        order.status === 'completed' ? 'bg-green-100 text-green-700' :
+                        order.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
+                        order.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                        order.status === 'declined' ? 'bg-red-100 text-red-700' :
+                        'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {order.status.replace('-', ' ').toUpperCase()}
+                      </span>
+                      {order.status === 'pending' && (
+                        <button
+                          onClick={() => handleDeclineJob(order._id)}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-medium transition"
+                        >
+                          <X size={14} />
+                          Decline
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -512,5 +598,6 @@ export default function HandyDashboard() {
         </div>
       )}
     </div>
+    </>
   );
 }

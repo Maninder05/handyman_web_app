@@ -1,4 +1,4 @@
-// backend/services/stripe.client.js
+// backend/services/stripeService.js
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
@@ -10,10 +10,6 @@ const __dirname = path.dirname(__filename);
 const envPath = path.resolve(__dirname, "../.env");
 dotenv.config({ path: envPath });
 
-// Optional debug (uncomment if needed):
-// console.log("[stripe.client] using .env at:", envPath);
-// console.log("[stripe.client] STRIPE_SECRET_KEY present?", !!process.env.STRIPE_SECRET_KEY);
-
 const apiKey = process.env.STRIPE_SECRET_KEY;
 if (!apiKey) {
   throw new Error(
@@ -21,7 +17,7 @@ if (!apiKey) {
   );
 }
 
-export const stripe = new Stripe(apiKey); // use account default API version
+export const stripe = new Stripe(apiKey);
 
 export function verifyStripeEvent(req) {
   const sig = req.headers["stripe-signature"];

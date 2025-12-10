@@ -1,4 +1,4 @@
-import stripe from '../../config/stripe.js';
+import { stripe } from '../../services/stripeService.js';
 import User from '../../models/auth/User.js';
 import HandymanSubscription from '../../models/mutual/HandymanSubscriptionModel.js';
 
@@ -41,18 +41,29 @@ export const handleStripeWebhook = async (req, res) => {
                 const periodEndTimestamp = subscription.current_period_end * 1000;
                 const newWindow = calculateNewBillingWindow(planName, periodEndTimestamp);
 
+                // Map plan names to job limits
+                const planNameLower = planName.toLowerCase();
+                let jobAcceptedLimit = 7; // Default to Basic
+                if (planNameLower === 'premium') {
+                    jobAcceptedLimit = 30;
+                } else if (planNameLower === 'standard') {
+                    jobAcceptedLimit = 15;
+                } else if (planNameLower === 'basic') {
+                    jobAcceptedLimit = 7;
+                }
+
                 await HandymanSubscription.findOneAndUpdate(
                     { handyman: handymanId },
                     {
                         handyman: handymanId,
                         stripeCustomerId: subscription.customer,
                         stripeSubscriptionId: subscription.id,
-                        planType: planName.toLowerCase(),
+                        planType: planNameLower,
                         status: subscription.status,
                         startDate: newWindow.startDate,
                         endDate: newWindow.endDate,
                         isProfileVisible: true,
-                        jobAcceptedLimit: (planName.toLowerCase() === 'premium' ? 50 : 5) 
+                        jobAcceptedLimit: jobAcceptedLimit 
                     },
                     { upsert: true, new: true, setDefaultsOnInsert: true }
                 );

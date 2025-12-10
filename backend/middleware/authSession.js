@@ -44,6 +44,9 @@ export default async function authSession(req, res, next) {
       userType: user.userType 
     };
 
+    // Debug: Log which user is authenticated
+    console.log(`[AUTH] Authenticated user - ID: ${req.user.id}, Email: ${req.user.email}, UserType: ${req.user.userType}, Path: ${req.path}`);
+
     next();
   } catch (err) {
     console.error("authSession error:", err);

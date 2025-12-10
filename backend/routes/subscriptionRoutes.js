@@ -1,32 +1,41 @@
 // routes/subscriptionRoutes.js
 
-import express from "express";
+import express from 'express';
 import {
-  createCheckoutSession,
-  createInlineSubscription,
-  confirmPayPalSubscription, // <-- NEW FUNCTION IMPORTED
-} from "../controllers/mutual/subscriptionController.js";
-import { handleStripeWebhook } from "../controllers/mutual/webhookController.js";
+    createCheckoutSession,
+    createInlineSubscription,
+    confirmPayPalSubscription,
+    changePlan
+} from '../controllers/mutual/subscriptionController.js';
+import { handleStripeWebhook } from '../controllers/mutual/webhookController.js';
+import authSession from '../middleware/authSession.js';
 
 const router = express.Router();
 
-// Placeholder for your authentication middleware
-const protect = (req, res, next) => {
-  // Mock user for local testing
-  if (!req.user) {
-    req.user = { id: "69012c57ee11fdfc9469a4b3", email: "kaurmaninder1321@gmail.com" };
-  }
-  next();
-};
+// Use real authentication middleware instead of mock
+const protect = authSession;
 
 // 1. Stripe Checkout (Redirect Flow)
 router.post("/subscribe", protect, createCheckoutSession);
 
 // 2. Stripe Elements (Inline Card Flow)
-router.post("/subscribe-inline", protect, createInlineSubscription);
+router.post("/subscribe-inline", protect, (req, res, next) => {
+    console.log('🔵 Route /subscribe-inline hit!');
+    console.log('🔵 Request body:', req.body);
+    console.log('🔵 req.user:', req.user ? { id: req.user.id, email: req.user.email } : 'NO USER');
+    next();
+}, createInlineSubscription);
 
 // 3. ✅ NEW ROUTE FOR PAYPAL CONFIRMATION
-router.post("/subscribe-paypal", protect, confirmPayPalSubscription);
+router.post('/subscribe-paypal', protect, confirmPayPalSubscription);
+
+// 4. Change existing plan (Netflix-style)
+router.post('/change-plan', protect, (req, res, next) => {
+    console.log('🔵 Route /change-plan hit!');
+    console.log('🔵 Request body:', req.body);
+    console.log('🔵 req.user:', req.user ? { id: req.user.id, email: req.user.email } : 'NO USER');
+    next();
+}, changePlan);
 
 // 4. Stripe Webhook
 router.post(

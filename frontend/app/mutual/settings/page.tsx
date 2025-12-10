@@ -90,7 +90,7 @@ export default function SettingsPage() {
     }
 
     try {
-      // Try handyman first (more likely to have issues)
+      // Try handyman first
       let response = await fetch("http://localhost:7000/api/handymen", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -111,11 +111,9 @@ export default function SettingsPage() {
 
       const data = await response.json();
       
-      // Store userType in localStorage for persistence
+
       localStorage.setItem("userType", detectedType);
       setUserType(detectedType);
-      
-      console.log("✅ User Type Detected:", detectedType);
 
       const nameParts = data.name ? data.name.split(" ") : ["", ""];
       setAccountData({
@@ -143,7 +141,7 @@ export default function SettingsPage() {
         setNotifications(settings.notifications || notifications);
       }
     } catch (err) {
-      console.error("❌ Error fetching data:", err);
+      console.error(" Error fetching data:", err);
       showAlert("error", "Failed to load settings");
     } finally {
       setLoading(false);
@@ -155,8 +153,8 @@ export default function SettingsPage() {
     setTimeout(() => setAlert(null), 5000);
   };
 
+
   const getDashboardPath = (): string => {
-    // Check localStorage first for persistence
     const storedType = localStorage.getItem("userType") as "client" | "handyman" | null;
     const finalType = storedType || userType;
     
@@ -166,6 +164,7 @@ export default function SettingsPage() {
       ? "/handyman/handyDashboard" 
       : "/client/clientDashboard";
   };
+  // END OF INSERTED PART ✔️
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -185,7 +184,7 @@ export default function SettingsPage() {
 
     const token = localStorage.getItem("token");
     const formData = new FormData();
-    formData.append("profileImage", selectedImage); // ✅ CORRECT FIELD NAME
+    formData.append("profileImage", selectedImage);
 
     setSaving(true);
 
@@ -197,25 +196,20 @@ export default function SettingsPage() {
         ? "http://localhost:7000/api/handymen/upload-profile-pic"
         : "http://localhost:7000/api/clients/upload-profile-pic";
 
-      console.log("📤 Uploading to:", endpoint);
+      console.log(" Uploading to:", endpoint);
 
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          // ❌ DON'T SET Content-Type for FormData - browser sets it automatically
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("❌ Upload error:", errorData);
         throw new Error(errorData.message || "Failed to upload image");
       }
 
       const data = await response.json();
-      console.log("✅ Upload success:", data);
       
       setAccountData({ 
         ...accountData, 
@@ -229,9 +223,7 @@ export default function SettingsPage() {
         router.push(getDashboardPath());
       }, 1500);
     } catch (err) {
-      const errorMessage = (err as Error).message || "Failed to upload image";
-      console.error("❌ Upload failed:", err);
-      showAlert("error", errorMessage);
+      showAlert("error", (err as Error).message || "Failed to upload image");
     } finally {
       setSaving(false);
     }
@@ -242,7 +234,6 @@ export default function SettingsPage() {
     const token = localStorage.getItem("token");
 
     try {
-      // If there's a selected image, upload it first
       if (selectedImage) {
         await uploadProfileImage();
         return;
@@ -277,7 +268,6 @@ export default function SettingsPage() {
         router.push(getDashboardPath());
       }, 1500);
     } catch (err) {
-      console.error("❌ Update failed:", err);
       showAlert("error", "Failed to update account");
     } finally {
       setSaving(false);
