@@ -13,7 +13,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userType, setUserType] = useState<"client" | "handyman" | null>(null);
-  
+ 
   // Alert state
   const [alert, setAlert] = useState<{
     type: "success" | "error";
@@ -110,10 +110,12 @@ export default function SettingsPage() {
       }
  
       const data = await response.json();
-      
- 
+     
+      // Store userType in localStorage for persistence
       localStorage.setItem("userType", detectedType);
       setUserType(detectedType);
+     
+      console.log(" User Type Detected:", detectedType);
  
       const nameParts = data.name ? data.name.split(" ") : ["", ""];
       setAccountData({
@@ -153,18 +155,17 @@ export default function SettingsPage() {
     setTimeout(() => setAlert(null), 5000);
   };
  
- 
   const getDashboardPath = (): string => {
+    // Check localStorage first for persistence
     const storedType = localStorage.getItem("userType") as "client" | "handyman" | null;
     const finalType = storedType || userType;
-    
+   
     console.log("🚀 Redirecting to:", finalType === "handyman" ? "/handyman/handyDashboard" : "/client/clientDashboard");
-    
+   
     return finalType === "handyman"
       ? "/handyman/handyDashboard"
       : "/client/clientDashboard";
   };
-  // END OF INSERTED PART ✔️
  
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -191,7 +192,7 @@ export default function SettingsPage() {
     try {
       const storedType = localStorage.getItem("userType") as "client" | "handyman" | null;
       const finalType = storedType || userType;
-      
+     
       const endpoint = finalType === "handyman"
         ? "http://localhost:7000/api/handymen/upload-profile-pic"
         : "http://localhost:7000/api/clients/upload-profile-pic";
@@ -200,17 +201,22 @@ export default function SettingsPage() {
  
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+       
+        },
         body: formData,
       });
  
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error(" Upload error:", errorData);
         throw new Error(errorData.message || "Failed to upload image");
       }
  
       const data = await response.json();
-      
+      console.log(" Upload success:", data);
+     
       setAccountData({
         ...accountData,
         profileImage: data.profilePic || data.profileImage || data.imageUrl
@@ -218,12 +224,14 @@ export default function SettingsPage() {
       setSelectedImage(null);
       setImagePreview(null);
       showAlert("success", "Profile picture updated!");
-      
+     
       setTimeout(() => {
         router.push(getDashboardPath());
       }, 1500);
     } catch (err) {
-      showAlert("error", (err as Error).message || "Failed to upload image");
+      const errorMessage = (err as Error).message || "Failed to upload image";
+      console.error(" Upload failed:", err);
+      showAlert("error", errorMessage);
     } finally {
       setSaving(false);
     }
@@ -234,6 +242,7 @@ export default function SettingsPage() {
     const token = localStorage.getItem("token");
  
     try {
+      // If there's a selected image, upload it first
       if (selectedImage) {
         await uploadProfileImage();
         return;
@@ -263,11 +272,12 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error("Failed to update account");
  
       showAlert("success", "Account updated successfully!");
-      
+     
       setTimeout(() => {
         router.push(getDashboardPath());
       }, 1500);
     } catch (err) {
+      console.error(" Update failed:", err);
       showAlert("error", "Failed to update account");
     } finally {
       setSaving(false);
@@ -305,7 +315,7 @@ export default function SettingsPage() {
  
       showAlert("success", "Password changed successfully!");
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      
+     
       setTimeout(() => {
         router.push(getDashboardPath());
       }, 1500);
@@ -333,7 +343,7 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error("Failed to update display settings");
  
       showAlert("success", "Display settings updated!");
-      
+     
       setTimeout(() => {
         router.push(getDashboardPath());
       }, 1500);
@@ -361,7 +371,7 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error("Failed to update notifications");
  
       showAlert("success", "Notification settings updated!");
-      
+     
       setTimeout(() => {
         router.push(getDashboardPath());
       }, 1500);
@@ -495,21 +505,11 @@ export default function SettingsPage() {
                     <div className="relative">
                       <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 border-4 border-[#D4A574]">
                         {imagePreview || accountData.profileImage ? (
-                     // NEW (should work)
-<img
-  src={
-    imagePreview ||
-    (accountData.profileImage?.startsWith('http')
-      ? accountData.profileImage
-      : `http://localhost:7000/uploads/profiles/${accountData.profileImage.split('/').pop()}`)
-  }
-  alt="Profile"
-  className="w-full h-full object-cover"
-  onError={(e) => {
-    console.error('Image load failed. Path:', accountData.profileImage);
-    e.currentTarget.style.display = 'none';
-  }}
-/>
+                          <img
+                            src={imagePreview || `http://localhost:7000${accountData.profileImage}`}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <User size={48} className="text-gray-400" />
@@ -868,5 +868,3 @@ export default function SettingsPage() {
     </div>
   );
 }
- 
- 

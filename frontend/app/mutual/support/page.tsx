@@ -35,7 +35,6 @@ export default function HelpCentrePage() {
   const [showChatbot, setShowChatbot] = useState(false);
   const [showAgentChat, setShowAgentChat] = useState(false);
   const [userId, setUserId] = useState<string | undefined>(undefined);
-  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
 
   // Fetch user type and username on mount
   useEffect(() => {
@@ -57,15 +56,13 @@ export default function HelpCentrePage() {
           console.log("Could not decode username from token");
         }
 
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
-        
         // Try client first, then handyman
-        let profileRes = await fetch(`${API_BASE}/api/clients/me`, {
+        let profileRes = await fetch("http://localhost:7000/api/clients/me", {
           headers: { Authorization: `Bearer ${token}` }
         });
         
         if (!profileRes.ok) {
-          profileRes = await fetch(`${API_BASE}/api/handymen/me`, {
+          profileRes = await fetch("http://localhost:7000/api/handymen/me", {
             headers: { Authorization: `Bearer ${token}` }
           });
         }
@@ -80,14 +77,6 @@ export default function HelpCentrePage() {
           // Get user's username - prioritize username from profile, fallback to name/firstName
           const name = profileData.username || profileData.name || profileData.firstName || "User";
           setUserName(name);
-          
-          // Get current plan if handyman has active subscription
-          if (detectedType === 'handyman' && profileData.planType && profileData.subscriptionStatus) {
-            const validStatuses = ['active', 'trialing', 'incomplete'];
-            if (validStatuses.includes(profileData.subscriptionStatus)) {
-              setCurrentPlan(profileData.planType);
-            }
-          }
         }
       } catch (error) {
         console.error("Error fetching user type:", error);
@@ -328,12 +317,7 @@ export default function HelpCentrePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F8F8] via-white to-[#FFF8F2]">
-      {/* <Header pageTitle="Help Center" /> */}
-      <Header 
-        pageTitle="Help Centre"
-        onLogout={() => console.log("logout clicked")} // or your real logout function
-      />
-
+      <Header pageTitle="Help Center" onLogout={handleLogout} />
 
       {/* Toast Notification */}
       {showToast && (
@@ -344,14 +328,14 @@ export default function HelpCentrePage() {
         >
           <svg
             className="w-5 h-5 flex-shrink-0"
-            fill="currentColor"
+            fill="currentColor"o
             viewBox="0 0 20 20"
           >
             {toastType === "success" ? (
               <path
                 fillRule="evenodd"
                 d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd" //comment 
+                clipRule="evenodd" 
               />
             ) : (
               <path
@@ -377,7 +361,7 @@ export default function HelpCentrePage() {
               Hello, {userName}!
             </p>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight text-[#5C4033] mb-4">
-              How can we <span className="bg-gradient-to-r from-[#D4A574] via-[#C4956A] to-[#B8A565] bg-clip-text text-transparent">help you</span> today?
+              How can we <span className="text-[#D4A574]">help you</span> today?
             </h1>
             <p className="text-lg sm:text-xl text-[#5C4033]/80 mb-8 max-w-2xl mx-auto">
               Find answers, browse guides, or get in touch with our support team
@@ -575,21 +559,6 @@ export default function HelpCentrePage() {
                 </span>
               </Link>
             ))}
-            
-            {/* Change Plan Button - Only show for handymen with a plan */}
-            {userType === 'handyman' && currentPlan && (
-              <Link
-                href="/mutual/membership"
-                className="group flex flex-col items-center gap-3 p-6 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-600 border-2 border-yellow-500 shadow-lg hover:shadow-xl hover:border-yellow-600 hover:-translate-y-1 transition-all"
-              >
-                <span className="text-4xl group-hover:scale-110 transition-transform">
-                  🔄
-                </span>
-                <span className="text-sm font-semibold text-white text-center">
-                  Change Your Existing Plan
-                </span>
-              </Link>
-            )}
           </div>
         </section>
 

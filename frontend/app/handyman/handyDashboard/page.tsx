@@ -1,63 +1,49 @@
 "use client";
  
-import React, { useEffect, useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Briefcase, HelpCircle, Crown, Wrench, Upload, Camera, Settings } from "lucide-react";
-import { FiUser, FiPlus, FiDollarSign, FiShoppingBag, FiStar } from "react-icons/fi";
-import Header from "../../components/handyHeader";
+import { Briefcase, Users, Calendar, HelpCircle, Upload, Camera } from "lucide-react";
+import { FiUser, FiDollarSign, FiShoppingBag } from "react-icons/fi";
+import Header from "../../components/clientHeader";
  
-type Service = {
-  _id?: string;
-  title: string;
-  description: string;
-  price?: number;
-};
- 
-type Order = {
+type Booking = {
   _id: string;
-  title: string;
-  description: string;
-  status: string;
-  clientName?: string;
-  date?: string;
+  service: string;
+  handyman: string;
+  status: 'pending' | 'accepted' | 'declined' | 'in-progress' | 'completed';
+  date: string;
 };
  
-type Profile = {
+type ClientProfile = {
   _id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   contact?: string;
   address?: string;
   bio?: string;
-  skills?: string[];
   profileImage?: string;
-  jobsDone: number;
-  jobsDoneCount?: number;
-  jobsInProgressCount: number;
-  rating: number;
-  earnings: number;
-  activeOrdersCount: number;
-  activeOrderCount?: number;
-  jobAcceptCount: number;
-  services: Service[];
-  recentOrders: Order[];
-  planType?: 'Basic' | 'Standard' | 'Premium';
-  verified?: boolean;
+  servicesBooked: number;
+  ongoingServices: number;
+  totalSpent: number;
+  activeBookings: number;
+  jobPostedCount: number;
   notificationsCount: number;
-  reviewsCount?: number;
+  recentBookings: Booking[];
 };
  
-export default function HandyDashboard() {
+export default function ClientDashboard() {
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+ 
  
   useEffect(() => {
     fetchProfile();
@@ -73,10 +59,45 @@ export default function HandyDashboard() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
- 
   }, []);
  
+  useEffect(() => {
+    const applyThemeSettings = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+ 
+        const res = await fetch("http://localhost:7000/api/settings", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+ 
+        if (res.ok) {
+          const settings = await res.json();
+ 
+          if (settings.theme === "dark") {
+            document.documentElement.classList.add("dark");
+          } else if (settings.theme === "light") {
+            document.documentElement.classList.remove("dark");
+          } else if (settings.theme === "auto") {
+            if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+              document.documentElement.classList.add("dark");
+            } else {
+              document.documentElement.classList.remove("dark");
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error applying theme:", err);
+      }
+    };
+ 
+    applyThemeSettings();
+  }, []);
+ 
+ 
   const fetchProfile = async () => {
+    setLoading(true);
+   
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -84,18 +105,17 @@ export default function HandyDashboard() {
         return;
       }
  
-      const res = await fetch("http://localhost:7000/api/handymen", {
+      const res = await fetch("http://localhost:7000/api/clients", {
         headers: { "Authorization": `Bearer ${token}` },
       });
  
       if (res.ok) {
-        const data: Profile = await res.json();
+        const data = await res.json();
+        console.log("Profile data received:", data);
         setProfile(data);
       } else if (res.status === 401) {
         localStorage.removeItem("token");
         router.push("/signup?mode=login");
-      } else {
-        setProfile(null);
       }
     } catch (err) {
       console.error("Error fetching profile:", err);
@@ -137,7 +157,7 @@ export default function HandyDashboard() {
       const formData = new FormData();
       formData.append('profileImage', selectedFile);
  
-      const res = await fetch("http://localhost:7000/api/handymen/upload-profile-pic", {
+      const res = await fetch("http://localhost:7000/api/clients/upload-profile-pic", {
         method: 'POST',
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -147,9 +167,10 @@ export default function HandyDashboard() {
  
       if (res.ok) {
         const data = await res.json();
+        console.log("Upload response:", data);
         setProfile(prev => prev ? {
           ...prev,
-          profileImage: data.profilePic || data.imageUrl
+          profileImage: data.profilePic || data.profileImage || data.imageUrl
         } : null);
         setShowUploadModal(false);
         setSelectedFile(null);
@@ -173,21 +194,31 @@ export default function HandyDashboard() {
     router.push("/");
   };
  
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'accepted': return 'bg-green-100 text-green-700';
+      case 'declined': return 'bg-red-100 text-red-700';
+      case 'in-progress': return 'bg-blue-100 text-blue-700';
+      case 'completed': return 'bg-gray-100 text-gray-700';
+      default: return 'bg-yellow-100 text-yellow-700';
+    }
+  };
+ 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#D4A574] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+          <p className="text-gray-600">Loading your dashboard...</p>
         </div>
       </div>
     );
   }
  
   return (
-    <div className="min-h-screen bg-[#F5F5F0] text-gray-900 flex flex-col">
+    <div className="min-h-screen bg-[#F5F5F0] dark:bg-[#0a0a0a] flex flex-col text-gray-900 dark:text-white">
       <Header
-        pageTitle="Handyman Dashboard"
+        pageTitle="Client Dashboard"
         onLogout={handleLogout}
         profile={{
           profileImage: profile?.profileImage,
@@ -201,12 +232,21 @@ export default function HandyDashboard() {
             <div className="flex flex-col items-center text-center mb-8">
               <div className="relative mb-4">
                 {profile?.profileImage ? (
-                  <Image
-                    src={profile.profileImage}
+                  <img
+                    src={`http://localhost:7000${profile.profileImage}`}
                     alt="Profile"
-                    width={112}
-                    height={112}
-                    className="rounded-full border-4 border-white shadow-lg object-cover"
+                    className="w-28 h-28 rounded-full border-4 border-white shadow-lg object-cover"
+                    onError={(e) => {
+                      console.error('Failed to load profile image:', profile.profileImage);
+                      e.currentTarget.style.display = 'none';
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        const fallback = document.createElement('div');
+                        fallback.className = 'w-28 h-28 rounded-full border-4 border-white bg-white/20 flex items-center justify-center';
+                        fallback.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
+                        parent.appendChild(fallback);
+                      }
+                    }}
                   />
                 ) : (
                   <div className="w-28 h-28 rounded-full border-4 border-white bg-white/20 flex items-center justify-center">
@@ -222,61 +262,33 @@ export default function HandyDashboard() {
                 </button>
               </div>
  
-              <div>
-                <div className="flex items-center gap-2 justify-center mb-2 flex-wrap">
-                  <h2 className="text-2xl font-bold text-white">
-                    {profile?.name || "Your Name"}
-                  </h2>
-                 
-                  {profile?.planType === 'Premium' && (
-                    <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-bold rounded-full flex items-center gap-1">
-                      👑 PREMIUM
-                    </span>
-                  )}
-                  {profile?.planType === 'Standard' && (
-                    <span className="px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
-                      ⭐ STANDARD
-                    </span>
-                  )}
-                  {profile?.planType === 'Basic' && (
-                    <span className="px-3 py-1 bg-gray-400 text-white text-xs font-bold rounded-full flex items-center gap-1">
-                      🆓 BASIC
-                    </span>
-                  )}
-                 
-                  {profile?.verified && (
-                    <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full flex items-center gap-1">
-                      ✅ VERIFIED
-                    </span>
-                  )}
-                </div>
-               
-                <p className="text-white/90 text-sm">
-                  {profile?.email || "your.email@example.com"}
+              <h2 className="text-2xl font-bold text-white mt-2">
+                {profile?.firstName && profile?.lastName
+                  ? `${profile.firstName} ${profile.lastName}`
+                  : profile?.name || "Your Name"}
+              </h2>
+              <p className="text-sm text-white/90">
+                {profile?.email || "your.email@example.com"}
+              </p>
+              {profile?.contact && (
+                <p className="text-sm text-white/80 mt-1">
+                  📱 {profile.contact}
                 </p>
-                {profile?.contact && (
-                  <p className="text-white/80 text-sm mt-1">
-                    📱 {profile.contact}
-                  </p>
-                )}
-              </div>
+              )}
             </div>
  
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center border border-white/30">
-                <p className="text-3xl font-bold text-white">{profile?.jobsDone || profile?.jobsDoneCount || 0}</p>
-                <p className="text-white/90 text-sm mt-1">Jobs Completed</p>
+                <p className="text-3xl font-bold text-white">{profile?.servicesBooked || 0}</p>
+                <p className="text-white/90 text-sm mt-1">Services Booked</p>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center border border-white/30">
-                <p className="text-3xl font-bold text-white">{profile?.jobsInProgressCount || 0}</p>
-                <p className="text-white/90 text-sm mt-1">In Progress</p>
+                <p className="text-3xl font-bold text-white">{profile?.ongoingServices || 0}</p>
+                <p className="text-white/90 text-sm mt-1">Ongoing</p>
               </div>
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center border border-white/30">
-                <div className="flex items-center justify-center gap-1">
-                  <p className="text-3xl font-bold text-white">{profile?.rating || 0}</p>
-                  <FiStar className="text-yellow-300 fill-yellow-300" size={20} />
-                </div>
-                <p className="text-white/90 text-sm mt-1">Rating</p>
+                <p className="text-3xl font-bold text-white">{profile?.activeBookings || 0}</p>
+                <p className="text-white/90 text-sm mt-1">Active Bookings</p>
               </div>
             </div>
           </div>
@@ -287,8 +299,8 @@ export default function HandyDashboard() {
             <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100 hover:shadow-lg transition">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm font-medium mb-1">Total Earnings</p>
-                  <p className="text-3xl font-bold text-[#1a1a1a]">${profile?.earnings || 0}</p>
+                  <p className="text-gray-500 text-sm font-medium mb-1">Total Spent</p>
+                  <p className="text-3xl font-bold text-[#1a1a1a]">${profile?.totalSpent || 0}</p>
                   <p className="text-gray-400 text-xs mt-1">All Time</p>
                 </div>
                 <div className="w-14 h-14 bg-gradient-to-br from-[#D4A574] to-[#B8A565] rounded-xl flex items-center justify-center">
@@ -300,9 +312,9 @@ export default function HandyDashboard() {
             <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100 hover:shadow-lg transition">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm font-medium mb-1">Active Orders</p>
-                  <p className="text-3xl font-bold text-[#1a1a1a]">{profile?.activeOrdersCount || profile?.activeOrderCount || 0}</p>
-                  <p className="text-gray-400 text-xs mt-1">Currently Working</p>
+                  <p className="text-gray-500 text-sm font-medium mb-1">Jobs Posted</p>
+                  <p className="text-3xl font-bold text-[#1a1a1a]">{profile?.jobPostedCount || 0}</p>
+                  <p className="text-gray-400 text-xs mt-1">Total Listings</p>
                 </div>
                 <div className="w-14 h-14 bg-gradient-to-br from-[#D4A574] to-[#B8A565] rounded-xl flex items-center justify-center">
                   <FiShoppingBag size={24} className="text-white" />
@@ -314,24 +326,23 @@ export default function HandyDashboard() {
  
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <h3 className="text-xl font-bold text-[#1a1a1a] mb-6">Quick Actions</h3>
- 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <Link href="/handyman/handyFindJobs" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Link href="/client/clientPostJob" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
               <Briefcase size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
-              <h4 className="font-bold text-[#1a1a1a]">Find Jobs</h4>
-              <p className="text-gray-500 text-sm mt-1">Browse available jobs</p>
+              <h4 className="font-bold text-[#1a1a1a]">Post Jobs</h4>
+              <p className="text-gray-500 text-sm mt-1">Hire handymen</p>
             </Link>
  
-            <Link href="/handyman/handyPostServices" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
-              <Wrench size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
-              <h4 className="font-bold text-[#1a1a1a]">My Services</h4>
-              <p className="text-gray-500 text-sm mt-1">Manage your services</p>
+            <Link href="/client/clientFindHandyman" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+              <Users size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
+              <h4 className="font-bold text-[#1a1a1a]">Find Handyman</h4>
+              <p className="text-gray-500 text-sm mt-1">Browse profiles</p>
             </Link>
  
-            <Link href="/mutual/membership" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
-              <Crown size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
-              <h4 className="font-bold text-[#1a1a1a]">Membership</h4>
-              <p className="text-gray-500 text-sm mt-1">View your plan</p>
+            <Link href="/client/clientBookings" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
+              <Calendar size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
+              <h4 className="font-bold text-[#1a1a1a]">Bookings</h4>
+              <p className="text-gray-500 text-sm mt-1">Track orders</p>
             </Link>
  
             <Link href="/mutual/support" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
@@ -339,104 +350,45 @@ export default function HandyDashboard() {
               <h4 className="font-bold text-[#1a1a1a]">Help</h4>
               <p className="text-gray-500 text-sm mt-1">Get support</p>
             </Link>
- 
-            <Link href="/mutual/settings" className="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition text-center group">
-              <Settings size={32} className="text-[#D4A574] mx-auto mb-3 group-hover:scale-110 transition" />
-              <h4 className="font-bold text-[#1a1a1a]">Settings</h4>
-              <p className="text-gray-500 text-sm mt-1">Account settings</p>
-            </Link>
           </div>
         </section>
  
         <section className="max-w-7xl mx-auto px-6 mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-[#1a1a1a]">Recent Orders</h3>
-            <Link href="/handyman/handyOrders" className="text-[#D4A574] hover:text-[#B8A565] font-medium text-sm">
-              View All Orders
+            <h3 className="text-xl font-bold text-[#1a1a1a]">Recent Bookings</h3>
+            <Link href="/client/clientBookings" className="text-[#D4A574] hover:text-[#B8A565] font-medium text-sm">
+              View All
             </Link>
           </div>
  
-          {(!profile?.recentOrders || profile.recentOrders.length === 0) ? (
+          {(!profile?.recentBookings || profile.recentBookings.length === 0) ? (
             <div className="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-200">
               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FiShoppingBag size={32} className="text-gray-400" />
+                <Calendar size={32} className="text-gray-400" />
               </div>
-              <p className="text-gray-400 text-lg mb-2">No recent orders</p>
-              <p className="text-gray-500 text-sm mb-4">Accept jobs to see them here</p>
+              <p className="text-gray-400 text-lg mb-2">No bookings yet</p>
+              <p className="text-gray-500 text-sm mb-4">Post your first job to get started</p>
               <Link
-                href="/handyman/handyFindJobs"
+                href="/client/clientPostJob"
                 className="inline-block px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold shadow-lg hover:shadow-xl"
               >
-                Browse Available Jobs
+                Post Jobs
               </Link>
             </div>
           ) : (
             <div className="space-y-4">
-              {profile.recentOrders.slice(0, 3).map((order) => (
-                <div key={order._id} className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition">
+              {profile.recentBookings.map((booking) => (
+                <div key={booking._id} className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="w-16 h-16 bg-gradient-to-br from-[#D4A574] to-[#B8A565] rounded-xl flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-xl font-bold">{order.title.charAt(0)}</span>
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-[#1a1a1a] text-lg mb-1">{order.title}</h4>
-                        <p className="text-gray-600 text-sm mb-1">{order.description}</p>
-                        {order.clientName && (
-                          <p className="text-gray-500 text-xs">Client: {order.clientName}</p>
-                        )}
-                        {order.date && (
-                          <p className="text-gray-400 text-xs mt-1">{order.date}</p>
-                        )}
-                      </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-[#1a1a1a] text-lg mb-1">{booking.service}</h4>
+                      <p className="text-gray-600 text-sm mb-2">Handyman: {booking.handyman}</p>
+                      <p className="text-gray-500 text-xs">{booking.date}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-                      order.status === 'completed' ? 'bg-green-100 text-green-700' :
-                      order.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
-                      order.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                      order.status === 'declined' ? 'bg-red-100 text-red-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {order.status.replace('-', ' ').toUpperCase()}
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${getStatusColor(booking.status)}`}>
+                      {booking.status.replace('-', ' ').toUpperCase()}
                     </span>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
- 
-        <section className="max-w-7xl mx-auto px-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-[#1a1a1a]">My Services</h3>
-            <Link href="/handyman/handyPostServices" className="text-[#D4A574] hover:text-[#B8A565] font-medium text-sm">
-              Manage Services
-            </Link>
-          </div>
- 
-          {(!profile?.services || profile.services.length === 0) ? (
-            <div className="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-200">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FiPlus size={32} className="text-gray-400" />
-              </div>
-              <p className="text-gray-400 text-lg mb-2">No services added</p>
-              <p className="text-gray-500 text-sm mb-4">Add your services to attract clients</p>
-              <Link
-                href="/handyman/handyPostServices"
-                className="inline-block px-6 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-semibold shadow-lg hover:shadow-xl"
-              >
-                Add Services
-              </Link>
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {profile.services.slice(0, 6).map((service, i) => (
-                <div key={service._id || i} className="bg-white rounded-xl shadow-lg p-5 border-2 border-gray-200 hover:border-[#D4A574] hover:shadow-xl transition">
-                  <h4 className="font-bold text-[#1a1a1a] text-lg mb-2">{service.title}</h4>
-                  <p className="text-gray-600 text-sm mb-2">{service.description || "Professional service"}</p>
-                  {service.price && (
-                    <p className="text-[#D4A574] font-bold text-lg">${service.price}</p>
-                  )}
                 </div>
               ))}
             </div>
@@ -451,15 +403,11 @@ export default function HandyDashboard() {
            
             <div className="mb-6">
               {previewUrl ? (
-                <div className="relative w-40 h-40 mx-auto mb-4">
-                  <Image
-                    src={previewUrl}
-                    alt="Preview"
-                    width={160}
-                    height={160}
-                    className="rounded-full object-cover border-4 border-[#D4A574]"
-                  />
-                </div>
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="w-40 h-40 mx-auto rounded-full object-cover border-4 border-[#D4A574]"
+                />
               ) : (
                 <div className="w-40 h-40 mx-auto mb-4 rounded-full border-4 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
                   <Upload size={48} className="text-gray-400" />
@@ -487,7 +435,7 @@ export default function HandyDashboard() {
                 <button
                   onClick={handleUploadImage}
                   disabled={uploadingImage}
-                  className="flex-1 px-4 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 bg-[#D4A574] text-white rounded-lg hover:bg-[#B8A565] transition font-medium disabled:opacity-50"
                 >
                   {uploadingImage ? 'Uploading...' : 'Upload'}
                 </button>
@@ -514,5 +462,3 @@ export default function HandyDashboard() {
     </div>
   );
 }
- 
- 
